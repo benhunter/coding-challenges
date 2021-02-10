@@ -3,8 +3,8 @@
 
 
 if __name__ == "__main__":
-    filename = ".\\AdventOfCode\\2020\\day13-input.txt"
-    # filename = ".\\AdventOfCode\\2020\\day13-example1-input.txt"
+    # filename = ".\\AdventOfCode\\2020\\day13-input.txt"
+    filename = ".\\AdventOfCode\\2020\\day13-example1-input.txt"
 
     with open(filename) as f:
         earliest_time = int(f.readline())
@@ -30,31 +30,47 @@ if __name__ == "__main__":
     # print(f"Part 1: {earliest_bus * (depart_time - earliest_time)}")
 
     # Part 2
-    print(bus_schedule)
+    print("Calculating Part 2")
+    # Brute Force Solution
+    # sequence_found = False
+    # time = buses[0]
+    # # time = 1068781  # example 1 solution
+    # while not sequence_found:
+    #     partial_sequence = False
+    #     sequence_time = time
+    #     for bus in bus_schedule:
+    #         if bus == "x":
+    #             sequence_time += 1
+    #             continue
+    #         if sequence_time % bus == 0:
+    #             partial_sequence = True
+    #             sequence_time += 1
+    #         else:
+    #             partial_sequence = False
+    #             break
 
-    sequence_found = False
+    #     sequence_found = partial_sequence
+    #     if not sequence_found:
+    #         time += buses[0]
+
+    #     if time % 1000000 == 0:
+    #         print(time)
+
+    # Chinese Remainder Theorem Sieve
     time = buses[0]
-    # time = 1068781  # example 1 solution
-    while not sequence_found:
-        partial_sequence = False
-        sequence_time = time
-        for bus in bus_schedule:
-            if bus == "x":
-                sequence_time += 1
-                continue
-            if sequence_time % bus == 0:
-                partial_sequence = True
-                sequence_time += 1
-            else:
-                partial_sequence = False
-                break
+    period = buses[0]
 
-        sequence_found = partial_sequence
-        if not sequence_found:
-            time += buses[0]
+    for offset, bus in enumerate(bus_schedule):
+        if bus == "x":
+            continue
+        print(f"offset, bus: {offset, bus}")
 
-        if time % 1000000 == 0:
-            print(time)
+        while (time + offset) % bus != 0:
+            time += period
+        print(f"Found solution at time: {time} bus:{bus} (time + offset) % bus: {(time + offset) % bus}")
+        # after leaving while loop
+        period = period * bus
+        print(f"New period: {period}")
 
     print(f"Part 2: ")
-    print(f"Time {time}")
+    print(f"Time {time}")  # 6055379026300640 too large
