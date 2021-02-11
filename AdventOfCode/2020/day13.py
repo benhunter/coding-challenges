@@ -3,8 +3,8 @@
 
 
 if __name__ == "__main__":
-    # filename = ".\\AdventOfCode\\2020\\day13-input.txt"
-    filename = ".\\AdventOfCode\\2020\\day13-example1-input.txt"
+    filename = ".\\AdventOfCode\\2020\\day13-input.txt"
+    # filename = ".\\AdventOfCode\\2020\\day13-example1-input.txt"
 
     with open(filename) as f:
         earliest_time = int(f.readline())
@@ -14,20 +14,20 @@ if __name__ == "__main__":
 
     # print(earliest_time, buses)
 
-    # found_bus = False
-    # depart_time = earliest_time
-    # earliest_bus = 0
-    # while not found_bus:
-    #     for bus in buses:
-    #         if depart_time % bus == 0:
-    #             print(f"Found bus: {bus} Depart Time: {depart_time}")
-    #             found_bus = True
-    #             earliest_bus = bus
-    #     if not found_bus:
-    #         depart_time += 1
+    found_bus = False
+    depart_time = earliest_time
+    earliest_bus = 0
+    while not found_bus:
+        for bus in buses:
+            if depart_time % bus == 0:
+                print(f"Found bus: {bus} Depart Time: {depart_time}")
+                found_bus = True
+                earliest_bus = bus
+        if not found_bus:
+            depart_time += 1
 
-    # # print(bus)
-    # print(f"Part 1: {earliest_bus * (depart_time - earliest_time)}")
+    # print(bus)
+    print(f"Part 1: {earliest_bus * (depart_time - earliest_time)}")
 
     # Part 2
     print("Calculating Part 2")
@@ -58,19 +58,20 @@ if __name__ == "__main__":
 
     # Chinese Remainder Theorem Sieve
     time = buses[0]
-    period = buses[0]
+    period = 1
 
     for offset, bus in enumerate(bus_schedule):
         if bus == "x":
             continue
-        print(f"offset, bus: {offset, bus}")
+        # print(f"offset, bus: {offset, bus}")
 
         while (time + offset) % bus != 0:
             time += period
-        print(f"Found solution at time: {time} bus:{bus} (time + offset) % bus: {(time + offset) % bus}")
+        # print(f"Found solution at time: {time}")
+        # print(f"    bus:{bus} (time + offset) % bus: {(time + offset) % bus}")
         # after leaving while loop
         period = period * bus
-        print(f"New period: {period}")
+        # print(f"New period: {period}")
 
     print(f"Part 2: ")
-    print(f"Time {time}")  # 6055379026300640 too large
+    print(f"Time {time}")  # 600691418730595
