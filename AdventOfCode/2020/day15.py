@@ -2,31 +2,53 @@
 # https://adventofcode.com/2020/day/15
 
 
-TARGET = 2020
+import cProfile
+from collections import defaultdict
+
+
+def calc_target(TARGET, nums):
+    all_prev_posn = defaultdict(lambda: -1)
+    prev_position = 0
+    for i in range(TARGET):
+        # handle seed nums first
+        if len(nums) - 1 > i:
+            all_prev_posn[nums[i]] = i
+            continue
+        last_num = nums[-1]
+        prev_position = all_prev_posn[last_num]
+
+        if prev_position == -1:
+            diff = 0
+        else:
+            diff = len(nums) - prev_position - 1
+        all_prev_posn[last_num] = len(nums) - 1
+        nums.append(diff)
+    return nums[-2]
 
 
 if __name__ == "__main__":
-    # filename = "./AdventOfCode/2020/day15-input.txt"
-    filename = "./AdventOfCode/2020/day15-example1-input.txt"
+    filename = "./AdventOfCode/2020/day15-input.txt"
+    # filename = "./AdventOfCode/2020/day15-example1-input.txt"
 
     with open(filename) as f:
         lines = [line.rstrip() for line in f]
-    print(lines)
+    # print(lines)
 
     # numbers = [int(x) for (x:=line.split(",")) for line in lines]
-    seed_nums = [int(x) for line in lines for x in line.split(",")]
-    print(seed_nums)
+    seednums = [int(x) for line in lines for x in line.split(",")]
+    # print(seednums)
 
-    nums = seed_nums.copy()
-    print(nums)
+    # Part 1
+    TARGET = 2020
+    nums = seednums.copy()
+    # cProfile.run('calc_target(TARGET, nums)')  # Profiler
+    part1 = calc_target(TARGET, nums)
+    print(f"Part 1: {part1}")  # 468
 
-    for i in range(TARGET):
-        if len(nums) > i:
-            continue
-        # print(i)
+    # Part 2
+    TARGET2 = 30000000
+    nums = seednums.copy()
+    # cProfile.run('calc_target(TARGET2, nums)')  # Profiler
 
-        last_num = nums[-1]
-
-        diff = len(nums) - prev_position  # or 0 if not in nums
-
-        nums.append(diff)
+    part2 = calc_target(TARGET2, nums)
+    print(f"Part 2: {part2}")  # 1801753
