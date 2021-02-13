@@ -1,4 +1,4 @@
-# Advent of Code
+# Advent of Code 2020 Day
 # https://adventofcode.com/2020/
 
 
