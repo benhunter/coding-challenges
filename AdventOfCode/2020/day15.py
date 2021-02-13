@@ -9,11 +9,13 @@ from collections import defaultdict
 def calc_target(TARGET, nums):
     all_prev_posn = defaultdict(lambda: -1)
     prev_position = 0
-    for i in range(TARGET):
-        # handle seed nums first
-        if len(nums) - 1 > i:
-            all_prev_posn[nums[i]] = i
-            continue
+
+    # handle seed nums first, except the last number
+    for i, x in enumerate(nums[:-1]):
+        all_prev_posn[x] = i
+
+    # iterate from the position of the last item in nums to the TARGET
+    for i in range(len(nums) - 1, TARGET):
         last_num = nums[-1]
         prev_position = all_prev_posn[last_num]
 
