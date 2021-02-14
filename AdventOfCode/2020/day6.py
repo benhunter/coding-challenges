@@ -3,7 +3,7 @@
 
 import string
 
-with open(".\\AdventOfCode\\2020\\day6-input.txt") as f:
+with open("./AdventOfCode/2020/day6-input.txt") as f:
     lines = f.read()  # read file to a single string
 
 # make a list of groups. Two newlines seperate records.
@@ -24,11 +24,10 @@ for i, g in enumerate(groups):
         part2 += len(people[0])
     elif len(people) > 1:
         group = "".join(sorted("".join(g.split())))
-        
+
         for letter in string.ascii_lowercase:
             if group.count(letter) == len(people):
                 part2 += 1
-            
 
 
 print("Part 1:", part1)

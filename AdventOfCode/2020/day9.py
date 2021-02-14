@@ -13,8 +13,8 @@ def is_sumoftwo(target, parts):
     target : int
     parts : list of ints
     """
-    
-    #itertools list of all combinations of pairs of parts 
+
+    # itertools list of all combinations of pairs of parts
     combos = itertools.combinations(parts, 2)
     sums = [a + b for (a, b) in combos]
 
@@ -23,19 +23,19 @@ def is_sumoftwo(target, parts):
 
 def find_first_fail(preamble_length, lines):
     for i in range(len(lines) - preamble_length):
-        preamble = lines[i:i+preamble_length]
+        preamble = lines[i : i + preamble_length]
 
-        if is_sumoftwo(lines[i+preamble_length], preamble):
+        if is_sumoftwo(lines[i + preamble_length], preamble):
             continue
         else:
-            return lines[i+preamble_length], i + preamble_length
+            return lines[i + preamble_length], i + preamble_length
     return 0, 0
 
 
 def test_testinput1():
     preamble_length = 5
 
-    with open(".\\AdventOfCode\\2020\\day9-test-input.txt") as f:
+    with open("./AdventOfCode/2020/day9-test-input.txt") as f:
         lines = [int(line.rstrip()) for line in f]
 
     part1 = 0
@@ -43,7 +43,7 @@ def test_testinput1():
     # logging.debug(f"preamble: {preamble}")
 
     part1, position = find_first_fail(preamble_length, lines)
-    
+
     assert part1 == 127
 
 
@@ -52,8 +52,8 @@ def find_contiguous_set(target, position, lines):
 
     for i in range(2, len(lines)):
         for j in range(len(lines) - i):
-            if sum(lines[j:j+i]) == target:
-                return lines[j:j+i]
+            if sum(lines[j : j + i]) == target:
+                return lines[j : j + i]
 
     return contig
 
@@ -62,7 +62,7 @@ def test_testinput2():
     preamble_length = 5
     part2 = 0
 
-    with open(".\\AdventOfCode\\2020\\day9-test-input.txt") as f:
+    with open("./AdventOfCode/2020/day9-test-input.txt") as f:
         lines = [int(line.rstrip()) for line in f]
     part1, position = find_first_fail(preamble_length, lines)
 

@@ -44,11 +44,11 @@ def prod_diffs(filepath):
 
 
 def test_test1():
-    assert prod_diffs(".\\AdventOfCode\\2020\\day10-test1-input.txt") == 35
+    assert prod_diffs("./AdventOfCode/2020/day10-test1-input.txt") == 35
 
 
 def test_test2():
-    assert prod_diffs(".\\AdventOfCode\\2020\\day10-test2-input.txt") == 220
+    assert prod_diffs("./AdventOfCode/2020/day10-test2-input.txt") == 220
 
 
 def arrangements(adapters):

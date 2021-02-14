@@ -7,14 +7,14 @@ from functools import reduce
 from pprint import pprint
 
 
-with open(".\\AdventOfCode\\2020\\day7-input.txt") as f:
+with open("./AdventOfCode/2020/day7-input.txt") as f:
     lines = [line.rstrip() for line in f]
 
 # print(rules)
 # print(len(rules))
 
+
 class BagRule:
-    
     def __init__(self, container, contains):
         self.container = container
         self.contains = contains
@@ -85,7 +85,12 @@ def calculate_bag(bag, rules):
             if isinstance(rule[0], str):
                 if rule[0] in [r.container for r in rules]:
                     # don't forget the + 1 here to include the bag holding the others:
-                    bag.contains[i][0] = calculate_bag([r for r in rules if r.container == rule[0]][0], rules) + 1
+                    bag.contains[i][0] = (
+                        calculate_bag(
+                            [r for r in rules if r.container == rule[0]][0], rules
+                        )
+                        + 1
+                    )
                     # print(bag, "calculated bag from str")
                 else:
                     # print(bag, rule[0], "not in rules")
@@ -101,8 +106,7 @@ def calculate_bag(bag, rules):
     else:
         print("ERROR", bag)
 
+
 target_rule = [r for r in rules if r.container == target][0]
 part2 = calculate_bag(target_rule, rules)
 print(part2)
-
-

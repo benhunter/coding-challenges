@@ -108,7 +108,7 @@ def test_nop():
 
 
 def test_input1_part1():
-    with open(".\\AdventOfCode\\2020\\day8-test-input.txt") as f:
+    with open("./AdventOfCode/2020/day8-test-input.txt") as f:
         code = [line.rstrip() for line in f]
     
     m = Machine(code)
@@ -121,7 +121,7 @@ def test_input1_part1():
 
 
 def test_input2_part2():
-    with open(".\\AdventOfCode\\2020\\day8-test-input.txt") as f:
+    with open("./AdventOfCode/2020/day8-test-input.txt") as f:
         code = [line.rstrip() for line in f]
     
     for i in range(len(code)):
