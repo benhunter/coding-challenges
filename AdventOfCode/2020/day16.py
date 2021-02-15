@@ -57,7 +57,19 @@ if __name__ == "__main__":
         if valid_ticket(ticket, field_values):
             valid_tickets.append(ticket)
     print(valid_tickets)
-                
+
+    # build all possible fields
+    # eliminate by testing every ticket until there's only one possible field
+
+    # print(len(field_values))
+    for index_fields in range(len(tickets[0])):
+        valid_fields = [True for i in range(len(fields))]
+        for ticket in valid_tickets:
+            print(ticket)
+            # if valid_field(ticket[index_fields], )
+    
+    part2 = False
+    print(f"Part 2: {part2}")
 
 
 
