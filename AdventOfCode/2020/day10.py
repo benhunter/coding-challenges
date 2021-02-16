@@ -34,7 +34,7 @@ def prod_diffs(filepath):
             ones += 1
         elif diff == 3:
             threes += 1
-        
+
         prev = num
 
     # print(f"ones: {ones} threes: {threes}")
@@ -56,7 +56,7 @@ def arrangements(adapters):
     # Dynamic programming solution / memoization
     # Credit: https://www.reddit.com/r/adventofcode/comments/ka8z8x/2020_day_10_solutions/gf9mvrh/
     # https://www.reddit.com/r/adventofcode/comments/ka8z8x/2020_day_10_solutions/
-    
+
     combos = {}
     combos[0] = 1
 
@@ -79,11 +79,15 @@ def difflist(adapters):
 def part2(adapters):
     # My solution - lookup table for how many combos based on on the length of a group of 1s
     # manually calculated the possible combos for small groups where an adapter may be skipped
-    
-    groups = [len(x) - 1 for k, g in itertools.groupby(difflist(adapters)) if k == 1 and len(x := list(g)) > 1] 
+
+    groups = [
+        len(x) - 1
+        for k, g in itertools.groupby(difflist(adapters))
+        if k == 1 and len(x := list(g)) > 1
+    ]
     # groups = [len(x) for k, g in itertools.groupby(difflist(adapters)) if k == 1 and len((x := list(g))) > 2]
     # for k, g in itertools.groupby(difflist(adapters)):
-        # print(k, list(g))
+    # print(k, list(g))
     # print(groups)
 
     combos = []
@@ -124,4 +128,3 @@ if __name__ == "__main__":
     # print(difflist(lines))
 
     print(f"Part 2: {part2(lines)}")
-    
