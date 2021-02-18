@@ -133,20 +133,20 @@ class ConwayState:
     def _count_neighbors(self, x, y, z):
         """x, y, z are indexes (meaning x and y are 0 based), not coordinates"""
 
-        raise NotImplementedError  # TODO z below and above not working
+        # raise NotImplementedError  # TODO z below and above not working
 
         count = 0
         # z layer below, above
         if z > self._z[0]:
             for index_y, val_y in enumerate(self._state[z - 1]):
                 count += val_y.count("#")
-        if z < self._z[0] - 1:
+        if z < self._z[1] - 1:
             for index_y, val_y in enumerate(self._state[z + 1]):
                 count += val_y.count("#")
         # y line top, bottom
         if y > self._y[0]:
             count += self._state[z][y - 1].count("#")
-        if y < self._y[0] - 1:
+        if y < self._y[1] - 1:
             count += self._state[z][y + 1].count("#")
         # x left, right
         if x > self._x[0] and self._state[z][y][x - 1] == "#":
