@@ -19,7 +19,7 @@ class ConwayState:
         # boundaries in x.y.z
         self._x = [0, len(initial_state_xy[0])]
         self._y = [0, len(initial_state_xy)]
-        self._z = [-1, 2]
+        self._z = [0, 1]
 
         z_generator = lambda: [
             "." * abs(self._x[0] - self._x[1])
@@ -36,13 +36,11 @@ class ConwayState:
         # return f"X: {self._x} Y: {self._y} Z: {self._z}\nState:\n" + pformat(self._state)
         # Iterating Z layers forces the z_generator to run if needed.
         return f"X: {self._x} Y: {self._y} Z: {self._z}\nState:\n{pformat([self._state[z] for z in range(*self._z)])}"
+        # return f"X: {self._x} Y: {self._y} Z: {self._z}\nState:\n{str([self._state[z] for z in range(*self._z)])}"
 
     def _is_needtogrow(self):
         # does the x,y,z box need to expand?
-        # yes, if there is an active cube on an edge
-
-        # remove?
-        # is_grow = False
+        # return True if there is an active cube on an edge
 
         # check bottom
         for index_y, val_y in enumerate(self._state[self._z[0]]):
@@ -74,14 +72,22 @@ class ConwayState:
         self._y = [self._y[0] - 1, self._y[1] + 1]
         self._z = [self._z[0] - 1, self._z[1] + 1]
 
-        # expand existing x,y (left and right, top and bottom)
         for index_z in range(self._z[0] + 1, self._z[1] - 1):
             for index_y, val_y in enumerate(self._state[index_z]):
-                pass
+                # expand existing x (left and right)
+                self._state[index_z][index_y] = (
+                    "." + self._state[index_z][index_y] + "."
+                )
 
+            # expand existing y (top and bottom)
+            self._state[index_z].insert(0, "." * abs(self._x[0] - self._x[1]))
+            self._state[index_z].append("." * abs(self._x[0] - self._x[1]))
 
-def count_neighbors(state, coord):
-    return 0
+    def step(self):
+        raise NotImplementedError
+
+    def _count_neighbors(self, x, y, z):
+        raise NotImplementedError
 
 
 if __name__ == "__main__":
