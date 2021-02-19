@@ -158,7 +158,8 @@ class ConwayState:
 
 if __name__ == "__main__":
     # filename = "./AdventOfCode/2020/day17-input.txt"
-    filename = "./AdventOfCode/2020/day17-example1-input.txt"
+    # filename = "./AdventOfCode/2020/day17-example1-input.txt"
+    filename = "./AdventOfCode/2020/day17-example2-input.txt"
 
     state = ConwayState(filename)
     print(state)
