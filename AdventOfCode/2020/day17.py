@@ -138,16 +138,16 @@ class ConwayState:
         count = 0
         # z layer below, above
         if z > self._z[0]:
-            for index_y, val_y in enumerate(self._state[z - 1]):
-                count += val_y.count("#")
+            for index_y, val_y in enumerate(self._state[z - 1][max(0, y - 1):min(self._y[1], y + 2)]):
+                count += val_y[max(0, x - 1):min(len(val_y), x + 2)].count("#")
         if z < self._z[1] - 1:
-            for index_y, val_y in enumerate(self._state[z + 1]):
-                count += val_y.count("#")
+            for index_y, val_y in enumerate(self._state[z + 1][max(0, y - 1):min(self._y[1], y + 2)]):
+                count += val_y[max(0, x - 1):min(len(val_y), x + 2)].count("#")
         # y line top, bottom
         if y > self._y[0]:
-            count += self._state[z][y - 1].count("#")
+            count += self._state[z][y - 1][max(0, x - 1):min(len(val_y), x + 2)].count("#")
         if y < self._y[1] - 1:
-            count += self._state[z][y + 1].count("#")
+            count += self._state[z][y + 1][max(0, x - 1):min(len(val_y), x + 2)].count("#")
         # x left, right
         if x > self._x[0] and self._state[z][y][x - 1] == "#":
             count += 1
@@ -158,8 +158,8 @@ class ConwayState:
 
 if __name__ == "__main__":
     # filename = "./AdventOfCode/2020/day17-input.txt"
-    # filename = "./AdventOfCode/2020/day17-example1-input.txt"
-    filename = "./AdventOfCode/2020/day17-example2-input.txt"
+    filename = "./AdventOfCode/2020/day17-example1-input.txt"
+    # filename = "./AdventOfCode/2020/day17-example2-input.txt"
 
     state = ConwayState(filename)
     print(state)
