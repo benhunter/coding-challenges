@@ -72,7 +72,7 @@ def parse(tokens: List[Token]):
         return parse(tokens[:index] + [parse(tokens[index + 1 : -1])])
 
 
-# Part 1
+# Part 2 - Addition has precedence over multiplication
 # Grammar:
 # Expression =  "(" Expression ")" |
 #               Expression Multiply Number |
