@@ -17,7 +17,7 @@ Tile = namedtuple("Tile", "number, data")
 # Tile.__repr__ = lambda self: pformat(data)
 
 
-def count_edge_match(tile_one, tile_two):
+def count_edge_matches(tile_one, tile_two):
     assert type(tile_one) is Tile
     assert type(tile_two) is Tile
 
@@ -45,7 +45,6 @@ def count_edge_match(tile_one, tile_two):
         face_one
         for face_one, face_two in itertools.product(first_tile_faces, second_tile_faces)
         if np.array_equal(face_one, face_two)
-        # if product[0] == product[1]
     ]
     return len(matches)
     # for face in first_tile:
@@ -55,7 +54,35 @@ def count_edge_match(tile_one, tile_two):
 def test_count_edge_match():
     tile_one = Tile(0, np.array([[0, 1], [2, 3]], dtype=object))
     tile_two = Tile(1, np.array([[0, 1], [4, 5]], dtype=object))
-    assert count_edge_match(tile_one, tile_two) == 1
+    assert count_edge_matches(tile_one, tile_two) == 1
+
+
+def is_edge_match(face, tile):
+    # determine whether face matches tile
+    assert type(face) is np.ndarray
+    assert type(tile) is Tile 
+    
+    tile_faces = [
+        tile.data[0],
+        tile.data[-1],
+        tile.data[:, 0],
+        tile.data[:, -1],
+    ]
+    nparray_tile_flipped = np.flip(tile.data)
+    tile_faces += [
+        nparray_tile_flipped[0],
+        nparray_tile_flipped[-1],
+        nparray_tile_flipped[:, 0],
+        nparray_tile_flipped[:, -1],
+    ]
+
+    matches = [
+        face_one
+        for face_one, face_two in itertools.product([face], tile_faces)
+        if np.array_equal(face_one, face_two)
+    ]
+    return bool(len(matches))
+
 
 
 def count_all_edge_matches(tile, tiles):
@@ -65,7 +92,7 @@ def count_all_edge_matches(tile, tiles):
             # don't check a tile against itself
             continue
         # count the matching edges
-        count += count_edge_match(tile, candidate_tile)
+        count += count_edge_matches(tile, candidate_tile)
         if DEBUG and count > 0:
             print(count)
     return count
@@ -81,6 +108,13 @@ def find_corner_pieces(tiles):
         if match_count == 2:
             corner_pieces.append(tile)
     return corner_pieces
+
+
+def find_next_match(tile, tiles):
+    for candidate_tile in tiles:
+        if count_edge_matches(tile, candidate_tile) > 0:
+            return candidate_tile
+    raise RuntimeError("Did not find a next match.")
 
 
 def product(values):
@@ -114,23 +148,53 @@ if __name__ == "__main__":
     # print(np.rot90(tiles[0].data, axes=(1,0)))  # rotate clockwise
     # print(np.rot90(tiles[0].data, k=0))  # rotate counter clockwise 0 times
     # note that rotations return views, not new arrays
+    # flip too, not just rotate
 
-    # TODO flip too, not just rotate
+    # Part 1
+    # find the corners by counting the matching edges of each tile.
+    # corners have only two matching edges
 
-    dimension = math.isqrt(len(tiles))
-    solution = [[None for _ in range(dimension)] for _ in range(dimension)]
-    print(solution)
-
-    solution[0][0] = tiles[0]
-    print(solution)
-
-    # test_count_edge_match()
     corners = find_corner_pieces(tiles)
     corner_ids = [corner.number for corner in corners]
     part1 = product(corner_ids)
     print(f"Part 1 {part1}")  # 68781323018729
     assert part1 == 68781323018729
 
+
+    # Part 2
+    dimension = math.isqrt(len(tiles))
+    solution = [[None for _ in range(dimension)] for _ in range(dimension)]
+    print(solution)
+
+    # start the solution with one of the corners found previously
+    solution[0][0] = corners[0]  # can be flipped/rotated
+    # tiles will only hold tiles that are not in solution yet
+    tiles.remove(corners[0])
+    print(solution)
+
+    # place solution[0][1]
+    #   find a matching tile
+    candidate_tile = find_next_match(solution[0][0], tiles)
+    print(f"candidate_tile: {candidate_tile}")
+    #   orient the corner. Which face matches?
+    
+    tile = solution[0][0]
+    tile_faces = [
+        tile.data[0],
+        tile.data[-1],
+        tile.data[:, 0],
+        tile.data[:, -1],
+    ]
+    for face in tile_faces:
+        if is_edge_match(face, candidate_tile):
+            print(f"Face {face} matched candidate {candidate_tile}")
+    #   orient the match and place it
+    #   remove match from tiles
+
+
+
+
+    # Idea for placing tiles
     # while len(tiles) > 0:
     # for tile_index, candidate_tile in enumerate(tiles[1:]):
     #     for solved_row_idx, solved_row in enumerate(solution):
