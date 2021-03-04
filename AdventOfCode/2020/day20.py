@@ -6,8 +6,9 @@ import itertools
 import math
 import numpy as np
 
-from pprint import pformat, pprint
 from collections import namedtuple
+from pprint import pformat, pprint
+from typing import List
 
 
 DEBUG = False
@@ -17,7 +18,7 @@ Tile = namedtuple("Tile", "number, data")
 Tile.__repr__ = lambda self: f"Tile: {self.number}\n{pformat(self.data)}"
 
 
-def count_edge_matches(tile_one, tile_two):
+def count_edge_matches(tile_one: Tile, tile_two: Tile):
     assert type(tile_one) is Tile
     assert type(tile_two) is Tile
 
@@ -85,7 +86,7 @@ def is_face_matches_tile(face: np.ndarray, tile: Tile):
     return bool(len(matches))
 
 
-def is_face_matches_face(face_one, face_two):
+def is_face_matches_face(face_one: np.ndarray, face_two: np.ndarray):
     assert type(face_one) is np.ndarray
     assert type(face_two) is np.ndarray
 
@@ -99,7 +100,7 @@ def is_face_matches_face(face_one, face_two):
     return result
 
 
-def count_all_edge_matches(tile, tiles):
+def count_all_edge_matches(tile: Tile, tiles: List[Tile]):
     count = 0
     for candidate_tile in tiles:
         if tile.number == candidate_tile.number:
@@ -112,7 +113,7 @@ def count_all_edge_matches(tile, tiles):
     return count
 
 
-def find_corner_pieces(tiles):
+def find_corner_pieces(tiles: List[Tile]):
     # count matching faces for every tile
     # corner tiles have only 2 matching faces
     # all other tiles have more
@@ -124,11 +125,21 @@ def find_corner_pieces(tiles):
     return corner_pieces
 
 
-def find_next_match(tile, tiles):
-    for candidate_tile in tiles:
-        if count_edge_matches(tile, candidate_tile) > 0:
+def find_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
+    assert type(known_tile) is Tile
+    # from candidate_tiles, find a tile that has a matching edge with known_tile 
+    for candidate_tile in candidate_tiles:
+        if count_edge_matches(known_tile, candidate_tile) > 0:
             return candidate_tile
     raise RuntimeError("Did not find a next match.")
+
+
+def yield_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
+    assert type(known_tile) is Tile
+    # from candidate_tiles, find a tile that has a matching edge with known_tile 
+    for candidate_tile in candidate_tiles:
+        if count_edge_matches(known_tile, candidate_tile) > 0:
+            yield candidate_tile
 
 
 def product(values):
@@ -136,6 +147,27 @@ def product(values):
     ret = 1
     ret = [ret := ret * v for v in values][-1]
     return ret
+
+
+def orientation_generator(tile: Tile):
+    # generator to provide all orientations (rotations and flips) for tile
+    # Usage:
+    #   for orientation in orientation_generator(candidate_tile):
+    #       print(orientation)
+    orientations = [
+        tile.data,
+        np.rot90(tile.data, k=1),
+        np.rot90(tile.data, k=2),
+        np.rot90(tile.data, k=3),
+    ]
+    tile_data_flipped = np.flip(tile.data, axis=0)
+    orientations += [
+        tile_data_flipped,
+        np.rot90(tile_data_flipped, k=1),
+        np.rot90(tile_data_flipped, k=2),
+        np.rot90(tile_data_flipped, k=3),
+    ]
+    yield from orientations
 
 
 if __name__ == "__main__":
@@ -197,44 +229,33 @@ if __name__ == "__main__":
     # 1. could make this a tuple that also carries the "index" for how to rotate
     # 2. or carries the rotated tile with each face
     # 3. or just send the rotations and check the desired face below
-    tile_faces = [
-        tile.data[0],  # top
-        tile.data[-1],  # bottom
-        tile.data[:, 0],  # left
-        tile.data[:, -1],  # right
-    ]
-    tile_rotations = [
-        tile.data,
-        np.rot90(tile.data, k=1),
-        np.rot90(tile.data, k=2),
-        np.rot90(tile.data, k=3),
-    ]
+    # tile_faces = [
+    #     tile.data[0],  # top
+    #     tile.data[-1],  # bottom
+    #     tile.data[:, 0],  # left
+    #     tile.data[:, -1],  # right
+    # ]
+    # tile_rotations = [
+    #     tile.data,
+    #     np.rot90(tile.data, k=1),
+    #     np.rot90(tile.data, k=2),
+    #     np.rot90(tile.data, k=3),
+    # ]
     # for face in tile_faces:
     #     if is_edge_match(face, candidate_tile):
     #         print(f"Face {face} matched candidate {candidate_tile}")
 
     # in tile_rotations we are looking for the right face to match
-    for orientation in tile_rotations:
+    # for orientation in tile_rotations:
+    for orientation in orientation_generator(tile):
         if is_face_matches_tile(orientation[:, -1], candidate_tile):
             # tile.data = rotation
             tile = Tile(tile.number, orientation)
-    #   orient the candidate match and place it
-    candidate_rotations = [
-        candidate_tile.data,
-        np.rot90(candidate_tile.data, k=1),
-        np.rot90(candidate_tile.data, k=2),
-        np.rot90(candidate_tile.data, k=3),
-    ]
-    candidate_flipped = np.flip(candidate_tile.data, axis=0)
-    candidate_flip_rotations = [
-        candidate_flipped,
-        np.rot90(candidate_flipped, k=1),
-        np.rot90(candidate_flipped, k=2),
-        np.rot90(candidate_flipped, k=3),
-    ]
-    candidate_orientations = candidate_rotations + candidate_flip_rotations
+            print("matched orientation")
+            break
 
-    for orientation in candidate_orientations:
+    # orient the candidate match and place it
+    for orientation in orientation_generator(candidate_tile):
         if is_face_matches_face(tile.data[:, -1], orientation[:, 0]):
             print(f"Placing candidate tile {candidate_tile.number}")
             solution[0][1] = Tile(candidate_tile.number, orientation)
@@ -243,7 +264,36 @@ if __name__ == "__main__":
             break
 
 
+    y_index = 0
+    for x_index, tile in enumerate(solution[y_index]):
+        if tile:
+            continue
+        print(f"{x_index} {tile}")
+        left_neighbor = solution[y_index][x_index-1]
+        # REMOVE candidate_tile = find_next_match(left_neighbor, tiles)
+        candidates = list(yield_next_match(left_neighbor, tiles))
+        assert candidate_tile is not None
+        print(f"found candidate {candidate_tile}")
+
+
+        for candidate_tile in candidates:
+            for orientation in orientation_generator(candidate_tile):
+                if is_face_matches_face(left_neighbor.data[:, -1], orientation[:, 0]):
+                    print(f"Placing candidate tile {candidate_tile.number}")
+                    solution[y_index][x_index] = Tile(candidate_tile.number, orientation)
+                    # remove candidate match from tiles
+                    tiles.remove(candidate_tile)
+                    break
+
+            if solution[y_index][x_index] is not None:
+                break
+
+        assert solution[y_index][x_index] is not None
+    
+
     print(f"Solution:\n{solution}")
+    print()
+
 
     # Idea for placing tiles
     # while len(tiles) > 0:
