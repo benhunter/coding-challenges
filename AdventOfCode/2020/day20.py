@@ -14,7 +14,7 @@ DEBUG = False
 
 
 Tile = namedtuple("Tile", "number, data")
-# Tile.__repr__ = lambda self: pformat(data)
+Tile.__repr__ = lambda self: f"Tile: {self.number}\n{pformat(self.data)}"
 
 
 def count_edge_matches(tile_one, tile_two):
@@ -57,11 +57,12 @@ def test_count_edge_match():
     assert count_edge_matches(tile_one, tile_two) == 1
 
 
-def is_edge_match(face, tile):
-    # determine whether face matches tile
+def is_face_matches_tile(face: np.ndarray, tile: Tile):
+    # determine whether face matches anywhere on tile,
+    # including after rotating and flipping tile
     assert type(face) is np.ndarray
-    assert type(tile) is Tile 
-    
+    assert type(tile) is Tile
+
     tile_faces = [
         tile.data[0],
         tile.data[-1],
@@ -83,6 +84,19 @@ def is_edge_match(face, tile):
     ]
     return bool(len(matches))
 
+
+def is_face_matches_face(face_one, face_two):
+    assert type(face_one) is np.ndarray
+    assert type(face_two) is np.ndarray
+
+    # with flipping
+    # result = np.array_equal(face_one, face_two) or np.array_equal(
+    #     face_one, np.flip(face_two)
+    # )
+
+    # without flipping
+    result = np.array_equal(face_one, face_two)
+    return result
 
 
 def count_all_edge_matches(tile, tiles):
@@ -160,7 +174,6 @@ if __name__ == "__main__":
     print(f"Part 1 {part1}")  # 68781323018729
     assert part1 == 68781323018729
 
-
     # Part 2
     dimension = math.isqrt(len(tiles))
     solution = [[None for _ in range(dimension)] for _ in range(dimension)]
@@ -177,22 +190,60 @@ if __name__ == "__main__":
     candidate_tile = find_next_match(solution[0][0], tiles)
     print(f"candidate_tile: {candidate_tile}")
     #   orient the corner. Which face matches?
-    
+
     tile = solution[0][0]
+
+    # Options
+    # 1. could make this a tuple that also carries the "index" for how to rotate
+    # 2. or carries the rotated tile with each face
+    # 3. or just send the rotations and check the desired face below
     tile_faces = [
-        tile.data[0],
-        tile.data[-1],
-        tile.data[:, 0],
-        tile.data[:, -1],
+        tile.data[0],  # top
+        tile.data[-1],  # bottom
+        tile.data[:, 0],  # left
+        tile.data[:, -1],  # right
     ]
-    for face in tile_faces:
-        if is_edge_match(face, candidate_tile):
-            print(f"Face {face} matched candidate {candidate_tile}")
-    #   orient the match and place it
-    #   remove match from tiles
+    tile_rotations = [
+        tile.data,
+        np.rot90(tile.data, k=1),
+        np.rot90(tile.data, k=2),
+        np.rot90(tile.data, k=3),
+    ]
+    # for face in tile_faces:
+    #     if is_edge_match(face, candidate_tile):
+    #         print(f"Face {face} matched candidate {candidate_tile}")
+
+    # in tile_rotations we are looking for the right face to match
+    for orientation in tile_rotations:
+        if is_face_matches_tile(orientation[:, -1], candidate_tile):
+            # tile.data = rotation
+            tile = Tile(tile.number, orientation)
+    #   orient the candidate match and place it
+    candidate_rotations = [
+        candidate_tile.data,
+        np.rot90(candidate_tile.data, k=1),
+        np.rot90(candidate_tile.data, k=2),
+        np.rot90(candidate_tile.data, k=3),
+    ]
+    candidate_flipped = np.flip(candidate_tile.data, axis=0)
+    candidate_flip_rotations = [
+        candidate_flipped,
+        np.rot90(candidate_flipped, k=1),
+        np.rot90(candidate_flipped, k=2),
+        np.rot90(candidate_flipped, k=3),
+    ]
+    candidate_orientations = candidate_rotations + candidate_flip_rotations
+
+    for orientation in candidate_orientations:
+        if is_face_matches_face(tile.data[:, -1], orientation[:, 0]):
+            print(f"Placing candidate tile {candidate_tile.number}")
+            solution[0][1] = Tile(candidate_tile.number, orientation)
+            # remove candidate match from tiles
+            tiles.remove(candidate_tile)
+            break
 
 
-
+    print(f"Solution:\n{solution}")
 
     # Idea for placing tiles
     # while len(tiles) > 0:
