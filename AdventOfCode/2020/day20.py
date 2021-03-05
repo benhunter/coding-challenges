@@ -8,7 +8,7 @@ import numpy as np
 
 from collections import namedtuple
 from pprint import pformat, pprint
-from typing import List
+from typing import List, Tuple
 
 
 DEBUG = False
@@ -127,7 +127,7 @@ def find_corner_pieces(tiles: List[Tile]):
 
 def find_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
     assert type(known_tile) is Tile
-    # from candidate_tiles, find a tile that has a matching edge with known_tile 
+    # from candidate_tiles, find a tile that has a matching edge with known_tile
     for candidate_tile in candidate_tiles:
         if count_edge_matches(known_tile, candidate_tile) > 0:
             return candidate_tile
@@ -136,7 +136,7 @@ def find_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
 
 def yield_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
     assert type(known_tile) is Tile
-    # from candidate_tiles, find a tile that has a matching edge with known_tile 
+    # from candidate_tiles, find a tile that has a matching edge with known_tile
     for candidate_tile in candidate_tiles:
         if count_edge_matches(known_tile, candidate_tile) > 0:
             yield candidate_tile
@@ -168,6 +168,86 @@ def orientation_generator(tile: Tile):
         np.rot90(tile_data_flipped, k=3),
     ]
     yield from orientations
+
+
+def yield_next_solution(solution: List[List[Tile]], position: Tuple):
+    print(solution)
+    print(position)
+
+
+def test_yield_next_solution():
+    yield_next_solution("solution string", "position string")
+
+
+def is_tile_matches_neighbors(index_y: int, index_x: int, solution: List[List[Tile]]):
+    ''' Neighbors can be None
+    '''
+    if solution[index_y][index_x] is None:
+        return True
+    # Up
+    if index_y > 0:
+        if solution[index_y - 1][index_x]:
+            tile_face_up = solution[index_y][index_x].data[0]
+            neighbor_face_down = solution[index_y - 1][index_x].data[-1]
+            if not is_face_matches_face(tile_face_up, neighbor_face_down):
+                return False
+    # Down
+    if index_y < (len(solution) - 1):
+        if solution[index_y + 1][index_x]:
+            tile_face_down = solution[index_y][index_x].data[-1]
+            neighbor_face_up = solution[index_y + 1][index_x].data[0]
+            if not is_face_matches_face(tile_face_down, neighbor_face_up):
+                return False
+    # Left
+    if index_x > 0:
+        if solution[index_y][index_x - 1]:
+            tile_face_left = solution[index_y][index_x].data[:, 0]
+            neighbor_face_right = solution[index_y][index_x - 1].data[:, -1]
+            if not is_face_matches_face(tile_face_left, neighbor_face_right):
+                return False
+    # Right
+    if index_x < (len(solution[0]) - 1):
+        if solution[index_y][index_x + 1]:
+            tile_face_right = solution[index_y][index_x].data[:, -1]
+            neighbor_face_left = solution[index_y][index_x + 1].data[:, 0]
+            if not is_face_matches_face(tile_face_right, neighbor_face_left):
+                return False
+    return True
+
+
+def is_partial_solution_valid(solution: List[List[Tile]]):
+    # Check a partial solution. None is allowed where a Tile has not been placed yet.
+    for y_index in range(len(solution)):
+        for x_index in range(len(solution[0])):
+            if solution[y_index][x_index] is None:
+                continue
+            if not is_tile_matches_neighbors(y_index, x_index, solution):
+                return False
+    return True
+
+def repr_solution(solution: List[List[Tile]]) -> str:
+    s = ""
+
+    for y_index, solution_row in enumerate(solution):
+        for y_tile_index in range(len(solution[0][0].data)):
+            for x_index, tile in enumerate(solution_row):
+                if solution[y_index][x_index]:
+                    s += "".join(solution[y_index][x_index].data[y_tile_index])
+                    s += " "
+                else:
+                    s += "-" * len(solution[0][0].data[0])
+                    s += " "
+            s += "\n"
+        s += "\n"
+
+    # for solution_row in range(len(solution) * len(solution[0][0].data)):
+    #     for 
+    #     "".join(solution[0][0].data[solution_row])
+    # for y_index in range(len(solution)):
+    #     for x_index in range(len(solution[0])):
+    #         if solution[y_index][x_index]:
+    return s
+
 
 
 if __name__ == "__main__":
@@ -211,20 +291,21 @@ if __name__ == "__main__":
     solution = [[None for _ in range(dimension)] for _ in range(dimension)]
     print(solution)
 
+    assert is_partial_solution_valid(solution)
+
+
     # start the solution with one of the corners found previously
     solution[0][0] = corners[0]  # can be flipped/rotated
     # tiles will only hold tiles that are not in solution yet
     tiles.remove(corners[0])
-    print(solution)
+    # print(solution)
+    assert is_partial_solution_valid(solution)
 
     # place solution[0][1]
     #   find a matching tile
     candidate_tile = find_next_match(solution[0][0], tiles)
-    print(f"candidate_tile: {candidate_tile}")
+    # print(f"candidate_tile: {candidate_tile}")
     #   orient the corner. Which face matches?
-
-    tile = solution[0][0]
-
     # Options
     # 1. could make this a tuple that also carries the "index" for how to rotate
     # 2. or carries the rotated tile with each face
@@ -247,40 +328,84 @@ if __name__ == "__main__":
 
     # in tile_rotations we are looking for the right face to match
     # for orientation in tile_rotations:
-    for orientation in orientation_generator(tile):
+    y_index = 0
+    x_index = 0
+    for orientation in orientation_generator(solution[y_index][x_index]):
         if is_face_matches_tile(orientation[:, -1], candidate_tile):
-            # tile.data = rotation
-            tile = Tile(tile.number, orientation)
+            solution[y_index][x_index] = Tile(
+                solution[y_index][x_index].number, orientation
+            )
             print("matched orientation")
             break
 
+    assert is_partial_solution_valid(solution)
+
     # orient the candidate match and place it
     for orientation in orientation_generator(candidate_tile):
-        if is_face_matches_face(tile.data[:, -1], orientation[:, 0]):
+        # compare left face of solved tile to right face of candidate_tile in all possible orientations
+        if is_face_matches_face(
+            solution[y_index][x_index].data[:, -1], orientation[:, 0]
+        ):
+            # print(f"Placing candidate tile {candidate_tile.number}")
+            solution[y_index][x_index + 1] = Tile(candidate_tile.number, orientation)
+            # remove the matching candidate from tiles
+            tiles.remove(candidate_tile)
+            break
+    
+    assert is_partial_solution_valid(solution)
+
+    y_index = 1
+    x_index = 0
+    candidate_tile = find_next_match(solution[y_index - 1][x_index], tiles)
+    # does row 0 need to flip?
+    # does candidate match to top or bottom of solution[0][0]?
+    needs_flip = False
+    # compare top face of solution[0][0] to candidate_tile
+    up_neighbor = solution[0][0]
+    if is_face_matches_tile(up_neighbor.data[0], candidate_tile):
+        needs_flip = True
+    if needs_flip:
+        for x_index, tile in enumerate(solution[0]):
+            if solution[0][x_index]:
+                flipped_data = np.flipud(tile.data)  # flip up down
+                solution[0][x_index] = Tile(tile.number, flipped_data)
+    # orient candidate_tile to tile above
+    # for orientation in orientation_generator(candidate_tile):
+    #     if is_face_matches_tile(orientation[0], solution[0][0]):
+    #         print(orientation[0])
+    #     if is_face_matches_face(orientation[0], solution[0][0].data[-1]):
+    #         print(orientation[0])
+
+    for orientation in orientation_generator(candidate_tile):
+        if is_face_matches_face(up_neighbor.data[-1], orientation[0]):
             print(f"Placing candidate tile {candidate_tile.number}")
-            solution[0][1] = Tile(candidate_tile.number, orientation)
+            solution[y_index][x_index] = Tile(
+                candidate_tile.number, orientation
+            )
             # remove candidate match from tiles
             tiles.remove(candidate_tile)
             break
 
+    assert is_partial_solution_valid(solution)
+    # after the first corner, and it's neighbors have been placed
+    # the solution cannot be flipped
 
+    # solve first row
     y_index = 0
     for x_index, tile in enumerate(solution[y_index]):
         if tile:
             continue
-        print(f"{x_index} {tile}")
-        left_neighbor = solution[y_index][x_index-1]
-        # REMOVE candidate_tile = find_next_match(left_neighbor, tiles)
-        candidates = list(yield_next_match(left_neighbor, tiles))
-        assert candidate_tile is not None
-        print(f"found candidate {candidate_tile}")
+        # print(f"{x_index} {tile}")
 
-
-        for candidate_tile in candidates:
+        left_neighbor = solution[y_index][x_index - 1]
+        for candidate_tile in yield_next_match(left_neighbor, tiles):
+            # find the right orientation for candidate_tile to left_neighbor
             for orientation in orientation_generator(candidate_tile):
                 if is_face_matches_face(left_neighbor.data[:, -1], orientation[:, 0]):
                     print(f"Placing candidate tile {candidate_tile.number}")
-                    solution[y_index][x_index] = Tile(candidate_tile.number, orientation)
+                    solution[y_index][x_index] = Tile(
+                        candidate_tile.number, orientation
+                    )
                     # remove candidate match from tiles
                     tiles.remove(candidate_tile)
                     break
@@ -289,11 +414,64 @@ if __name__ == "__main__":
                 break
 
         assert solution[y_index][x_index] is not None
-    
-
+        assert is_partial_solution_valid(solution)
     print(f"Solution:\n{solution}")
+    print(repr_solution(solution))
+    assert is_partial_solution_valid(solution)
     print()
 
+    # solve other rows. if the left neighbor is empty or we are on the left edge of solution,
+    # look up to place tile
+    y_index = 1
+    for x_index, tile in enumerate(solution[y_index]):
+        if tile:
+            continue
+        if x_index > 0:
+            # we are not on left edge of solution
+            left_neighbor = solution[y_index][x_index - 1]
+            for candidate_tile in yield_next_match(left_neighbor, tiles):
+                # find the right orientation for candidate_tile to left_neighbor
+                # and to up_neighbor
+                for orientation in orientation_generator(candidate_tile):
+                    if is_face_matches_face(left_neighbor.data[:, -1], orientation[:, 0]):
+                        # print(f"Placing candidate tile {candidate_tile.number}")
+                        solution[y_index][x_index] = Tile(
+                            candidate_tile.number, orientation
+                        )
+                        if not is_partial_solution_valid(solution):
+                            # keep trying orientations
+                            continue
+                        # this is the right orientation with all neighbors
+                        # remove candidate match from tiles
+                        tiles.remove(candidate_tile)
+                        break
+                if solution[y_index][x_index] is not None:
+                    break
+            assert solution[y_index][x_index] is not None
+            assert is_partial_solution_valid(solution)
+        elif x_index == 0:
+            # on left edge of solution, look at up neighbor
+            up_neighbor = solution[y_index - 1][x_index]
+            for candidate_tile in yield_next_match(up_neighbor, tiles):
+                for orientation in orientation_generator(candidate_tile):
+                    if is_face_matches_face(up_neighbor.data[-1], orientation[0]):
+                        # print(f"Placing candidate tile {candidate_tile.number}")
+                        solution[y_index][x_index] = Tile(
+                            candidate_tile.number, orientation
+                        )
+                        if not is_partial_solution_valid(solution):
+                            # keep trying orientations
+                            continue
+                        # remove candidate match from tiles
+                        tiles.remove(candidate_tile)
+                        break
+                if solution[y_index][x_index] is not None:
+                    break
+            assert solution[y_index][x_index] is not None
+            assert is_partial_solution_valid(solution)
+
+    print(repr_solution(solution))
+    print()
 
     # Idea for placing tiles
     # while len(tiles) > 0:
