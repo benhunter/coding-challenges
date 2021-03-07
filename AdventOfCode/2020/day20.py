@@ -11,6 +11,7 @@ from pprint import pformat, pprint
 from typing import List, Tuple
 
 
+USE_EXAMPLE1 = False
 DEBUG = False
 
 
@@ -149,10 +150,31 @@ def product(values):
     return ret
 
 
-def orientation_generator(tile: Tile):
+def generate_nparray_orientation(npa: np.array):
+    # generator to provide all orientations (rotations and flips) for 2-Dimensial np.array
+    # Usage:
+    #   for orientation in generate_nparray_orientation(candidate_nparray):
+    #       print(orientation)
+    orientations = [
+        npa,
+        np.rot90(npa, k=1),
+        np.rot90(npa, k=2),
+        np.rot90(npa, k=3),
+    ]
+    npa_flipped = np.flip(npa, axis=0)
+    orientations += [
+        npa_flipped,
+        np.rot90(npa_flipped, k=1),
+        np.rot90(npa_flipped, k=2),
+        np.rot90(npa_flipped, k=3),
+    ]
+    yield from orientations
+
+
+def generate_tile_orientation(tile: Tile):
     # generator to provide all orientations (rotations and flips) for tile
     # Usage:
-    #   for orientation in orientation_generator(candidate_tile):
+    #   for orientation in generate_tile_orientation(candidate_tile):
     #       print(orientation)
     orientations = [
         tile.data,
@@ -254,11 +276,77 @@ def repr_solution(solution: List[List[Tile]]) -> str:
     return s
 
 
+def list_str_solution(solution: List[List[Tile]]) -> List[str]:
+    lines = []
+    for y_index, solution_row in enumerate(solution):
+        for y_tile_index in range(1, len(solution[0][0].data) - 1):
+            line = ""
+            for x_index, tile in enumerate(solution_row):
+                if solution[y_index][x_index]:
+                    line += "".join(solution[y_index][x_index].data[y_tile_index][1:-1])
+                else:
+                    line += "-" * len(solution[0][0].data[0][1:-1])
+            lines.append(line)
+    return lines
+
+
+def match_2d(pattern_2d: np.array, string_2d: np.array):
+    matches = []
+    for y_index in range(len(string_2d) - len(pattern_2d) + 1):
+        for x_index in range(len(string_2d[0]) - len(pattern_2d[0]) + 1):
+            next_candidate = False
+            candidate_str = string_2d[
+                y_index : y_index + len(pattern_2d),
+                x_index : x_index + len(pattern_2d[0]),
+            ]
+            for y_candidate in range(len(pattern_2d)):
+                for x_candidate in range(len(pattern_2d[0])):
+                    # only looking for "#" in pattern_2d
+                    if pattern_2d[y_candidate][x_candidate] != "#":
+                        continue
+                    if (
+                        pattern_2d[y_candidate][x_candidate]
+                        != candidate_str[y_candidate][x_candidate]
+                    ):
+                        next_candidate = True
+                        break
+                    else:
+                        continue
+                if next_candidate:
+                    break
+            if not next_candidate:
+                matches.append((y_index, x_index))
+    return matches
+
+
+def test_match_2d():
+    monster = ["                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
+    sea = ["# .               # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
+
+    matches = match_2d(monster, monster)
+    assert matches == [(0, 0)]
+    matches = match_2d(monster, sea)
+    assert matches == [(0, 0)]
+
+
+def flipud_2d_str(string_2d: List[str]) -> List[str]:
+    return string_2d[::-1]
+
+
+def test_flipud_2d_str():
+    s = flipud_2d_str(["12", "34"])
+    assert s == ["34", "12"]
+
+
+def list_str_to_nparray(list_str: List[str]) -> np.array:
+    return np.array([[c for c in s] for s in list_str])
+
+
 if __name__ == "__main__":
-    USE_EXAMPLE1 = True
-    filename = "./AdventOfCode/2020/day20-input.txt"
     if USE_EXAMPLE1:
         filename = "./AdventOfCode/2020/day20-example1-input.txt"
+    else:
+        filename = "./AdventOfCode/2020/day20-input.txt"
 
     with open(filename) as f:
         tiles = f.read().split("\n\n")
@@ -269,7 +357,8 @@ if __name__ == "__main__":
         data = np.array([[char for char in row] for row in candidate_tile[1:]])
         tiles[t_index] = Tile(number, data)
     orig_tiles = tiles.copy()
-    # pprint(tiles)
+    if DEBUG:
+        pprint(tiles)
     print(f"Loaded {len(tiles)} tiles")
     print(f"Each tile is {len(tiles[0].data)} rows, {len(tiles[0].data[0])} columns")
 
@@ -338,7 +427,7 @@ if __name__ == "__main__":
     # for orientation in tile_rotations:
     y_index = 0
     x_index = 0
-    for orientation in orientation_generator(solution[y_index][x_index]):
+    for orientation in generate_tile_orientation(solution[y_index][x_index]):
         if is_face_matches_tile(orientation[:, -1], candidate_tile):
             solution[y_index][x_index] = Tile(
                 solution[y_index][x_index].number, orientation
@@ -349,7 +438,7 @@ if __name__ == "__main__":
     assert is_partial_solution_valid(solution)
 
     # orient the candidate match and place it
-    for orientation in orientation_generator(candidate_tile):
+    for orientation in generate_tile_orientation(candidate_tile):
         # compare left face of solved tile to right face of candidate_tile in all possible orientations
         if is_face_matches_face(
             solution[y_index][x_index].data[:, -1], orientation[:, 0]
@@ -384,7 +473,7 @@ if __name__ == "__main__":
     #     if is_face_matches_face(orientation[0], solution[0][0].data[-1]):
     #         print(orientation[0])
 
-    for orientation in orientation_generator(candidate_tile):
+    for orientation in generate_tile_orientation(candidate_tile):
         if is_face_matches_face(up_neighbor.data[-1], orientation[0]):
             print(f"Placing candidate tile {candidate_tile.number}")
             solution[y_index][x_index] = Tile(candidate_tile.number, orientation)
@@ -406,7 +495,7 @@ if __name__ == "__main__":
         left_neighbor = solution[y_index][x_index - 1]
         for candidate_tile in yield_next_match(left_neighbor, tiles):
             # find the right orientation for candidate_tile to left_neighbor
-            for orientation in orientation_generator(candidate_tile):
+            for orientation in generate_tile_orientation(candidate_tile):
                 if is_face_matches_face(left_neighbor.data[:, -1], orientation[:, 0]):
                     # print(f"Placing candidate tile {candidate_tile.number}")
                     solution[y_index][x_index] = Tile(
@@ -438,7 +527,7 @@ if __name__ == "__main__":
                 for candidate_tile in yield_next_match(left_neighbor, tiles):
                     # find the right orientation for candidate_tile to left_neighbor
                     # and to up_neighbor
-                    for orientation in orientation_generator(candidate_tile):
+                    for orientation in generate_tile_orientation(candidate_tile):
                         if is_face_matches_face(
                             left_neighbor.data[:, -1], orientation[:, 0]
                         ):
@@ -461,7 +550,7 @@ if __name__ == "__main__":
                 # on left edge of solution, look at up neighbor
                 up_neighbor = solution[y_index - 1][x_index]
                 for candidate_tile in yield_next_match(up_neighbor, tiles):
-                    for orientation in orientation_generator(candidate_tile):
+                    for orientation in generate_tile_orientation(candidate_tile):
                         if is_face_matches_face(up_neighbor.data[-1], orientation[0]):
                             # print(f"Placing candidate tile {candidate_tile.number}")
                             solution[y_index][x_index] = Tile(
@@ -481,41 +570,32 @@ if __name__ == "__main__":
     print(repr_solution_tiles(solution))
     str_solution = repr_solution(solution)
     print(str_solution)
-    print()
 
     monster = ["                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
-    sea = ["# .               # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
+    nparray_monster = list_str_to_nparray(monster)
 
-    def match_2d(pattern_2d, string_2d):
-        matches = []
-        for y_index in range(len(string_2d) - len(pattern_2d) + 1):
-            for x_index in range(len(string_2d[0]) - len(pattern_2d[0]) + 1):
-                next_candidate = False
-                candidate_str = string_2d[y_index : y_index + len(pattern_2d)][
-                    x_index : x_index + len(pattern_2d[0])
-                ]
-                for y_candidate in range(len(pattern_2d)):
-                    for x_candidate in range(len(pattern_2d[0])):
-                        # only looking for "#" in pattern_2d
-                        if pattern_2d[y_candidate][x_candidate] != "#":
-                            continue
-                        if pattern_2d[y_candidate][x_candidate] != candidate_str[y_candidate][x_candidate]:
-                            next_candidate = True
-                            break
-                        else:
-                            continue
-                    if next_candidate:
-                        break
-                if not next_candidate:
-                    matches.append((y_index, x_index))
-
-        return matches
-
-    matches = match_2d(monster, monster)
-    print(matches)
-    matches = match_2d(monster, sea)
-    print(matches)
-
-    matches = match_2d(monster, str_solution)
-    print(matches)
     # need to rotate and flip str_solution to get matches
+
+    nparray_solution = list_str_to_nparray(list_str_solution(solution))
+    print(nparray_solution)
+
+    # matches = match_2d(monster, list_str_solution(solution))
+    # print(matches)
+
+    for orientation in generate_nparray_orientation(nparray_solution):
+        matches = match_2d(nparray_monster, orientation)
+        if len(matches) > 0:
+            break
+    print(orientation)
+    print(matches)
+
+    # count "#" minus (count "#" in monster * len(matches))
+    pound_in_orientation = len(
+        [char for row in orientation for char in row if char == "#"]
+    )
+    pound_in_monster = len(
+        [char for row in nparray_monster for char in row if char == "#"]
+    )
+    part2 = pound_in_orientation - (len(matches) * pound_in_monster)
+    print(part2)
+    assert part2 == 1629
