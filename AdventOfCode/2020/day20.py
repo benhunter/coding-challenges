@@ -8,7 +8,8 @@ import numpy as np
 
 from collections import namedtuple
 from pprint import pformat, pprint
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from numpy.typing import ArrayLike
 
 
 USE_EXAMPLE1 = False
@@ -16,7 +17,26 @@ DEBUG = False
 
 
 Tile = namedtuple("Tile", "number, data")
-Tile.__repr__ = lambda self: f"Tile: {self.number}\n{pformat(self.data)}"
+Tile.__repr__ = lambda self: f"Tile: {self.number}\n{pformat(self.data)}"  # type: ignore
+
+# class Tile(namedtuple("Tile", "number, data")):
+#     # Tile with a number ID and data fields.
+#     # Inheriting from namedtuple to override the repr dunder.
+#     # Equivalent code:
+#     #   Tile = namedtuple("Tile", "number, data")
+#     #   Tile.__repr__ = lambda self: f"Tile: {self.number}\n{pformat(self.data)}"
+#     def __new__(cls, number, data: ArrayLike):
+#         self = super(Tile, cls).__new__(cls, number, data)
+#         return self
+
+#     def __repr__(self) -> str:
+#         return f"Tile: {self.number}\n{pformat(self.data)}"
+
+
+def test_Tile():
+    assert Tile("1", 0)
+    assert Tile("1", 0).number == "1"
+    assert Tile("1", 0).data == 0
 
 
 def count_edge_matches(tile_one: Tile, tile_two: Tile):
@@ -49,8 +69,6 @@ def count_edge_matches(tile_one: Tile, tile_two: Tile):
         if np.array_equal(face_one, face_two)
     ]
     return len(matches)
-    # for face in first_tile:
-    #     pass
 
 
 def test_count_edge_match():
@@ -59,10 +77,11 @@ def test_count_edge_match():
     assert count_edge_matches(tile_one, tile_two) == 1
 
 
-def is_face_matches_tile(face: np.ndarray, tile: Tile):
-    # determine whether face matches anywhere on tile,
-    # including after rotating and flipping tile
-    assert type(face) is np.ndarray
+def generate_faces(tile: Tile):
+    # Generator for Tile faces
+    # use:
+    # for face in generate_faces(tile):
+    #   print(face)
     assert type(tile) is Tile
 
     tile_faces = [
@@ -78,25 +97,28 @@ def is_face_matches_tile(face: np.ndarray, tile: Tile):
         nparray_tile_flipped[:, 0],
         nparray_tile_flipped[:, -1],
     ]
+    yield from tile_faces
+
+
+def is_face_matches_tile(face: np.ndarray, tile: Tile):
+    # determine whether face matches anywhere on tile,
+    # including after rotating and flipping tile
+    assert type(face) is np.ndarray
+    assert type(tile) is Tile
 
     matches = [
         face_one
-        for face_one, face_two in itertools.product([face], tile_faces)
+        for face_one, face_two in itertools.product([face], generate_faces(tile))
         if np.array_equal(face_one, face_two)
     ]
     return bool(len(matches))
 
 
 def is_face_matches_face(face_one: np.ndarray, face_two: np.ndarray):
+    # Compare faces without flipping
     assert type(face_one) is np.ndarray
     assert type(face_two) is np.ndarray
 
-    # with flipping
-    # result = np.array_equal(face_one, face_two) or np.array_equal(
-    #     face_one, np.flip(face_two)
-    # )
-
-    # without flipping
     result = np.array_equal(face_one, face_two)
     return result
 
@@ -126,21 +148,19 @@ def find_corner_pieces(tiles: List[Tile]):
     return corner_pieces
 
 
-def find_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
+def next_match(known_tile: Tile, candidate_tiles: List[Tile]) -> Tile:
     assert type(known_tile) is Tile
     # from candidate_tiles, find a tile that has a matching edge with known_tile
-    for candidate_tile in candidate_tiles:
-        if count_edge_matches(known_tile, candidate_tile) > 0:
-            return candidate_tile
-    raise RuntimeError("Did not find a next match.")
+    return next(generate_next_match(known_tile, candidate_tiles))
 
 
-def yield_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
+def generate_next_match(known_tile: Tile, candidate_tiles: List[Tile]):
     assert type(known_tile) is Tile
     # from candidate_tiles, find a tile that has a matching edge with known_tile
     for candidate_tile in candidate_tiles:
         if count_edge_matches(known_tile, candidate_tile) > 0:
             yield candidate_tile
+    raise RuntimeError("Did not find a next match.")
 
 
 def product(values):
@@ -150,7 +170,7 @@ def product(values):
     return ret
 
 
-def generate_nparray_orientation(npa: np.array):
+def generate_nparray_orientation(npa: ArrayLike):
     # generator to provide all orientations (rotations and flips) for 2-Dimensial np.array
     # Usage:
     #   for orientation in generate_nparray_orientation(candidate_nparray):
@@ -172,71 +192,67 @@ def generate_nparray_orientation(npa: np.array):
 
 
 def generate_tile_orientation(tile: Tile):
-    # generator to provide all orientations (rotations and flips) for tile
-    # Usage:
-    #   for orientation in generate_tile_orientation(candidate_tile):
-    #       print(orientation)
-    orientations = [
-        tile.data,
-        np.rot90(tile.data, k=1),
-        np.rot90(tile.data, k=2),
-        np.rot90(tile.data, k=3),
-    ]
-    tile_data_flipped = np.flip(tile.data, axis=0)
-    orientations += [
-        tile_data_flipped,
-        np.rot90(tile_data_flipped, k=1),
-        np.rot90(tile_data_flipped, k=2),
-        np.rot90(tile_data_flipped, k=3),
-    ]
-    yield from orientations
+    yield from generate_nparray_orientation(tile.data)
 
 
-def yield_next_solution(solution: List[List[Tile]], position: Tuple):
-    print(solution)
-    print(position)
-
-
-def test_yield_next_solution():
-    yield_next_solution("solution string", "position string")
-
-
-def is_tile_matches_neighbors(index_y: int, index_x: int, solution: List[List[Tile]]):
-    """Neighbors can be None"""
-    if solution[index_y][index_x] is None:
+def is_tile_matches_neighbors(
+    y_index: int, x_index: int, solution: List[List[Optional[Tile]]]
+):
+    """Neighbors can be Tile or None"""
+    optional_tile: Optional[Tile] = solution[y_index][x_index]
+    if optional_tile is None:
         return True
+    elif isinstance(optional_tile, Tile):
+        tile: Tile = optional_tile
+    else:
+        raise RuntimeError
+
+    assert isinstance(solution[y_index][x_index], Tile)
+    if DEBUG:
+        print(tile.data)
+
     # Up
-    if index_y > 0:
-        if solution[index_y - 1][index_x]:
-            tile_face_up = solution[index_y][index_x].data[0]
-            neighbor_face_down = solution[index_y - 1][index_x].data[-1]
+    temp_tile: Optional[Tile]
+    if y_index > 0:
+        temp_tile = solution[y_index - 1][x_index]
+        if isinstance(temp_tile, Tile):
+            # if solution[y_index - 1][x_index]:
+            neighbor_up: Tile = temp_tile
+            neighbor_face_down: np.ndarray = neighbor_up.data[-1]
+            tile_face_up: np.ndarray = tile.data[0]
             if not is_face_matches_face(tile_face_up, neighbor_face_down):
                 return False
     # Down
-    if index_y < (len(solution) - 1):
-        if solution[index_y + 1][index_x]:
-            tile_face_down = solution[index_y][index_x].data[-1]
-            neighbor_face_up = solution[index_y + 1][index_x].data[0]
+    if y_index < (len(solution) - 1):
+        temp_tile = solution[y_index + 1][x_index]
+        if isinstance(temp_tile, Tile):
+            neighbor_down: Tile = temp_tile
+            neighbor_face_up: np.ndarray = neighbor_down.data[0]
+            tile_face_down: np.ndarray = tile.data[-1]
             if not is_face_matches_face(tile_face_down, neighbor_face_up):
                 return False
     # Left
-    if index_x > 0:
-        if solution[index_y][index_x - 1]:
-            tile_face_left = solution[index_y][index_x].data[:, 0]
-            neighbor_face_right = solution[index_y][index_x - 1].data[:, -1]
+    if x_index > 0:
+        temp_tile = solution[y_index][x_index - 1]
+        if isinstance(temp_tile, Tile):
+            neighbor_left: Tile = temp_tile
+            neighbor_face_right = neighbor_left.data[:, -1]
+            tile_face_left = tile.data[:, 0]
             if not is_face_matches_face(tile_face_left, neighbor_face_right):
                 return False
     # Right
-    if index_x < (len(solution[0]) - 1):
-        if solution[index_y][index_x + 1]:
-            tile_face_right = solution[index_y][index_x].data[:, -1]
-            neighbor_face_left = solution[index_y][index_x + 1].data[:, 0]
+    if x_index < (len(solution[0]) - 1):
+        temp_tile = solution[y_index][x_index + 1]
+        if isinstance(temp_tile, Tile):
+            neighbor_right: Tile = temp_tile
+            neighbor_face_left = neighbor_right.data[:, 0]
+            tile_face_right = tile.data[:, -1]
             if not is_face_matches_face(tile_face_right, neighbor_face_left):
                 return False
     return True
 
 
-def is_partial_solution_valid(solution: List[List[Tile]]):
+def is_partial_solution_valid(solution: List[List[Optional[Tile]]]):
     # Check a partial solution. None is allowed where a Tile has not been placed yet.
     for y_index in range(len(solution)):
         for x_index in range(len(solution[0])):
@@ -290,7 +306,7 @@ def list_str_solution(solution: List[List[Tile]]) -> List[str]:
     return lines
 
 
-def match_2d(pattern_2d: np.array, string_2d: np.array):
+def match_2d(pattern_2d: np.ndarray, string_2d: np.ndarray):
     matches = []
     for y_index in range(len(string_2d) - len(pattern_2d) + 1):
         for x_index in range(len(string_2d[0]) - len(pattern_2d[0]) + 1):
@@ -321,11 +337,13 @@ def match_2d(pattern_2d: np.array, string_2d: np.array):
 
 def test_match_2d():
     monster = ["                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
+    monster_nparray = list_str_to_nparray(monster)
     sea = ["# .               # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
+    sea_nparray = list_str_to_nparray(sea)
 
-    matches = match_2d(monster, monster)
+    matches = match_2d(monster_nparray, monster_nparray)
     assert matches == [(0, 0)]
-    matches = match_2d(monster, sea)
+    matches = match_2d(monster_nparray, sea_nparray)
     assert matches == [(0, 0)]
 
 
@@ -338,7 +356,7 @@ def test_flipud_2d_str():
     assert s == ["34", "12"]
 
 
-def list_str_to_nparray(list_str: List[str]) -> np.array:
+def list_str_to_nparray(list_str: List[str]) -> np.ndarray:
     return np.array([[c for c in s] for s in list_str])
 
 
@@ -349,18 +367,23 @@ if __name__ == "__main__":
         filename = "./AdventOfCode/2020/day20-input.txt"
 
     with open(filename) as f:
-        tiles = f.read().split("\n\n")
+        tiles_str: List[str] = f.read().split("\n\n")
         # lines = [line.rstrip() for line in f]
-    for t_index, candidate_tile in enumerate(tiles):
-        candidate_tile = candidate_tile.split("\n")
-        number = int(candidate_tile[0].split()[1][:-1])
-        data = np.array([[char for char in row] for row in candidate_tile[1:]])
-        tiles[t_index] = Tile(number, data)
-    orig_tiles = tiles.copy()
+    tiles: List[Tile] = []
+    t_index: int
+    tile_str: str
+    for t_index, tile_str in enumerate(tiles_str):
+        tile_temp: List[str] = tile_str.split("\n")
+        number: int = int(tile_temp[0].split()[1][:-1])
+        data: np.ndarray = np.array([[char for char in row] for row in tile_temp[1:]])
+        tiles.append(Tile(number, data))
+    orig_tiles: List[Tile] = tiles.copy()
     if DEBUG:
         pprint(tiles)
-    print(f"Loaded {len(tiles)} tiles")
-    print(f"Each tile is {len(tiles[0].data)} rows, {len(tiles[0].data[0])} columns")
+        print(f"Loaded {len(tiles)} tiles")
+        print(
+            f"Each tile is {len(tiles[0].data)} rows, {len(tiles[0].data[0])} columns"
+        )
 
     # np array rotations
     # https://numpy.org/doc/stable/reference/generated/numpy.rot90.html#numpy.rot90
@@ -375,10 +398,10 @@ if __name__ == "__main__":
     # find the corners by counting the matching edges of each tile.
     # corners have only two matching edges
 
-    corners = find_corner_pieces(tiles)
+    corners: List[Tile] = find_corner_pieces(tiles)
     corner_ids = [corner.number for corner in corners]
     part1 = product(corner_ids)
-    print(f"Part 1 {part1}")  # 68781323018729
+    print(f"Part 1: {part1}")  # 68781323018729
     if USE_EXAMPLE1:
         assert part1 == 20899048083289
     else:
@@ -386,7 +409,12 @@ if __name__ == "__main__":
 
     # Part 2
     dimension = math.isqrt(len(tiles))
-    solution = [[None for _ in range(dimension)] for _ in range(dimension)]
+    solution: List[List[Optional[Tile]]] = [
+        [None for _ in range(dimension)] for _ in range(dimension)
+    ]
+    # solution: List[List[Tile]] = [
+    #     [None for _ in range(dimension)] for _ in range(dimension)
+    # ]
     # print(solution)
 
     assert is_partial_solution_valid(solution)
@@ -400,7 +428,8 @@ if __name__ == "__main__":
 
     # place solution[0][1]
     #   find a matching tile
-    candidate_tile = find_next_match(solution[0][0], tiles)
+    assert isinstance(solution[0][0], Tile)
+    candidate_tile = next_match(solution[0][0], tiles)
     # print(f"candidate_tile: {candidate_tile}")
     #   orient the corner. Which face matches?
     # Options
@@ -425,13 +454,14 @@ if __name__ == "__main__":
 
     # in tile_rotations we are looking for the right face to match
     # for orientation in tile_rotations:
-    y_index = 0
-    x_index = 0
-    for orientation in generate_tile_orientation(solution[y_index][x_index]):
+    y_index: int = 0
+    x_index: int = 0
+
+    tile = solution[y_index][x_index]
+    assert isinstance(tile, Tile)
+    for orientation in generate_tile_orientation(tile):
         if is_face_matches_tile(orientation[:, -1], candidate_tile):
-            solution[y_index][x_index] = Tile(
-                solution[y_index][x_index].number, orientation
-            )
+            solution[y_index][x_index] = Tile(tile.number, orientation)
             # print("matched orientation")
             break
 
@@ -440,9 +470,9 @@ if __name__ == "__main__":
     # orient the candidate match and place it
     for orientation in generate_tile_orientation(candidate_tile):
         # compare left face of solved tile to right face of candidate_tile in all possible orientations
-        if is_face_matches_face(
-            solution[y_index][x_index].data[:, -1], orientation[:, 0]
-        ):
+        tile = solution[y_index][x_index]
+        assert isinstance(tile, Tile)
+        if is_face_matches_face(tile.data[:, -1], orientation[:, 0]):
             # print(f"Placing candidate tile {candidate_tile.number}")
             solution[y_index][x_index + 1] = Tile(candidate_tile.number, orientation)
             # remove the matching candidate from tiles
@@ -453,17 +483,19 @@ if __name__ == "__main__":
 
     y_index = 1
     x_index = 0
-    candidate_tile = find_next_match(solution[y_index - 1][x_index], tiles)
+    tile = solution[y_index - 1][x_index]
+    assert isinstance(tile, Tile)
+    candidate_tile = next_match(tile, tiles)
     # does row 0 need to flip?
     # does candidate match to top or bottom of solution[0][0]?
-    needs_flip = False
+    needs_flip: bool = False
     # compare top face of solution[0][0] to candidate_tile
-    up_neighbor = solution[0][0]
+    up_neighbor: Tile = solution[0][0]
     if is_face_matches_tile(up_neighbor.data[0], candidate_tile):
         needs_flip = True
     if needs_flip:
         for x_index, tile in enumerate(solution[0]):
-            if solution[0][x_index]:
+            if isinstance(tile, Tile):
                 flipped_data = np.flipud(tile.data)  # flip up down
                 solution[0][x_index] = Tile(tile.number, flipped_data)
     # orient candidate_tile to tile above
@@ -475,7 +507,8 @@ if __name__ == "__main__":
 
     for orientation in generate_tile_orientation(candidate_tile):
         if is_face_matches_face(up_neighbor.data[-1], orientation[0]):
-            print(f"Placing candidate tile {candidate_tile.number}")
+            if DEBUG:
+                print(f"Placing candidate tile {candidate_tile.number}")
             solution[y_index][x_index] = Tile(candidate_tile.number, orientation)
             # remove candidate match from tiles
             tiles.remove(candidate_tile)
@@ -492,8 +525,9 @@ if __name__ == "__main__":
             continue
         # print(f"{x_index} {tile}")
 
-        left_neighbor = solution[y_index][x_index - 1]
-        for candidate_tile in yield_next_match(left_neighbor, tiles):
+        left_neighbor: Optional[Tile] = solution[y_index][x_index - 1]
+        assert isinstance(left_neighbor, Tile)
+        for candidate_tile in generate_next_match(left_neighbor, tiles):
             # find the right orientation for candidate_tile to left_neighbor
             for orientation in generate_tile_orientation(candidate_tile):
                 if is_face_matches_face(left_neighbor.data[:, -1], orientation[:, 0]):
@@ -508,7 +542,7 @@ if __name__ == "__main__":
             if solution[y_index][x_index] is not None:
                 break
 
-        assert solution[y_index][x_index] is not None
+        assert isinstance(solution[y_index][x_index], Tile)
         assert is_partial_solution_valid(solution)
     # print(f"Solution:\n{solution}")
     # print(repr_solution(solution))
@@ -523,8 +557,10 @@ if __name__ == "__main__":
                 continue
             if x_index > 0:
                 # we are not on left edge of solution
+                assert isinstance(solution[y_index][x_index - 1], Tile)
                 left_neighbor = solution[y_index][x_index - 1]
-                for candidate_tile in yield_next_match(left_neighbor, tiles):
+                assert isinstance(left_neighbor, Tile)
+                for candidate_tile in generate_next_match(left_neighbor, tiles):
                     # find the right orientation for candidate_tile to left_neighbor
                     # and to up_neighbor
                     for orientation in generate_tile_orientation(candidate_tile):
@@ -548,8 +584,10 @@ if __name__ == "__main__":
                 assert is_partial_solution_valid(solution)
             elif x_index == 0:
                 # on left edge of solution, look at up neighbor
-                up_neighbor = solution[y_index - 1][x_index]
-                for candidate_tile in yield_next_match(up_neighbor, tiles):
+                temp_tile: Optional[Tile] = solution[y_index - 1][x_index]
+                assert isinstance(temp_tile, Tile)
+                up_neighbor = temp_tile
+                for candidate_tile in generate_next_match(up_neighbor, tiles):
                     for orientation in generate_tile_orientation(candidate_tile):
                         if is_face_matches_face(up_neighbor.data[-1], orientation[0]):
                             # print(f"Placing candidate tile {candidate_tile.number}")
@@ -567,17 +605,25 @@ if __name__ == "__main__":
                 assert solution[y_index][x_index] is not None
                 assert is_partial_solution_valid(solution)
 
-    print(repr_solution_tiles(solution))
-    str_solution = repr_solution(solution)
-    print(str_solution)
+    for row in solution:
+        for tile in row:
+            assert isinstance(tile, Tile)
+    solution_complete: List[List[Tile]] = solution.copy()  # type: ignore  # assert above verified correctness
+
+    if DEBUG:
+        print(repr_solution_tiles(solution_complete))
+    str_solution = repr_solution(solution_complete)
+    if DEBUG:
+        print(str_solution)
 
     monster = ["                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
     nparray_monster = list_str_to_nparray(monster)
 
     # need to rotate and flip str_solution to get matches
 
-    nparray_solution = list_str_to_nparray(list_str_solution(solution))
-    print(nparray_solution)
+    nparray_solution = list_str_to_nparray(list_str_solution(solution_complete))
+    if DEBUG:
+        print(nparray_solution)
 
     # matches = match_2d(monster, list_str_solution(solution))
     # print(matches)
@@ -586,8 +632,9 @@ if __name__ == "__main__":
         matches = match_2d(nparray_monster, orientation)
         if len(matches) > 0:
             break
-    print(orientation)
-    print(matches)
+    if DEBUG:
+        print(orientation)
+        print(matches)
 
     # count "#" minus (count "#" in monster * len(matches))
     pound_in_orientation = len(
@@ -597,5 +644,9 @@ if __name__ == "__main__":
         [char for row in nparray_monster for char in row if char == "#"]
     )
     part2 = pound_in_orientation - (len(matches) * pound_in_monster)
-    print(part2)
-    assert part2 == 1629
+    print(f"Part 2: {part2}")
+
+    if USE_EXAMPLE1:
+        assert part2 == 273
+    else:
+        assert part2 == 1629
