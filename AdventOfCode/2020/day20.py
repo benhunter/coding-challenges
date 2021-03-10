@@ -8,7 +8,7 @@ import numpy as np
 
 from collections import namedtuple
 from pprint import pformat, pprint
-from typing import List, Tuple, Optional
+from typing import List, Optional
 from numpy.typing import ArrayLike
 
 
@@ -39,36 +39,19 @@ def test_Tile():
     assert Tile("1", 0).data == 0
 
 
-def count_edge_matches(tile_one: Tile, tile_two: Tile):
-    assert type(tile_one) is Tile
-    assert type(tile_two) is Tile
+def count_edge_matches(first_tile: Tile, second_tile: Tile):
+    assert type(first_tile) is Tile
+    assert type(second_tile) is Tile
 
-    first_tile_faces = [
-        tile_one.data[0],
-        tile_one.data[-1],
-        tile_one.data[:, 0],
-        tile_one.data[:, -1],
-    ]
-    nparray_first_tile_flipped = np.flip(tile_one.data)
-    first_tile_faces += [
-        nparray_first_tile_flipped[0],
-        nparray_first_tile_flipped[-1],
-        nparray_first_tile_flipped[:, 0],
-        nparray_first_tile_flipped[:, -1],
-    ]
-    second_tile_faces = [
-        tile_two.data[0],
-        tile_two.data[-1],
-        tile_two.data[:, 0],
-        tile_two.data[:, -1],
-    ]
+    first_tile_faces: List[np.ndarray] = list(generate_faces(first_tile))
+    second_tile_faces: List[np.ndarray] = list(generate_faces(second_tile))
 
-    matches = [
+    matches: List[np.ndarray] = [
         face_one
         for face_one, face_two in itertools.product(first_tile_faces, second_tile_faces)
         if np.array_equal(face_one, face_two)
     ]
-    return len(matches)
+    return len(matches) // 2
 
 
 def test_count_edge_match():
@@ -279,19 +262,6 @@ def repr_solution_tiles(solution: List[List[Tile]]) -> str:
     return s
 
 
-def repr_solution(solution: List[List[Tile]]) -> str:
-    s = ""
-    for y_index, solution_row in enumerate(solution):
-        for y_tile_index in range(1, len(solution[0][0].data) - 1):
-            for x_index, tile in enumerate(solution_row):
-                if solution[y_index][x_index]:
-                    s += "".join(solution[y_index][x_index].data[y_tile_index][1:-1])
-                else:
-                    s += "-" * len(solution[0][0].data[0][1:-1])
-            s += "\n"
-    return s
-
-
 def list_str_solution(solution: List[List[Tile]]) -> List[str]:
     lines = []
     for y_index, solution_row in enumerate(solution):
@@ -304,6 +274,13 @@ def list_str_solution(solution: List[List[Tile]]) -> List[str]:
                     line += "-" * len(solution[0][0].data[0][1:-1])
             lines.append(line)
     return lines
+
+
+def repr_solution(solution: List[List[Tile]]) -> str:
+    s = ""
+    for row in list_str_solution(solution):
+        s += row + "\n"
+    return s
 
 
 def match_2d(pattern_2d: np.ndarray, string_2d: np.ndarray):
@@ -347,16 +324,8 @@ def test_match_2d():
     assert matches == [(0, 0)]
 
 
-def flipud_2d_str(string_2d: List[str]) -> List[str]:
-    return string_2d[::-1]
-
-
-def test_flipud_2d_str():
-    s = flipud_2d_str(["12", "34"])
-    assert s == ["34", "12"]
-
-
 def list_str_to_nparray(list_str: List[str]) -> np.ndarray:
+    # seperate each character so the nparray can be rotated, flipped
     return np.array([[c for c in s] for s in list_str])
 
 
@@ -612,8 +581,7 @@ if __name__ == "__main__":
 
     if DEBUG:
         print(repr_solution_tiles(solution_complete))
-    str_solution = repr_solution(solution_complete)
-    if DEBUG:
+        str_solution = repr_solution(solution_complete)
         print(str_solution)
 
     monster = ["                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
