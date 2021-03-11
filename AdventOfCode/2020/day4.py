@@ -23,17 +23,18 @@ count_part2 = 0
 
 for r in records:
     # Part 1 checks
-    if 'byr:' in r and \
-       'ecl:' in r and \
-       'eyr:' in r and \
-       'hcl:' in r and \
-       'hgt:' in r and \
-       'iyr:' in r and \
-       'pid:' in r:
-       count_part1 += 1
+    if (
+        "byr:" in r
+        and "ecl:" in r
+        and "eyr:" in r
+        and "hcl:" in r
+        and "hgt:" in r
+        and "iyr:" in r
+        and "pid:" in r
+    ):
+        count_part1 += 1
     else:
         continue
-
 
     # Part 2 checks
     r = r.split()
@@ -81,10 +82,10 @@ for r in records:
     hgt_match = re.match(r"^hgt:(\d+)(cm|in)$", r[4])
     if hgt_match:
         hgt_num = int(hgt_match.group(1))
-        if hgt_match.group(2) == 'cm':
+        if hgt_match.group(2) == "cm":
             if not (150 <= hgt_num <= 193):
-                continue 
-        elif hgt_match.group(2) == 'in':
+                continue
+        elif hgt_match.group(2) == "in":
             if not (59 <= hgt_num <= 76):
                 continue
     else:

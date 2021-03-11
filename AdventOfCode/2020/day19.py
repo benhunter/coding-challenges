@@ -41,7 +41,7 @@ def match(message, rule):
     if isinstance(rule, str):
         # literal rule
         if message == rule:
-            
+
             return message
     elif isinstance(rule, int):
         return match(message, rules_tuple[rule])
@@ -230,33 +230,25 @@ def test_is_valid_example2():
 
 
 def test_example1():
-    count = count_matches(
-        *load_input("./AdventOfCode/2020/day19-example1-input.txt")
-    )
+    count = count_matches(*load_input("./AdventOfCode/2020/day19-example1-input.txt"))
     assert count == 2
 
 
 def test_example2():
-    count = count_matches(
-        *load_input("./AdventOfCode/2020/day19-example2-input.txt")
-    )
+    count = count_matches(*load_input("./AdventOfCode/2020/day19-example2-input.txt"))
 
     assert count == 2
 
 
 def test_example3_before():
     match.cache_clear()
-    count = count_matches(
-        *load_input("./AdventOfCode/2020/day19-example3-input.txt")
-    )
+    count = count_matches(*load_input("./AdventOfCode/2020/day19-example3-input.txt"))
     assert count == 3
 
 
 def test_example3_after():
     match.cache_clear()
-    rules_tuple, messages = load_input(
-        "./AdventOfCode/2020/day19-example3-input.txt"
-    )
+    rules_tuple, messages = load_input("./AdventOfCode/2020/day19-example3-input.txt")
 
     rules_tuple[8] = ((42,), (42, 8))
     rules_tuple[11] = ((42, 31), (42, 11, 31))

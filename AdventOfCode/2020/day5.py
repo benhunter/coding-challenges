@@ -4,6 +4,7 @@
 import pytest
 import re
 
+
 def decode_boarding_pass(seat_encoded):
     # first 7 chars must be F or B
     # last 3 chars must be L or R
@@ -11,7 +12,7 @@ def decode_boarding_pass(seat_encoded):
     if not re.match(r"^[FB]{7}[LR]{3}$", seat_encoded):
         # Manually raise Exception because assert can be stripped at runtime
         raise ValueError("Boarding pass format is invalid.")
-    
+
     # row: F=0, B=1, convert to int
     row = seat_encoded[:7].replace("F", "0").replace("B", "1")
     row = int(row, base=2)
@@ -46,19 +47,17 @@ if __name__ == "__main__":
             possible_seat.append(i)
     print("Part 2:", max(possible_seat))
 
-    
-
 
 def test_decode_bad_passes():
     with pytest.raises(TypeError):
         decode_boarding_pass()
-    
+
     with pytest.raises(ValueError):
         decode_boarding_pass("")
 
     with pytest.raises(ValueError):
         decode_boarding_pass("FFFFFFLLL")
-    
+
     with pytest.raises(ValueError):
         decode_boarding_pass("FFFFFFFLL")
 
@@ -67,6 +66,7 @@ def test_decode_bad_passes():
 
     with pytest.raises(ValueError):
         decode_boarding_pass("FFFFFFFLLA")
+
 
 def test_decode_good_passes():
     # assert decode_boarding_pass("") == (, , )

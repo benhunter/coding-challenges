@@ -6,8 +6,7 @@ import copy
 import pytest
 
 
-class Machine():
-    
+class Machine:
     def __init__(self, code):
         """
         Arguments
@@ -19,21 +18,29 @@ class Machine():
         self.ip = 0  # instruction pointer
         self.acc = 0  # accumulator
         self.history_instructions = []  # list of instructions executed
-        self.history_states = []  # list of tuples (new_ip, new_acc) after the corresponding instruction was executed
-
+        self.history_states = (
+            []
+        )  # list of tuples (new_ip, new_acc) after the corresponding instruction was executed
 
     def execute(self):
         """Execute a single instruction."""
 
         # check if this instruction executed already
         if self.ip in self.history_instructions:
-            raise RuntimeError("Infinite loop detected at instruction " + str(self.ip) + ", " + self.code[self.ip] + ". Machine state: " + str(self.history_states[-1]))
+            raise RuntimeError(
+                "Infinite loop detected at instruction "
+                + str(self.ip)
+                + ", "
+                + self.code[self.ip]
+                + ". Machine state: "
+                + str(self.history_states[-1])
+            )
 
         # check to terminate code
         if self.ip == len(self.code):
             # print("Terminated")
-            return 0 
-        
+            return 0
+
         old_ip = self.ip
         instruction, operand = self.code[self.ip].split()
         operand = int(operand)
@@ -52,7 +59,6 @@ class Machine():
 
         return self.ip
 
-    
     def run(self):
         try:
             while self.execute():
@@ -110,7 +116,7 @@ def test_nop():
 def test_input1_part1():
     with open("./AdventOfCode/2020/day8-test-input.txt") as f:
         code = [line.rstrip() for line in f]
-    
+
     m = Machine(code)
 
     # execute until instruction tries to execute twice
@@ -123,7 +129,7 @@ def test_input1_part1():
 def test_input2_part2():
     with open("./AdventOfCode/2020/day8-test-input.txt") as f:
         code = [line.rstrip() for line in f]
-    
+
     for i in range(len(code)):
         test_code = copy.copy(code)
         if test_code[i].split()[0] == "jmp":
@@ -147,7 +153,7 @@ if __name__ == "__main__":
 
     with open(".\\AdventOfCode\\2020\\day8-input.txt") as f:
         code = [line.rstrip() for line in f]
-    
+
     m = Machine(code)
 
     # execute until instruction tries to execute twice
@@ -155,7 +161,7 @@ if __name__ == "__main__":
         while m.execute():
             # print(m.history_states[-1])
             pass
-            
+
     except RuntimeError as exc:
         print(exc)
         print("Part 1:", m.history_states[-1][1])
@@ -175,4 +181,3 @@ if __name__ == "__main__":
 
         if m.ip == len(m.code):
             print("Part 2:", m.history_states[-1][1])
-

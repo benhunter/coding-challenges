@@ -15,7 +15,7 @@ for p in password_list:
     parts = p.split()
     # print(parts)
 
-    min, max = map(int, parts[0].split('-'))
+    min, max = map(int, parts[0].split("-"))
     # print(min, max)
 
     char = parts[1][0]
@@ -27,8 +27,10 @@ for p in password_list:
         # print("pass")
         countpart1 += 1
 
-    if (parts[2][min-1] == char and parts[2][max-1] != char) or (parts[2][min-1] != char and parts[2][max-1] == char):
+    if (parts[2][min - 1] == char and parts[2][max - 1] != char) or (
+        parts[2][min - 1] != char and parts[2][max - 1] == char
+    ):
         countpart2 += 1
-     
+
 print("Part 1:", countpart1)
 print("Part 2:", countpart2)

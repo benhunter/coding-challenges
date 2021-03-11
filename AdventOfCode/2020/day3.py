@@ -31,7 +31,7 @@ for row_num, row in enumerate(slope):
     posn_right1down2 = column_right1down2 % len_slope
 
     if row[posn_right1] == "#":
-        count_right1 += 1    
+        count_right1 += 1
     if row[posn_right3] == "#":
         count_right3 += 1
     if row[posn_right5] == "#":

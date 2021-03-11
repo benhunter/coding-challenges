@@ -85,11 +85,7 @@ if __name__ == "__main__":
                 [
                     "1"
                     if state.mask[i] == "1"
-                    else (
-                        bin_addr[i]
-                        if state.mask[i] == "0"
-                        else state.mask[i]
-                    )
+                    else (bin_addr[i] if state.mask[i] == "0" else state.mask[i])
                     for i, x in enumerate(operand)
                 ]
             )
