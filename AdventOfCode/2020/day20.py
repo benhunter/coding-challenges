@@ -2,6 +2,7 @@
 # https://adventofcode.com/2020/
 
 
+import cProfile
 import itertools
 import math
 import numpy as np
@@ -12,14 +13,15 @@ from typing import List, Optional
 from numpy.typing import ArrayLike
 
 
-USE_EXAMPLE1 = False
-DEBUG = False
+USE_EXAMPLE1 = False  # example input or full input
+DEBUG = False  # debug prints to console
+PROFILE = False  # profiling flag
 
 
 Tile = namedtuple("Tile", "number, data")
-Tile.__repr__ = ( # type: ignore
-    lambda self: f"Tile: {self.number}\n" # type: ignore
-    + f"{pformat(self.data)}")  # type: ignore
+Tile.__repr__ = (  # type: ignore
+    lambda self: f"Tile: {self.number}\n" + f"{pformat(self.data)}"  # type: ignore
+)  # type: ignore
 
 # class Tile(namedtuple("Tile", "number, data")):
 #     # Tile with a number ID and data fields.
@@ -75,7 +77,8 @@ def generate_faces(tile: Tile):
         tile.data[:, 0],
         tile.data[:, -1],
     ]
-    nparray_tile_flipped = np.flip(tile.data)
+    nparray_tile_flipped = np.flip(tile.data)  # flip on both axes
+
     tile_faces += [
         nparray_tile_flipped[0],
         nparray_tile_flipped[-1],
@@ -160,13 +163,23 @@ def generate_nparray_orientation(npa: ArrayLike):
     # Usage:
     #   for orientation in generate_nparray_orientation(candidate_nparray):
     #       print(orientation)
+
+    # np array rotations
+    # https://numpy.org/doc/stable/reference/generated/numpy.rot90.html#numpy.rot90
+    # print(tiles[0].data)
+    # print(np.rot90(tiles[0].data))  # rotate counter clockwise
+    # print(np.rot90(tiles[0].data, axes=(1,0)))  # rotate clockwise
+    # print(np.rot90(tiles[0].data, k=0))  # rotate counter clockwise 0 times
+    # note that rotations return views, not new arrays
+    # flip too, not just rotate
+
     orientations = [
-        npa,
-        np.rot90(npa, k=1),
-        np.rot90(npa, k=2),
-        np.rot90(npa, k=3),
+        npa,  # original
+        np.rot90(npa, k=1),  # counter-clockwise once
+        np.rot90(npa, k=2),  # counter-clockwise twice
+        np.rot90(npa, k=3),  # counter-clockwise thrice
     ]
-    npa_flipped = np.flip(npa, axis=0)
+    npa_flipped = np.flip(npa, axis=0)  # flip on x axis
     orientations += [
         npa_flipped,
         np.rot90(npa_flipped, k=1),
@@ -331,54 +344,15 @@ def list_str_to_nparray(list_str: List[str]) -> np.ndarray:
     return np.array([[c for c in s] for s in list_str])
 
 
-if __name__ == "__main__":
-    if USE_EXAMPLE1:
-        filename = "./AdventOfCode/2020/day20-example1-input.txt"
-    else:
-        filename = "./AdventOfCode/2020/day20-input.txt"
-
-    with open(filename) as f:
-        tiles_str: List[str] = f.read().split("\n\n")
-        # lines = [line.rstrip() for line in f]
-    tiles: List[Tile] = []
-    t_index: int
-    tile_str: str
-    for t_index, tile_str in enumerate(tiles_str):
-        tile_temp: List[str] = tile_str.split("\n")
-        number: int = int(tile_temp[0].split()[1][:-1])
-        data: np.ndarray = np.array([[char for char in row] for row in tile_temp[1:]])
-        tiles.append(Tile(number, data))
-    orig_tiles: List[Tile] = tiles.copy()
-    if DEBUG:
-        pprint(tiles)
-        print(f"Loaded {len(tiles)} tiles")
-        print(
-            f"Each tile is {len(tiles[0].data)} rows, {len(tiles[0].data[0])} columns"
-        )
-
-    # np array rotations
-    # https://numpy.org/doc/stable/reference/generated/numpy.rot90.html#numpy.rot90
-    # print(tiles[0].data)
-    # print(np.rot90(tiles[0].data))  # rotate counter clockwise
-    # print(np.rot90(tiles[0].data, axes=(1,0)))  # rotate clockwise
-    # print(np.rot90(tiles[0].data, k=0))  # rotate counter clockwise 0 times
-    # note that rotations return views, not new arrays
-    # flip too, not just rotate
-
-    # Part 1
+def solve_part1(tiles: List[Tile]) -> int:
     # find the corners by counting the matching edges of each tile.
     # corners have only two matching edges
-
     corners: List[Tile] = find_corner_pieces(tiles)
     corner_ids = [corner.number for corner in corners]
-    part1 = product(corner_ids)
-    print(f"Part 1: {part1}")  # 68781323018729
-    if USE_EXAMPLE1:
-        assert part1 == 20899048083289
-    else:
-        assert part1 == 68781323018729
+    return product(corner_ids)
 
-    # Part 2
+
+def solve_part2(tiles: List[Tile]) -> int:
     dimension = math.isqrt(len(tiles))
     solution: List[List[Optional[Tile]]] = [
         [None for _ in range(dimension)] for _ in range(dimension)
@@ -391,9 +365,9 @@ if __name__ == "__main__":
     assert is_partial_solution_valid(solution)
 
     # start the solution with one of the corners found previously
-    solution[0][0] = corners[0]  # can be flipped/rotated
+    solution[0][0] = find_corner_pieces(tiles)[0]  # can be flipped/rotated
     # tiles will only hold tiles that are not in solution yet
-    tiles.remove(corners[0])
+    tiles.remove(solution[0][0])
     # print(solution)
     assert is_partial_solution_valid(solution)
 
@@ -614,9 +588,62 @@ if __name__ == "__main__":
         [char for row in nparray_monster for char in row if char == "#"]
     )
     part2 = pound_in_orientation - (len(matches) * pound_in_monster)
+    return part2
+
+
+def load_tiles(filename: str) -> List[Tile]:
+    with open(filename) as f:
+        tiles_str: List[str] = f.read().split("\n\n")
+    tiles: List[Tile] = []
+    t_index: int
+    tile_str: str
+    for t_index, tile_str in enumerate(tiles_str):
+        tile_temp: List[str] = tile_str.split("\n")
+        number: int = int(tile_temp[0].split()[1][:-1])
+        data: np.ndarray = np.array([[char for char in row] for row in tile_temp[1:]])
+        tiles.append(Tile(number, data))
+    return tiles
+
+
+def main():
+    if USE_EXAMPLE1:
+        filename = "./AdventOfCode/2020/day20-example1-input.txt"
+    else:
+        filename = "./AdventOfCode/2020/day20-input.txt"
+
+    tiles: List[Tile] = load_tiles(filename)
+    if DEBUG:
+        pprint(tiles)
+        print(f"Loaded {len(tiles)} tiles")
+        print(
+            f"Each tile is {len(tiles[0].data)} rows, {len(tiles[0].data[0])} columns"
+        )
+
+    # Part 1
+    part1 = solve_part1(tiles)
+    print(f"Part 1: {part1}")  # 68781323018729
+    if USE_EXAMPLE1:
+        assert part1 == 20899048083289
+    else:
+        assert part1 == 68781323018729
+    if PROFILE:
+        with cProfile.Profile() as pr:
+            solve_part1(tiles)
+        pr.print_stats()
+
+    # Part 2
+    part2 = solve_part2(tiles.copy())
     print(f"Part 2: {part2}")
 
     if USE_EXAMPLE1:
         assert part2 == 273
     else:
         assert part2 == 1629
+    if PROFILE:
+        with cProfile.Profile() as pr:
+            solve_part2(tiles.copy())
+        pr.print_stats()
+
+
+if __name__ == "__main__":
+    main()

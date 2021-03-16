@@ -10,7 +10,19 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "env": {"PYTEST_ADDOPTS": "--no-cov"}
-        }
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov"
+            }
+        },
+        {
+            "name": "Python: Current File / Assertions Disabled",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "pythonArgs": [
+                "-O"
+            ]
+        },
     ]
 }
