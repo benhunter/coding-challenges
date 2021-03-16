@@ -35,9 +35,9 @@ if __name__ == "__main__":
 
     for op in operations:
         # print(op)
-        op = op.split()
-        operation = op[0]
-        operand = op[-1]
+        op_split = op.split()
+        operation = op_split[0]
+        operand = op_split[-1]
 
         if operation == "mask":
             state.mask = operand
@@ -65,9 +65,9 @@ if __name__ == "__main__":
     state = State()
 
     for op in operations:
-        op = op.split()
-        operation = op[0]
-        operand = op[-1]
+        op_split = op.split()
+        operation = op_split[0]
+        operand = op_split[-1]
 
         if operation == "mask":
             state.mask = operand

@@ -17,7 +17,9 @@ DEBUG = False
 
 
 Tile = namedtuple("Tile", "number, data")
-Tile.__repr__ = lambda self: f"Tile: {self.number}\n{pformat(self.data)}"  # type: ignore
+Tile.__repr__ = ( # type: ignore
+    lambda self: f"Tile: {self.number}\n" # type: ignore
+    + f"{pformat(self.data)}")  # type: ignore
 
 # class Tile(namedtuple("Tile", "number, data")):
 #     # Tile with a number ID and data fields.

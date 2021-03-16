@@ -6,6 +6,9 @@ import cProfile
 from collections import defaultdict
 
 
+DEBUG = False
+
+
 def calc_target(TARGET, nums):
     all_prev_posn = defaultdict(lambda: -1)
     prev_position = 0
@@ -43,14 +46,16 @@ if __name__ == "__main__":
     # Part 1
     TARGET = 2020
     nums = seednums.copy()
-    # cProfile.run('calc_target(TARGET, nums)')  # Profiler
+    if DEBUG:
+        cProfile.run('calc_target(TARGET, nums)')  # Profiler
     part1 = calc_target(TARGET, nums)
     print(f"Part 1: {part1}")  # 468
 
     # Part 2
     TARGET2 = 30000000
     nums = seednums.copy()
-    # cProfile.run('calc_target(TARGET2, nums)')  # Profiler
+    if DEBUG:
+        cProfile.run('calc_target(TARGET2, nums)')  # Profiler
 
     part2 = calc_target(TARGET2, nums)
     print(f"Part 2: {part2}")  # 1801753

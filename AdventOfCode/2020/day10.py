@@ -54,14 +54,16 @@ def test_test2():
 def arrangements(adapters):
     # Part 2
     # Dynamic programming solution / memoization
-    # Credit: https://www.reddit.com/r/adventofcode/comments/ka8z8x/2020_day_10_solutions/gf9mvrh/
+    # Credit: https://www.reddit.com/
+    #   r/adventofcode/comments/ka8z8x/2020_day_10_solutions/gf9mvrh
     # https://www.reddit.com/r/adventofcode/comments/ka8z8x/2020_day_10_solutions/
 
     combos = {}
     combos[0] = 1
 
     for a in adapters[1:]:
-        # every adapter can be connected to all possible combos of adapters that are 3 less than itself
+        # every adapter can be connected to all possible combos of adapters
+        # that are 3 less than itself
         combos[a] = combos.get(a - 1, 0) + combos.get(a - 2, 0) + combos.get(a - 3, 0)
 
     return combos[max(combos)]
@@ -77,17 +79,23 @@ def difflist(adapters):
 
 
 def part2(adapters):
-    # My solution - lookup table for how many combos based on on the length of a group of 1s
-    # manually calculated the possible combos for small groups where an adapter may be skipped
+    # My solution - lookup table for how many combos based on on the length of a group
+    # of 1's.
+    # Manually calculated the possible combos for small groups where an adapter may be
+    # skipped.
 
     groups = [
         len(x) - 1
         for k, g in itertools.groupby(difflist(adapters))
         if k == 1 and len(x := list(g)) > 1
     ]
-    # groups = [len(x) for k, g in itertools.groupby(difflist(adapters)) if k == 1 and len((x := list(g))) > 2]
+    # groups = [
+    #     len(x)
+    #     for k, g in itertools.groupby(difflist(adapters))
+    #     if k == 1 and len((x := list(g))) > 2
+    # ]
     # for k, g in itertools.groupby(difflist(adapters)):
-    # print(k, list(g))
+    #   print(k, list(g))
     # print(groups)
 
     combos = []
@@ -102,9 +110,12 @@ def part2(adapters):
     return math.prod(combos)
 
     # notes in OneNote
-    # general solution (maybe?) for groups greater than 3 (where all adapters in the group are optional)
+    # general solution (maybe?)
+    # for groups greater than 3 (where all adapters in the group are optional)
     # relies on previous calculation - dynamic programming / memoization
-    # result is how many bad combos exist for the group size (not the number of good combos)
+    # result is how many bad combos exist for the group size
+    # this is not the number of good combos
+    #
     # (run 1) = 0
     # (run 2) = 0
     # (run 3) = 1

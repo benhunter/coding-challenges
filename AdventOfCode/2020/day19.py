@@ -6,7 +6,7 @@ from functools import lru_cache
 
 
 DEBUG = False
-rules_tuple = {}
+rules_tuple: dict = {}
 
 
 @lru_cache(maxsize=None)

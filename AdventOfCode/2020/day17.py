@@ -3,7 +3,6 @@
 
 
 from copy import deepcopy
-from pprint import pformat
 from typing import DefaultDict
 
 
@@ -39,10 +38,7 @@ class ConwayState:
             self._grow()
 
     def __repr__(self):
-        # return f"X: {self._x} Y: {self._y} Z: {self._z}\nState:\n" + pformat(self._state)
         # Iterating Z layers forces the z_generator to run if needed.
-        # return f"X: {self._x} Y: {self._y} Z: {self._z}\nState:\n{pformat([self._state[z] for z in range(*self._z)])}"
-        # return f"X: {self._x} Y: {self._y} Z: {self._z}\nState:\n{str([self._state[z] for z in range(*self._z)])}"
         str_state = f"X: {self._x} Y: {self._y} Z: {self._z}\n"
         for index_z in range(self._z[0], self._z[1]):
             str_state += f"z={index_z}\n"

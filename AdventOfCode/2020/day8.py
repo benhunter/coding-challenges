@@ -5,6 +5,11 @@
 import copy
 import pytest
 
+from typing import List, Tuple
+
+
+DEBUG = False
+
 
 class Machine:
     def __init__(self, code):
@@ -18,9 +23,9 @@ class Machine:
         self.ip = 0  # instruction pointer
         self.acc = 0  # accumulator
         self.history_instructions = []  # list of instructions executed
-        self.history_states = (
-            []
-        )  # list of tuples (new_ip, new_acc) after the corresponding instruction was executed
+        self.history_states: List[Tuple[int, int]] = []
+        # self.history_states = list of tuples (new_ip, new_acc)
+        # after the corresponding instruction was executed
 
     def execute(self):
         """Execute a single instruction."""
@@ -64,8 +69,8 @@ class Machine:
             while self.execute():
                 pass
         except RuntimeError as exc:
-            # print(exc)
-            pass
+            if DEBUG:
+                print(exc)
 
 
 def test_init():
