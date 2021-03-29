@@ -9,6 +9,8 @@ DEBUG = False
 
 
 class Day21:
+    """Class for maintaining state between Part 1 and 2."""
+
     def __init__(self, filename):
         """Load puzzle input.
         Input will be stored as a list of labels.
@@ -37,7 +39,9 @@ class Day21:
 
         for allergen in allergens:
             foods_with_allergen = [food for food in self.foods if allergen in food[1]]
-            foods_without_allergen = [food for food in self.foods if allergen not in food[1]]
+            foods_without_allergen = [
+                food for food in self.foods if allergen not in food[1]
+            ]
 
             if DEBUG:
                 pprint(foods_with_allergen)
@@ -47,8 +51,8 @@ class Day21:
                 ingredient
                 for food in foods_with_allergen
                 for ingredient in food[0]
-
                 # ingedient is in every food with allergen one time
+                # ingredient may be in other foods that don't have the allergen
                 if (
                     len(
                         [
@@ -58,12 +62,6 @@ class Day21:
                         ]
                     )
                     == len(foods_with_allergen)
-                    # (commented out) and not in any other food that doesn't have the allergen
-                    # and len([
-                    #     food3
-                    #     for food3 in foods_without_allergen
-                    #     if (ingredient in food3[0])
-                    # ]) == 0
                 )
             ]
             self.allergen_dict[allergen] = list(set(self.allergen_dict[allergen]))
@@ -88,10 +86,11 @@ class Day21:
     def part2(self):
         # Find the actual dangerous ingredients by removing redundant values so that
         # each allergen has one ingredient associated.
+
         # part1() must run first to generate self.allergen_dict
         if not hasattr(self, "allergen_dict"):
             self.part1()
-        
+
         # create a copy of the allergen dictionary so we can remove items from it
         # as we eleminate redundant valuesmm
         temp_allergen_dict = self.allergen_dict.copy()
@@ -107,7 +106,9 @@ class Day21:
                             temp_values.remove(allergen_values[0])
                             temp_allergen_dict[temp_key] = temp_values
                     break
-        dangerous = ",".join([dangerous_ingredients[key] for key in sorted(dangerous_ingredients.keys())])
+        dangerous = ",".join(
+            [dangerous_ingredients[key] for key in sorted(dangerous_ingredients.keys())]
+        )
         return dangerous
 
 
@@ -135,7 +136,6 @@ def test_part2():
     input_file = "./AdventOfCode/2020/day21-input.txt"
     day21 = Day21(input_file)
     assert day21.part2() == "hkflr,ctmcqjf,bfrq,srxphcm,snmxl,zvx,bd,mqvk"
-
 
 
 def main():
