@@ -2,9 +2,10 @@
 # https://adventofcode.com/2020/day/21
 
 
+import itertools
 from pprint import pprint
 
-DEBUG = True
+DEBUG = False
 
 
 def load(filename):
@@ -45,9 +46,10 @@ def part1(filename):
     for allergen in allergens:
         foods_with_allergen = [food for food in foods if allergen in food[1]]
         foods_without_allergen = [food for food in foods if allergen not in food[1]]
-
-        pprint(foods_with_allergen)
-        pprint(foods_without_allergen)
+        
+        if DEBUG:
+            pprint(foods_with_allergen)
+            pprint(foods_without_allergen)
 
         allergen_dict[allergen] = [
             ingredient
@@ -70,23 +72,39 @@ def part1(filename):
                 #     if (ingredient in food3[0])
                 # ]) == 0
             )
-        ][0]
-    print(allergen_dict)
+        ]
+        allergen_dict[allergen] = list(set(allergen_dict[allergen]))
+    if DEBUG:
+        print(allergen_dict)
+        print(list(allergen_dict.values()))
+
+    ingredients_with_allergens = set(
+        list(itertools.chain.from_iterable(allergen_dict.values()))
+    )
+    ingredients_without_allergens = [
+        ingredient
+        for label in foods
+        for ingredient in label[0]
+        if ingredient not in ingredients_with_allergens
+    ]
+    if DEBUG:
+        print(ingredients_without_allergens)
+        print(len(ingredients_without_allergens))
+    return len(ingredients_without_allergens)
 
 
 def test_part1():
     example1_file = "./AdventOfCode/2020/day21-example1-input.txt"
     assert part1(example1_file) == 5
 
-    # TODO
-    # input_file = "./AdventOfCode/2020/day21-input.txt"
-    # assert part1(load(input_file)) == XXXX
+    input_file = "./AdventOfCode/2020/day21-input.txt"
+    assert part1(input_file) == 2542
 
 
 def main():
-    # filename = "./AdventOfCode/2020/day21-input.txt"
-    filename = "./AdventOfCode/2020/day21-example1-input.txt"
-    part1(filename)
+    filename = "./AdventOfCode/2020/day21-input.txt"
+    # filename = "./AdventOfCode/2020/day21-example1-input.txt"
+    print(part1(filename))
 
 
 def test_main():
