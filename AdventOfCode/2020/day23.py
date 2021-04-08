@@ -6,6 +6,7 @@ import cProfile
 
 
 DEBUG = False
+PROFILE = True
 
 
 # def next_three(cups, current_posn):
@@ -56,14 +57,41 @@ def test_repr_cups():
     assert repr_cups(cups, current_posn) == " 0  1 (2) 3 "
 
 
+def select_destination(cups, current_value, next_three):
+    # The crab selects a destination cup: the cup with a label equal to the current
+    # cup's label minus one. If this would select one of the cups that was just
+    # picked up, the crab will keep subtracting one until it finds a cup that
+    # wasn't just picked up. If at any point in this process the value goes below
+    # the lowest value on any cup's label, it wraps around to the highest value on
+    # any cup's label instead.
+    destination_value = current_value
+    for _ in range(len(cups)):
+        destination_value -= 1
+        if destination_value in next_three:
+            continue
+        elif destination_value < 1:
+            destination_value = max(cups)
+        try:
+            destination_posn = cups.index(destination_value)
+            break
+        except ValueError:
+            continue
+    if DEBUG:
+        print(f"destination: {destination_value}\n")
+    return destination_posn
+
+
 def move(cups, moves):
+    if PROFILE:
+        inner_loop_count = 0  # profiling helper
     current_posn = 0
     current_value = cups[current_posn]
     # three_cups = next_three(cups, current_posn)
+    len_cups = len(cups)
 
     move_count = 1
     for _ in range(moves):
-        if move_count % 1000 == 0:
+        if PROFILE and move_count % 1000 == 0:
             print(f"move count: {move_count}")
         if DEBUG:
             print(f"-- move {move_count} --")
@@ -71,45 +99,42 @@ def move(cups, moves):
 
         index = current_posn + 1
         next_three = []
-        for i in range(3):
-            # index += 1
-            if index >= len(cups):
-                index = 0
-            next_three.append(cups.pop(index))
+        if index + 3 < len_cups:
+            next_three = cups[index:index + 3]
+            del cups[index:index + 3]
+        else:
+            for i in range(3):
+                if index >= len(cups):
+                    index = 0
+                next_three.append(cups.pop(index))
 
         if DEBUG:
             print(f"pick up: {', '.join(str(cup) for cup in next_three)}")
 
-        # The crab selects a destination cup: the cup with a label equal to the current
-        # cup's label minus one. If this would select one of the cups that was just
-        # picked up, the crab will keep subtracting one until it finds a cup that
-        # wasn't just picked up. If at any point in this process the value goes below
-        # the lowest value on any cup's label, it wraps around to the highest value on
-        # any cup's label instead.
-        destination_value = current_value
-        for _ in range(len(cups)):
-            destination_value -= 1
-            if destination_value in next_three:
-                continue
-            elif destination_value < 1:
-                destination_value = max(cups)
-            try:
-                destination_posn = cups.index(destination_value)
-                break
-            except ValueError:
-                continue
-                # destination_posn = cups.index(destination_value)
-        if DEBUG:
-            print(f"destination: {destination_value}\n")
+        destination_posn = select_destination(cups, current_value, next_three)
 
         # place next_three into cups after destination_posn
-        # cups.insert(destination_posn + 1, )
-        cups = cups[:destination_posn + 1] + next_three + cups[destination_posn + 1:]
+        # option 1
+        # cups = cups[:destination_posn + 1] + next_three + cups[destination_posn + 1:]
+        # option 2
+        # cups = [*cups[:destination_posn + 1], *next_three, *cups[destination_posn + 1:]]
+        # option 3
+        # new_cups = cups[:destination_posn + 1]
+        # new_cups += next_three
+        # new_cups += cups[destination_posn + 1:]
+        # cups = new_cups
+        # option 4
+        # cups.insert(destination_posn + 1, next_three)  # does not unpack next_three
+        cups[destination_posn + 1:destination_posn + 1] = next_three
+
         move_count += 1
+            
+        if current_posn > destination_posn:
+            # will change if next_three 
+            # was inserted before current_posn
+            current_posn += 3
 
-        current_posn = cups.index(current_value)
-
-        current_posn = (current_posn + 1) if (current_posn + 1) < len(cups) else 0
+        current_posn = (current_posn + 1) if (current_posn + 1) < len_cups else 0
         current_value = cups[current_posn]
 
     return cups
@@ -146,7 +171,7 @@ def test_part2_example1():
     filename = "./AdventOfCode/2020/day23-example1-input.txt"
     cups = load_cups(filename)
     cups += list(range(max(cups) + 1,1000000))
-    # cups = move(cups, 10000000)
+    cups = move(cups, 10000000)
     one_index = cups.index(1)
     assert cups[one_index + 1] == 934001
     assert cups[one_index + 2] == 159792
@@ -155,11 +180,12 @@ def test_part2_example1():
 
 
 def profile_part2():
+    MOVES = 10000
     filename = "./AdventOfCode/2020/day23-example1-input.txt"
     cups = load_cups(filename)
     cups += list(range(max(cups) + 1,1000000))
     with cProfile.Profile() as pr:
-        cups = move(cups, 1000)
+        cups = move(cups, MOVES)
     pr.print_stats()
 
 
@@ -186,6 +212,7 @@ def main():
 
 
 if __name__ == "__main__":
-    profile_part2()
+    if PROFILE:
+        profile_part2()
     # test_part2_example1()
     # main()
