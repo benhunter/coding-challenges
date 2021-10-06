@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/darts" />
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/hamming" />
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/lasagna" />
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/leap" />
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/resistor-color" />
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/resistor-color-duo" />
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/reverse-string" />
+    <file type="web" url="file://$PROJECT_DIR$/Exercism/java/two-fer" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="16" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>

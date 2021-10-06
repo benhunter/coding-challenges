@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/darts" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="gradleJvm" value="16" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/darts" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/hamming" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/hamming" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/lasagna" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/lasagna" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/leap" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="gradleJvm" value="16" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/leap" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/resistor-color" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="gradleJvm" value="16" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/resistor-color" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/resistor-color-duo" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="gradleJvm" value="16" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/resistor-color-duo" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/reverse-string" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="gradleJvm" value="16" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/reverse-string" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Exercism/java/two-fer" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/7.2/libexec" />
+        <option name="gradleJvm" value="16" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Exercism/java/two-fer" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>
