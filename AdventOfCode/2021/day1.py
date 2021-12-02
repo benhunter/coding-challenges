@@ -1,4 +1,4 @@
-
+# https://adventofcode.com/2021/day/1
 
 with open('day1-input.txt') as f:
     data = [int(line.rstrip()) for line in f]

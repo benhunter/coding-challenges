@@ -1,3 +1,5 @@
+# https://adventofcode.com/2021/day/2
+
 with open('day2-input.txt') as f:
     data = [line.rstrip().split() for line in f]
     data = list(map(lambda command: [command[0], int(command[1])], data))
