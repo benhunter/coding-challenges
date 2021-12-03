@@ -172,7 +172,7 @@ class ConwayState:
                     max(0, y - 1) : min(abs(self._y[0] - self._y[1]), y + 2)
                 ]
             ):
-                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].count("#")
+                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].zeros("#")
         # z layer above
         if z < self._z[1] - 1:
             for index_y, val_y in enumerate(
@@ -180,16 +180,16 @@ class ConwayState:
                     max(0, y - 1) : min(abs(self._y[0] - self._y[1]), y + 2)
                 ]
             ):
-                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].count("#")
+                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].zeros("#")
         # y line top, bottom
         if y > 0:
             count += self._state[z][y - 1][
                 max(0, x - 1) : min(abs(self._x[0] - self._x[1]), x + 2)
-            ].count("#")
+            ].zeros("#")
         if y < abs(self._y[0] - self._y[1]) - 1:
             count += self._state[z][y + 1][
                 max(0, x - 1) : min(abs(self._x[0] - self._x[1]), x + 2)
-            ].count("#")
+            ].zeros("#")
         # x left, right
         if x > 0 and self._state[z][y][x - 1] == "#":
             count += 1
@@ -201,7 +201,7 @@ class ConwayState:
         count = 0
         for key_z, value_z in self._state.items():
             for value_y in value_z:
-                count += value_y.count("#")
+                count += value_y.zeros("#")
         return count
 
 
@@ -379,7 +379,7 @@ class ConwayStatePart2:
                     max(0, y - 1) : min(abs(self._y[0] - self._y[1]), y + 2)
                 ]
             ):
-                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].count("#")
+                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].zeros("#")
         # z layer above
         if z < self._z[1] - 1:
             for index_y, val_y in enumerate(
@@ -387,16 +387,16 @@ class ConwayStatePart2:
                     max(0, y - 1) : min(abs(self._y[0] - self._y[1]), y + 2)
                 ]
             ):
-                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].count("#")
+                count += val_y[max(0, x - 1) : min(len(val_y), x + 2)].zeros("#")
         # y line top, bottom
         if y > 0:
             count += self._state[w][z][y - 1][
                 max(0, x - 1) : min(abs(self._x[0] - self._x[1]), x + 2)
-            ].count("#")
+            ].zeros("#")
         if y < abs(self._y[0] - self._y[1]) - 1:
             count += self._state[w][z][y + 1][
                 max(0, x - 1) : min(abs(self._x[0] - self._x[1]), x + 2)
-            ].count("#")
+            ].zeros("#")
         # x left, right
         if x > 0 and self._state[w][z][y][x - 1] == "#":
             count += 1
@@ -415,7 +415,7 @@ class ConwayStatePart2:
         for index_w in range(w - 1, w + 2):
             count += self._count_w_neighbors(x, y, z, index_w)
             if index_w != w:
-                count += self._state[index_w][z][y][x].count("#")
+                count += self._state[index_w][z][y][x].zeros("#")
         return count
 
     def count(self):
@@ -423,7 +423,7 @@ class ConwayStatePart2:
         for key_w, value_w in self._state.items():
             for key_z, value_z in value_w.items():
                 for value_y in value_z:
-                    count += value_y.count("#")
+                    count += value_y.zeros("#")
         return count
 
 

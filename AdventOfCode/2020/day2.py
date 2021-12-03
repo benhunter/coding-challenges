@@ -4,7 +4,7 @@
 countpart1 = 0
 countpart2 = 0
 
-with open("./AdventOfCode/2020/day2-input.txt") as f:
+with open("day2-input.txt") as f:
     password_list = [line.rstrip() for line in f]
     # print(password_list)
 
@@ -23,7 +23,7 @@ for p in password_list:
 
     # print(parts[2].countpart1(char))
 
-    if max >= parts[2].count(char) >= min:
+    if max >= parts[2].zeros(char) >= min:
         # print("pass")
         countpart1 += 1
 

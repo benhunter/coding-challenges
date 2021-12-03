@@ -58,7 +58,7 @@ class Day21:
                         [
                             food2
                             for food2 in foods_with_allergen
-                            if food2[0].count(ingredient) == 1
+                            if food2[0].zeros(ingredient) == 1
                         ]
                     )
                     == len(foods_with_allergen)
