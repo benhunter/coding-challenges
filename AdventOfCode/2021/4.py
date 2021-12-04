@@ -3,8 +3,8 @@
 from pprint import pprint
 import itertools
 
-with open('4-input.txt') as f:
-    # with open('4-input-test.txt') as f:
+# with open('4-input.txt') as f:
+with open('4-input-test.txt') as f:
     # numbers, boards = [
     #     [line for line in section.split('\n')] for section in f.read().split('\n\n')]
     sections = f.read().split('\n\n')
@@ -12,8 +12,10 @@ with open('4-input.txt') as f:
 
 numbers = sections[0].split(',')
 boards = [[[cell.strip() for cell in row.split()] for row in board.split('\n')] for board in sections[1:]]
+boards_p2 = boards.copy()
 pprint(numbers)
 pprint(boards)
+
 
 def mark(board, number):
     for y, row in enumerate(board):
@@ -49,14 +51,39 @@ for n in numbers:
     if winner:
         break
 
-part1 = list(itertools.chain.from_iterable(winning_board))
-part1 = filter(lambda x: x != 'X', part1)
-part1 = list(map(int, part1))
-part1 = sum(part1)
-part1 = part1 * int(n)
-print(f'Part 1: {part1}')
+
+def sum_board(board):
+    return sum(int(cell) for row in board for cell in row if cell != 'X')
+
+
+# part1 = list(itertools.chain.from_iterable(winning_board))
+# part1 = filter(lambda x: x != 'X', part1)
+# part1 = list(map(int, part1))
+# part1 = sum(part1)
+part1 = sum_board(board) * int(n)
+print(f'Part 1: {part1}')  # 4512
 
 # Part 2
+last_board_bingo = False
+for n in numbers:
+    print(f'Drawing {n}')
+    for board in boards_p2:
+        mark(board, n)
+        print(f'Marked {board} {n} sum: {sum_board(board)}')
+        if check(board):
+            if len(boards_p2) > 1:
+                boards_p2.remove(board)
+                print(f'Removed board: {board}')
+            else:
+                print(f'Not removing last board: {board}')
+                last_board_bingo = True
+    if last_board_bingo:
+        print(f'Bingo!')
+        break
+
+print(f'Last board: {boards_p2[0]}')
+pprint(boards_p2[0])
+print(f'Part 2: {sum_board(boards_p2[0])}')  # 706
 
 part2 = 0
 print(f'Part 2: {part2}')
