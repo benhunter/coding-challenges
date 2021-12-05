@@ -82,6 +82,7 @@ for n in numbers:
             else:
                 # print(f'Not removing last board: {board}')
                 last_board_bingo = True
+    # Remove any boards set to None
     # boards_p2 = [board for board in boards_p2 if board is not None]
     boards_p2 = list(filter(lambda b: b is not None, boards_p2))  # same as above
     if last_board_bingo:
