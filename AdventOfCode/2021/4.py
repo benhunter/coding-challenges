@@ -3,8 +3,8 @@
 from pprint import pprint
 import itertools
 
-# with open('4-input.txt') as f:
-with open('4-input-test.txt') as f:
+with open('4-input.txt') as f:
+# with open('4-input-test.txt') as f:
     # numbers, boards = [
     #     [line for line in section.split('\n')] for section in f.read().split('\n\n')]
     sections = f.read().split('\n\n')
@@ -64,26 +64,30 @@ part1 = sum_board(board) * int(n)
 print(f'Part 1: {part1}')  # 4512
 
 # Part 2
-last_board_bingo = False
+last_board_bingo = None
 for n in numbers:
     print(f'Drawing {n}')
-    for board in boards_p2:
+    for board_num, board in enumerate(boards_p2):
+        if board is None:
+            continue
         mark(board, n)
-        print(f'Marked {board} {n} sum: {sum_board(board)}')
+        print(f'Marked {n} on {board_num} sum: {sum_board(board)}')
+        pprint(board)
         if check(board):
-            if len(boards_p2) > 1:
-                boards_p2.remove(board)
-                print(f'Removed board: {board}')
+            print(f'Bingo! {n} on {board_num}')
+            remaining_boards = len(list(filter(lambda b: b is not None, boards_p2)))
+            if remaining_boards > 1:
+                boards_p2[board_num] = None
+                print(f'Removed board: {board_num} {board}, boards remaining: {remaining_boards}')
             else:
                 print(f'Not removing last board: {board}')
-                last_board_bingo = True
+                last_board_bingo = board
     if last_board_bingo:
         print(f'Bingo!')
         break
 
-print(f'Last board: {boards_p2[0]}')
-pprint(boards_p2[0])
-print(f'Part 2: {sum_board(boards_p2[0])}')  # 706
+print(f'Last board: {last_board_bingo}')
+pprint(last_board_bingo)
 
-part2 = 0
-print(f'Part 2: {part2}')
+part2 = sum_board(last_board_bingo) * int(n)
+print(f'Part 2: {part2}')  # test: 1924
