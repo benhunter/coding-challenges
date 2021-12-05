@@ -13,8 +13,8 @@ with open('4-input.txt') as f:
 numbers = sections[0].split(',')
 boards = [[[cell.strip() for cell in row.split()] for row in board.split('\n')] for board in sections[1:]]
 boards_p2 = boards.copy()
-pprint(numbers)
-pprint(boards)
+# pprint(numbers)
+# pprint(boards)
 
 
 def mark(board, number):
@@ -45,8 +45,8 @@ for n in numbers:
         if check(board):  # Should we update all the boards first?
             winner = True
             winning_board = board
-            print(f'Winner: {n}')
-            print(f'Winning board: {board}')
+            # print(f'Winner: {n}')
+            # print(f'Winning board: {board}')
             break;
     if winner:
         break
@@ -61,33 +61,35 @@ def sum_board(board):
 # part1 = list(map(int, part1))
 # part1 = sum(part1)
 part1 = sum_board(board) * int(n)
-print(f'Part 1: {part1}')  # 4512
+print(f'Part 1: {part1}')  # 55770, test: 4512
 
 # Part 2
-last_board_bingo = None
+last_board_bingo = False
 for n in numbers:
-    print(f'Drawing {n}')
+    # print(f'Drawing {n}')
     for board_num, board in enumerate(boards_p2):
         if board is None:
             continue
         mark(board, n)
-        print(f'Marked {n} on {board_num} sum: {sum_board(board)}')
-        pprint(board)
+        # print(f'Marked {n} on {board_num} sum: {sum_board(board)}')
+        # pprint(board)
+    for board_num, board in enumerate(boards_p2):
         if check(board):
-            print(f'Bingo! {n} on {board_num}')
-            remaining_boards = len(list(filter(lambda b: b is not None, boards_p2)))
-            if remaining_boards > 1:
+            # print(f'Bingo! {n} on {board_num}')
+            if len(boards_p2) > 1:
                 boards_p2[board_num] = None
-                print(f'Removed board: {board_num} {board}, boards remaining: {remaining_boards}')
+                # print(f'Removed board: {board_num} {board}, boards remaining: {len(boards_p2)}')
             else:
-                print(f'Not removing last board: {board}')
-                last_board_bingo = board
+                # print(f'Not removing last board: {board}')
+                last_board_bingo = True
+    # boards_p2 = [board for board in boards_p2 if board is not None]
+    boards_p2 = list(filter(lambda b: b is not None, boards_p2))  # same as above
     if last_board_bingo:
-        print(f'Bingo!')
+        # print(f'Bingo!')
         break
 
-print(f'Last board: {last_board_bingo}')
-pprint(last_board_bingo)
+# print(f'Last board: {boards_p2[0]}')
+# pprint(boards_p2[0])
 
-part2 = sum_board(last_board_bingo) * int(n)
-print(f'Part 2: {part2}')  # test: 1924
+part2 = sum_board(boards_p2[0]) * int(n)
+print(f'Part 2: {part2}')  # 2980, test: 1924
