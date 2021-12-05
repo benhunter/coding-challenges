@@ -1,4 +1,5 @@
-# Problem:
+# Problem: https://adventofcode.com/2021/day/5
+# Reddit solutions thread: https://www.reddit.com/r/adventofcode/comments/r9824c/2021_day_5_solutions/
 
 with open('5-input.txt') as f:
 # with open('5-input-test.txt') as f:
@@ -13,16 +14,18 @@ for row in data:
     end = list(map(int, end.split(',')))
     lines.append((start, end))
 
-# max dimension of the grid based on the largest value in the lines
+# Max dimension of the grid based on the largest value in the lines
 max_dimension = max([dim for line in lines for point in line for dim in point])
 
-# setup a grid
+# Setup the grid
 grid = [[0 for x in range(max_dimension + 1)] for y in range(max_dimension + 1)]
 
 
 # Update the grid with by incrementing each point in the grid along the line
 # ignore_diagonal for part 1
-def update_grid(grid, start, end, ignore_diagonal=True):
+def update_grid(grid, line, ignore_diagonal=True):
+    start = line[0]
+    end = line[1]
     if start[0] != end[0] and start[1] != end[1]:
         # Diagonal line
         if ignore_diagonal:
@@ -45,7 +48,7 @@ def update_grid(grid, start, end, ignore_diagonal=True):
     for y in range(min(start[1], end[1]), max(start[1], end[1]) + 1):
         for x in range(min(start[0], end[0]), max(start[0], end[0]) + 1):
             grid[y][x] += 1
-            # print(f'x: {x}, y: {y}, grid[y][x]: {grid[y][x]}')
+            # print(f'grid[{y}][{x}]: {grid[y][x]}')
 
 
 # Print the grid
@@ -55,23 +58,17 @@ def print_grid(grid):
 
 # Part 1
 for line in lines:
-    start = line[0]
-    end = line[1]
-    # print(f"start: {start} end: {end}")
-    update_grid(grid, start, end)
+    # print(f"start: {line[0]} end: {line[1]}")
+    update_grid(grid, line)
     # print_grid(grid)
-
 part1 = len(list(filter(lambda x: x > 1, [cell for row in grid for cell in row])))
 print(f'Part 1: {part1}')  # 6666, test: 5
 
 # Part 2
 grid = [[0 for x in range(max_dimension + 1)] for y in range(max_dimension + 1)]
 for line in lines:
-    start = line[0]
-    end = line[1]
-    # print(f"start: {start} end: {end}")
-    update_grid(grid, start, end, ignore_diagonal=False)
+    # print(f"start: {line[0]} end: {line[1]}")
+    update_grid(grid, line, ignore_diagonal=False)
     # print_grid(grid)
-# print_grid(grid)
 part2 = len(list(filter(lambda x: x > 1, [cell for row in grid for cell in row])))
 print(f'Part 2: {part2}')  # 19081, test: 12
