@@ -87,10 +87,10 @@ for n in numbers:
     boards_p2 = list(filter(lambda b: b is not None, boards_p2))  # same as above
     if last_board_bingo:
         # print(f'Bingo!')
+        # print(f'Last board: {boards_p2[0]}')
+        # pprint(boards_p2[0])
         break
 
-# print(f'Last board: {boards_p2[0]}')
-# pprint(boards_p2[0])
 
 part2 = sum_board(boards_p2[0]) * int(n)
 print(f'Part 2: {part2}')  # 2980, test: 1924
