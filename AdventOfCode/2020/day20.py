@@ -20,7 +20,7 @@ PROFILE = False  # profiling flag
 
 Tile = namedtuple("Tile", "number, data")
 Tile.__repr__ = (  # type: ignore
-    lambda self: f"Tile: {self.line}\n" + f"{pformat(self.data)}"  # type: ignore
+    lambda self: f"Tile: {self.number}\n" + f"{pformat(self.data)}"  # type: ignore
 )  # type: ignore
 
 # class Tile(namedtuple("Tile", "number, data")):
