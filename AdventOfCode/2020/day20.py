@@ -20,7 +20,7 @@ PROFILE = False  # profiling flag
 
 Tile = namedtuple("Tile", "number, data")
 Tile.__repr__ = (  # type: ignore
-    lambda self: f"Tile: {self.number}\n" + f"{pformat(self.data)}"  # type: ignore
+    lambda self: f"Tile: {self.line}\n" + f"{pformat(self.data)}"  # type: ignore
 )  # type: ignore
 
 # class Tile(namedtuple("Tile", "number, data")):
@@ -442,7 +442,7 @@ def solve_part2(tiles: List[Tile]) -> int:
         for x_index, tile in enumerate(solution[0]):
             if isinstance(tile, Tile):
                 flipped_data = np.flipud(tile.data)  # flip up down
-                solution[0][x_index] = Tile(tile.number, flipped_data)
+                solution[0][x_index] = Tile(tile.line, flipped_data)
     # orient candidate_tile to tile above
     # for orientation in orientation_generator(candidate_tile):
     #     if is_face_matches_tile(orientation[0], solution[0][0]):
