@@ -5,8 +5,8 @@ with open('X-input-test.txt') as f:
     data = [line.rstrip() for line in f]
     # print(data)
 
-for number in data:
-    print(f"number: {number}")
+for line in data:
+    print(f"number: {line}")
 
 part1 = 0
 print(f'Part 1: {part1}')
