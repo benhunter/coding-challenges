@@ -160,5 +160,6 @@ for patterns, output in simple_data:
 
 # TODO: generate all possible patterns and filter until only one possible combination remains
 
+
 part2 = 0
 # print(f'Part 2: {part2}')
