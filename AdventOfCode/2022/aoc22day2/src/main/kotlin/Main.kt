@@ -1,6 +1,8 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
+val DEBUG = false
+
 fun main(args: Array<String>) {
 
     val filename = "input.txt"
@@ -11,19 +13,20 @@ fun main(args: Array<String>) {
     resourceStream.close()
 
     val lines = text.split("\n")
-//    println(lines)
+//    debugln(lines)
 
     val leftMap = mapOf("A" to 1, "B" to 2, "C" to 3)
     val rightMap = mapOf("X" to 1, "Y" to 2, "Z" to 3)
+    val playToScoreMap = mapOf("rock" to 1, "paper" to 2, "scissors" to 3)
 
     var part1 = 0
     lines.forEach {
-        print("$it ")
+        debug("$it ")
         val round = it.split(" ")
         val leftScore = leftMap[round[0]] ?: throw Exception("oof")
-        print("$leftScore ")
+        debug("$leftScore ")
         val rightScore = rightMap[round[1]] ?: throw Exception("oof")
-        print("$rightScore ")
+        debug("$rightScore ")
 
         val winScore = when {
             leftScore == 1 && rightScore == 3 -> 0
@@ -33,42 +36,73 @@ fun main(args: Array<String>) {
             leftScore < rightScore -> 6
             else -> 6
         }
-        print("winScore $winScore ")
+        debug("winScore $winScore ")
         val roundScore = rightScore + winScore
-        print("roundScore $roundScore ")
+        debug("roundScore $roundScore ")
         part1 += roundScore
 
-        println("score $part1 ")
+        debugln("score $part1 ")
     }
     println("part 1 $part1")
-    // 14531
+//     14531
 
+    val leftMapWord = mapOf("A" to "rock", "B" to "paper", "C" to "scissors")
     val outcomeMap = mapOf("X" to "lose", "Y" to "draw", "Z" to "win")
+    val outcomeScoreMap = mapOf("lose" to 0, "draw" to 3, "win" to 6)
+
+    debugln("part 2")
 
     var part2 = 0
     lines.forEach {
-        print("$it ")
+        debug("input: $it ### ")
         val round = it.split(" ")
-        val leftScore = leftMap[round[0]] ?: throw Exception("oof")
-        print("$leftScore ")
+        val leftPlay = leftMapWord[round[0]] ?: throw Exception("oof")
+        debug("$leftPlay ")
 
         val outcome = outcomeMap[round[1]]
-        print("$outcome ")
-        val winScore = rightMap[round[1]] ?: throw Exception("oof")
-        val rightScore = when (outcome) {
-            "win"-> (leftScore + 1).mod(3)
-            "draw"-> leftScore
-            "lose"-> (leftScore - 1).mod(3)
-            else -> throw Exception("wtf")
+        debug("$outcome ### ")
+
+
+        val rightPlay = when (outcome) {
+            "draw" -> leftPlay
+            "lose" -> when (leftPlay) {
+                "rock" -> "scissors"
+                "paper" -> "rock"
+                "scissors" -> "paper"
+                else -> TODO("need outcome $outcome for leftPlay $leftPlay")
+            }
+
+            "win" -> when (leftPlay) {
+                "scissors" -> "rock"
+                "paper" -> "scissors"
+                "rock" -> "paper"
+                else -> TODO("need outcome $outcome for leftPlay $leftPlay")
+            }
+
+            else -> TODO("need outcome $outcome")
         }
-        print("rightScore $rightScore ")
+        debug("rightPlay $rightPlay, ")
 
+        val rightScore = playToScoreMap[rightPlay] ?: throw Exception("oof")
+        debug("rightScore $rightScore, ")
+
+        val winScore = outcomeScoreMap[outcome] ?: throw Exception("oof")
+        debug("winScore $winScore, ")
         val roundScore = rightScore + winScore
-        print("roundScore $roundScore ")
-        part2+= roundScore
+        debug("roundScore $roundScore, ")
 
-        println("score $part2")
+        part2 += roundScore
+
+        debugln("score $part2")
     }
     println("part 2 $part2")
-    // 8383 too low
+    // 11258
+}
+
+fun debug(out: String) {
+    if (DEBUG) print(out)
+}
+
+fun debugln(out: String) {
+    if (DEBUG) println(out)
 }
