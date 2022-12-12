@@ -17,8 +17,9 @@ fun main(args: Array<String>) {
 
 
     var part1 = 0
-    lines.forEach {
-        debug("$it ")
+    lines.forEach { line ->
+        debug("$line")
+
         debugln("score $part1 ")
     }
     println("part 1 $part1")
@@ -27,8 +28,9 @@ fun main(args: Array<String>) {
 //    debugln("part 2")
 //
 //    var part2 = 0
-//    lines.forEach {
-//        debug("input: $it ### ")
+//    lines.forEach { line ->
+//        debug("input: $line ### ")
+//
 //        debugln("score $part2")
 //    }
 //    println("part 2 $part2")

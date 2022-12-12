@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
         val pairs = line.split(",")
         debug("$pairs ")
 
-        val ranges = pairs.map { it.split('-').map { it.toInt() }}
+        val ranges = pairs.map { it.split('-').map { it.toInt() } }
         debug("ranges $ranges ")
 
         if (within(ranges[0], ranges[1])) part1 += 1
@@ -34,14 +34,33 @@ fun main(args: Array<String>) {
     // 580
 
 
-//    debugln("part 2")
-//
-//    var part2 = 0
-//    lines.forEach {
-//        debug("input: $it ### ")
-//        debugln("score $part2")
-//    }
-//    println("part 2 $part2")
+    debugln("part 2")
+
+    var part2 = 0
+    lines.forEach { line ->
+//        debug("input: $line ### ")
+
+        val pairs = line.split(",")
+        debug("$pairs ")
+
+        val ranges = pairs.map { it.split('-').map { it.toInt() } }
+        debug("ranges $ranges ")
+
+        if (overlap(ranges[0], ranges[1])) part2 += 1
+        else if (overlap(ranges[1], ranges[0])) part2 += 1
+        else if (within(ranges[0], ranges[1])) part1 += 1
+        else if (within(ranges[1], ranges[0])) part1 += 1
+
+        debugln("score $part2")
+    }
+    println("part 2 $part2")
+    // 895
+}
+
+fun overlap(range0: List<Int>, range1: List<Int>): Boolean {
+    if (range0[0] >= range1[0] && range0[0] <= range1[1]) return true
+    if (range0[1] >= range1[0] && range0[1] <= range1[1]) return true
+    return false
 }
 
 fun within(range1: List<Int>, range2: List<Int>): Boolean {
