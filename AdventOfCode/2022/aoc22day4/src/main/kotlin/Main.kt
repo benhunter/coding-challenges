@@ -1,7 +1,7 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-val DEBUG = true
+val DEBUG = false
 
 fun main(args: Array<String>) {
 
@@ -48,8 +48,6 @@ fun main(args: Array<String>) {
 
         if (overlap(ranges[0], ranges[1])) part2 += 1
         else if (overlap(ranges[1], ranges[0])) part2 += 1
-        else if (within(ranges[0], ranges[1])) part1 += 1
-        else if (within(ranges[1], ranges[0])) part1 += 1
 
         debugln("score $part2")
     }
@@ -70,7 +68,6 @@ fun within(range1: List<Int>, range2: List<Int>): Boolean {
     }
     return false
 }
-
 
 fun debug(out: String) {
     if (DEBUG) print(out)
