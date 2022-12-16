@@ -1,10 +1,11 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-fun main(args: Array<String>) {
+fun day1() {
+    println("day 1")
 
-//    val filename = "sample.txt"
-    val filename = "input.txt"
+//    val filename = "1-test.txt"
+    val filename = "1-input.txt"
     val resourceStream = ClassLoader.getSystemResourceAsStream(filename)
     val reader = BufferedReader(InputStreamReader(resourceStream))
 
