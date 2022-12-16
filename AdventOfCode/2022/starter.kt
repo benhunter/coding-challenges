@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
 
     var part1 = 0
     lines.forEach { line ->
-        debug("$line")
+        debug("$line ")
 
         debugln("score $part1 ")
     }
