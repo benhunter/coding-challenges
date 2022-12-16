@@ -1,12 +1,12 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-val DEBUG = false
 
-fun main(args: Array<String>) {
+fun day5() {
+    println("day 5")
 
-    val filename = "input.txt"
-//    val filename = "test.txt"
+    val filename = "5-input.txt"
+//    val filename = "5-test.txt"
     val resourceStream = ClassLoader.getSystemResourceAsStream(filename)
     val reader = BufferedReader(InputStreamReader(resourceStream))
     val text = reader.readText()
@@ -104,22 +104,4 @@ fun debugStacks(stacks: MutableList<MutableList<String>>) {
         println()
     }
     println("End of Stacks")
-}
-
-fun debug(out: String) {
-    if (DEBUG) print(out)
-}
-
-fun debugln(out: String) {
-    if (DEBUG) println(out)
-}
-
-fun <T> MutableList<T>.mapInPlace(mutator: (T) -> (T)) {
-    this.forEachIndexed { i, value ->
-        val changedValue = mutator(value)
-
-        if (value != changedValue) {
-            this[i] = changedValue
-        }
-    }
 }
