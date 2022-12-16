@@ -1,12 +1,12 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-val DEBUG = false
 
-fun main(args: Array<String>) {
+fun day4() {
+    println("day 4")
 
-    val filename = "input.txt"
-//    val filename = "test.txt"
+    val filename = "4-input.txt"
+//    val filename = "4-test.txt"
     val resourceStream = ClassLoader.getSystemResourceAsStream(filename)
     val reader = BufferedReader(InputStreamReader(resourceStream))
     val text = reader.readText().trim()
@@ -67,12 +67,4 @@ fun within(range1: List<Int>, range2: List<Int>): Boolean {
         return true
     }
     return false
-}
-
-fun debug(out: String) {
-    if (DEBUG) print(out)
-}
-
-fun debugln(out: String) {
-    if (DEBUG) println(out)
 }
