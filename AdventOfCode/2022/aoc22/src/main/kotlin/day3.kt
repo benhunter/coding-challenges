@@ -1,12 +1,12 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-val DEBUG = false
 
-fun main(args: Array<String>) {
+fun day3() {
+    println("day 3")
 
-    val filename = "input.txt"
-//    val filename = "test.txt"
+    val filename = "3-input.txt"
+//    val filename = "3-test.txt"
     val resourceStream = ClassLoader.getSystemResourceAsStream(filename)
     val reader = BufferedReader(InputStreamReader(resourceStream))
     val text = reader.readText().trim()
@@ -59,16 +59,8 @@ fun priorityOf(char: Char): Int {
 val alphabetPriorityMap = buildAlphaMap()
 
 fun buildAlphaMap(): MutableMap<Char, Int> {
-    val priorityMap = mapOf<Char, Int>().toMutableMap()
-    ('a'..'z').forEachIndexed { index, c -> priorityMap[c] = index + 1 }
-    ('A'..'Z').forEachIndexed { index, c -> priorityMap[c] = index + 27 }
-    return priorityMap
-}
-
-fun debug(out: String) {
-    if (DEBUG) print(out)
-}
-
-fun debugln(out: String) {
-    if (DEBUG) println(out)
+    val alphaMap = mapOf<Char, Int>().toMutableMap()
+    ('a'..'z').forEachIndexed { index, c -> alphaMap[c] = index + 1 }
+    ('A'..'Z').forEachIndexed { index, c -> alphaMap[c] = index + 27 }
+    return alphaMap
 }

@@ -21,33 +21,33 @@ fun day1() {
 //    val text = reader.readLines()
 
     val text = reader.readText()
-    println(text)
+    debugln(text)
 
     resourceStream.close()
     reader.close()
 
     var groups = text
         .split("\n\n")
-    println(groups)
+    debugln(groups.toString())
 
     val intGroups = groups
         .map {
-            println("groups $it")
+            debugln("groups $it")
             it.split("\n")
                 .filter { it.isNotEmpty() }
                 .map {
-                    println("line $it")
+                    debugln("line $it")
                     it.toInt()
                 }
         }
-    println(intGroups)
+    debugln(intGroups.toString())
 
     val totals = intGroups.map { it.sum() }
-    println(totals)
+    debugln(totals.toString())
 
     val part1 = totals.max()
-    println("part1 $part1")
+    println("part 1 $part1")
 
     val part2 = totals.sortedDescending().subList(0, 3).sum()
-    println("part2 $part2")
+    println("part 2 $part2")
 }

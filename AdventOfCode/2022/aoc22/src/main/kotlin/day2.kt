@@ -1,7 +1,6 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-val DEBUG = false
 
 fun day2() {
     println("day 2")
@@ -98,12 +97,4 @@ fun day2() {
     }
     println("part 2 $part2")
     // 11258
-}
-
-fun debug(out: String) {
-    if (DEBUG) print(out)
-}
-
-fun debugln(out: String) {
-    if (DEBUG) println(out)
 }
