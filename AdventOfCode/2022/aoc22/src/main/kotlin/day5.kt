@@ -1,16 +1,9 @@
-import java.io.BufferedReader
-import java.io.InputStreamReader
-
-
 fun day5() {
     println("day 5")
 
     val filename = "5-input.txt"
 //    val filename = "5-test.txt"
-    val resourceStream = ClassLoader.getSystemResourceAsStream(filename)
-    val reader = BufferedReader(InputStreamReader(resourceStream))
-    val text = reader.readText()
-    resourceStream.close()
+    val text = getTextFromResource(filename)
 
     val input = text.split("\n\n")
     var inputLines = input[0].split("\n").toMutableList().map { line -> line.chunked(4) }

@@ -1,20 +1,10 @@
-import java.io.BufferedReader
-import java.io.InputStreamReader
-
-
 fun day4() {
     println("day 4")
 
     val filename = "4-input.txt"
 //    val filename = "4-test.txt"
-    val resourceStream = ClassLoader.getSystemResourceAsStream(filename)
-    val reader = BufferedReader(InputStreamReader(resourceStream))
-    val text = reader.readText().trim()
-    resourceStream.close()
-
+    val text = getTextFromResource(filename).trim()
     val lines = text.split("\n")
-//    debugln(lines)
-
 
     var part1 = 0
     lines.forEach { line ->
@@ -53,18 +43,4 @@ fun day4() {
     }
     println("part 2 $part2")
     // 895
-}
-
-fun overlap(range0: List<Int>, range1: List<Int>): Boolean {
-    if (range0[0] >= range1[0] && range0[0] <= range1[1]) return true
-    if (range0[1] >= range1[0] && range0[1] <= range1[1]) return true
-    return false
-}
-
-fun within(range1: List<Int>, range2: List<Int>): Boolean {
-    // example: 3,4 and 2,5
-    if (range1[0] >= range2[0] && range1[1] <= range2[1]) {
-        return true
-    }
-    return false
 }
