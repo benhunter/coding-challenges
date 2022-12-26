@@ -3,17 +3,14 @@ import java.io.InputStreamReader
 
 
 fun dayx() {
-    println("day x")
+    val day = 0
+    println("day $day")
 
-//    val filename = "x-input.txt"
-    val filename = "x-test.txt"
-    val resourceStream = ClassLoader.getSystemResourceAsStream(filename)
-    val reader = BufferedReader(InputStreamReader(resourceStream))
-    val text = reader.readText().trim()
-    resourceStream.close()
-
+//    val filename = "$day-input.txt"
+    val filename = "$day-test.txt"
+    val text = getTextFromResource(filename).trim()
     val lines = text.split("\n")
-//    debugln(lines)
+    debugln(lines.toString())
 
 
     var part1 = 0

@@ -1,7 +1,3 @@
-import java.io.BufferedReader
-import java.io.InputStreamReader
-
-
 fun day6() {
     println("day 6")
 
@@ -46,8 +42,4 @@ fun day6() {
         }
         println("part 2 $part2") // 3605
     }
-}
-
-fun isUniqueChars(string: String, size: Int): Boolean {
-    return string.toSet().size == size
 }

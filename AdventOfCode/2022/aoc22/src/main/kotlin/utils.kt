@@ -1,11 +1,11 @@
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-fun debug(out: String) {
+fun debug(out: Any) {
     if (DEBUG) print(out)
 }
 
-fun debugln(out: String) {
+fun debugln(out: Any) {
     if (DEBUG) println(out)
 }
 
@@ -47,4 +47,8 @@ fun within(range0: List<Int>, range1: List<Int>): Boolean {
         return true
     }
     return false
+}
+
+fun isUniqueChars(string: String, size: Int): Boolean {
+    return string.toSet().size == size
 }
