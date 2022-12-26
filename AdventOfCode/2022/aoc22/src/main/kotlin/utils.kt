@@ -5,7 +5,7 @@ fun debug(out: Any) {
     if (DEBUG) print(out)
 }
 
-fun debugln(out: Any) {
+fun debugln(out: Any="") {
     if (DEBUG) println(out)
 }
 

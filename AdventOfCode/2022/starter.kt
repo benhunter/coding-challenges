@@ -10,7 +10,7 @@ fun dayx() {
     val filename = "$day-test.txt"
     val text = getTextFromResource(filename).trim()
     val lines = text.split("\n")
-    debugln(lines.toString())
+    debugln(lines)
 
 
     var part1 = 0
