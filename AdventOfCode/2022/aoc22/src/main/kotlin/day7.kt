@@ -23,7 +23,6 @@ fun day7() {
         debugln("filesystem $filesystem")
         debugln("filesystemSize $filesystemSize")
         val tokens = line.split(" ")
-//        tokens.forEach { debugln(it) }
 
         when (tokens[0]) {
             "$" -> when (tokens[1]) {
@@ -108,20 +107,27 @@ fun day7() {
     part1 = filesystemSize.filter {
         filesystem[it.key]?.isNotEmpty() ?: throw Exception("$it not found")
     }
-        .filter { it.value <= 100000 }
+        .filter { it.value <= 100_000 }
         .values
         .sum()
 
     println("part 1 $part1") // 1454188
 
 
-//    debugln("part 2")
-//
-//    var part2 = 0
-//    lines.forEach { line ->
-//        debug("input: $line ### ")
-//
-//        debugln("score $part2")
-//    }
-//    println("part 2 $part2")
+    debugln("part 2")
+
+    val DISK_SIZE = 70_000_000
+    val NEED_FOR_UPDATE = 30_000_000
+    val free = DISK_SIZE - (filesystemSize["/"] ?: throw Exception("/ not found"))
+    val needFree = NEED_FOR_UPDATE - free
+    val candidates = filesystemSize.filter {
+        filesystem[it.key]?.isNotEmpty() ?: throw Exception("$it not found")
+    }
+        .filter { it.value >= needFree }
+        .toList()
+        .sortedBy { (_, value) -> value }
+    val part2 = candidates[0].second
+    debugln(candidates)
+
+    println("part 2 $part2")
 }
