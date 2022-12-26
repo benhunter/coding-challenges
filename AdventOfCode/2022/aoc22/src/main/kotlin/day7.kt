@@ -8,12 +8,10 @@ fun day7() {
     val lines = text.split("\n")
     debugln(lines.toString())
 
-    // build filesystem
 
     var part1 = 0
 
-    data class FilesystemObject(val name: String, val size: Int = 0)
-
+    // build filesystem
     val filesystemSize = mutableMapOf("/" to 0)
     val filesystem = mutableMapOf("/" to mutableListOf<String>())
     var currentDir = "/"
@@ -93,9 +91,7 @@ fun day7() {
 
             val childrenNeedToCalcSize = children.filter { it in needToCalcSize }
             if (childrenNeedToCalcSize.isEmpty()) {
-                var sum = 0
-                children.forEach { sum += filesystemSize[it] ?: throw Exception("$it not found") }
-                filesystemSize[current] = sum
+                filesystemSize[current] = children.mapNotNull { filesystemSize[it] }.sum()
                 needToCalcSize.remove(current)
             }
         }
@@ -129,5 +125,5 @@ fun day7() {
     val part2 = candidates[0].second
     debugln(candidates)
 
-    println("part 2 $part2")
+    println("part 2 $part2") // 4183246
 }
