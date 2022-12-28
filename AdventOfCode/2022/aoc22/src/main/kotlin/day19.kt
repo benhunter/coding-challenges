@@ -23,16 +23,16 @@ fun day19() {
         val geodebot_obsidian = blueprint[30].toInt()
 
         val startTimeBlueprint = System.nanoTime()
-        val maxGeode = 0
-//            calcMaxGeodes(
-//            orebot_ore,
-//            claybot_ore,
-//            obsidianbot_ore,
-//            obsidianbot_clay,
-//            geodebot_ore,
-//            geodebot_obsidian,
-//            minutesPart1
-//        )
+        val maxGeode =
+            calcMaxGeodes(
+            orebot_ore,
+            claybot_ore,
+            obsidianbot_ore,
+            obsidianbot_clay,
+            geodebot_ore,
+            geodebot_obsidian,
+            minutesPart1
+        )
         val stopTimeBlueprint = System.nanoTime()
         val timeSeconds = (stopTimeBlueprint - startTimeBlueprint) / 1_000_000_000.0
         println("Elapsed time: $timeSeconds seconds")
@@ -77,7 +77,7 @@ fun day19() {
     }
     debugln(maxGeodes2)
     part2 = maxGeodes2.reduce { acc, i -> acc * i }
-    println("part 2 $part2")
+    println("part 2 $part2") // 4216
 
     val stopTime = System.nanoTime()
     val timeSeconds = (stopTime - startTime) / 1_000_000_000.0
