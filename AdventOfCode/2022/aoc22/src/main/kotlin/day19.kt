@@ -10,12 +10,14 @@ fun day19() {
     val blueprints = text.split("\n")
 //    debugln(blueprints)
 
-    val minutes = 15 // 24
+    val minutes = 24 // 24
     // 15 = 70 seconds with maps
 
     var part1 = 0
     blueprints.forEach { line ->
         debugln(line)
+
+        calcMaxGeodes(line)
 
         val blueprint = line.split(" ")
         val orebot_ore = blueprint[6].toInt()
@@ -25,28 +27,42 @@ fun day19() {
         val geodebot_ore = blueprint[27].toInt()
         val geodebot_obsidian = blueprint[30].toInt()
 
-//        data class Rock(var ore: Int = 0, var clay: Int = 0, var obsidian: Int = 0, var geode: Int = 0) // optimization test vs maps...
+        data class Rock(
+            var ore: Int = 0,
+            var clay: Int = 0,
+            var obsidian: Int = 0,
+            var geode: Int = 0
+        ) // optimization test vs maps...
+        {
+            operator fun plusAssign(rock: Rock) {
+                ore += rock.ore
+                clay += rock.clay
+                obsidian += rock.obsidian
+                geode += rock.geode
+            }
+        }
 
-        val emptyBots = mapOf("ore" to 0, "clay" to 0, "obsidian" to 0, "geode" to 0)
-        val startRobots = mapOf("ore" to 1, "clay" to 0, "obsidian" to 0, "geode" to 0).toMutableMap()
-        val startResources = mapOf("ore" to 0, "clay" to 0, "obsidian" to 0, "geode" to 0).toMutableMap()
+        val emptyBots = Rock()
+        val startRobots = Rock(1, 0, 0, 0)
+        val startResources = Rock()
 
         data class State(
             val minute: Int,
-            val robots: MutableMap<String, Int>,
-            val resources: MutableMap<String, Int>,
+            val robots: Rock,
+            val resources: Rock,
             val action: Action
         )
 
         val startState = State(1, startRobots, startResources, Action.Mine)
-        val nodes = mutableListOf<State>(startState)
-        val leafNodes = mutableListOf<State>()
+        val nodes = mutableListOf(startState)
+//        val leafNodes = mutableListOf<State>()
         var maxGeodes = 0
+        var bestNode: State
 
         var count = 1
         var current = nodes[0]
         while (nodes.isNotEmpty()) {
-            current = nodes.removeFirst()
+            current = nodes.removeLast()
             count += 1
 
             // do current
@@ -54,112 +70,88 @@ fun day19() {
             when (current.action) {
                 Action.Mine -> {}
                 Action.BuildOre -> {
-                    if (current.resources["ore"]!! >= orebot_ore) {
-//                        debug("Spending $orebot_ore ore on 1 ore-collecting robot. ")
-                        current.resources["ore"] = current.resources["ore"]!! - orebot_ore
+                    if (current.resources.ore >= orebot_ore) {
+                        current.resources.ore -= orebot_ore
                     } else continue
                 }
 
                 Action.BuildClay -> {
-                    if (current.resources["ore"]!! >= claybot_ore) {
-//                        debug("Spending $claybot_ore ore on 1 clay-collecting robot. ")
-                        current.resources["ore"] = current.resources["ore"]!! - claybot_ore
+                    if (current.resources.ore >= claybot_ore) {
+                        current.resources.ore -= claybot_ore
                     } else continue
                 }
 
                 Action.BuildObsidian -> {
-                    if (current.resources["ore"]!! >= obsidianbot_ore && current.resources["clay"]!! >= obsidianbot_clay) {
-//                        debug("Spending $obsidianbot_ore ore and $obsidianbot_clay clay on 1 obsidian-collecting robot. ")
-                        current.resources["ore"] = current.resources["ore"]!! - obsidianbot_ore
-                        current.resources["clay"] = current.resources["clay"]!! - obsidianbot_clay
+                    if (current.resources.ore >= obsidianbot_ore && current.resources.clay >= obsidianbot_clay) {
+                        current.resources.ore -= obsidianbot_ore
+                        current.resources.clay -= obsidianbot_clay
                     } else continue
                 }
 
                 Action.BuildGeode -> {
-                    if (current.resources["ore"]!! >= geodebot_ore && current.resources["obsidian"]!! >= geodebot_obsidian) {
-//                        debug("Spending $geodebot_ore ore and $geodebot_obsidian obsidian on 1 geode-collecting robot. ")
-                        current.resources["ore"] = current.resources["ore"]!! - geodebot_ore
-                        current.resources["obsidian"] = current.resources["obsidian"]!! - geodebot_obsidian
+                    if (current.resources.ore >= geodebot_ore && current.resources.obsidian >= geodebot_obsidian) {
+                        current.resources.ore -= geodebot_ore
+                        current.resources.obsidian -= geodebot_obsidian
 
                     } else continue
                 }
             }
+
             // mine
-            current.resources["ore"] = current.resources["ore"]!! + current.robots["ore"]!!
-//            debug("ore ${current.resources["ore"]}. ")
-            current.resources["clay"] = current.resources["clay"]!! + current.robots["clay"]!!
-//            debug("clay ${current.resources["clay"]}. ")
-            current.resources["obsidian"] = current.resources["obsidian"]!! + current.robots["obsidian"]!!
-//            debug("obsidian ${current.resources["obsidian"]}. ")
-            current.resources["geode"] = current.resources["geode"]!! + current.robots["geode"]!!
-//            debug("geode ${current.resources["geode"]}. ")
+            current.resources += current.robots
 
             // add robot
             when (current.action) {
                 Action.Mine -> {}
-                Action.BuildOre -> current.robots["ore"] = current.robots["ore"]!! + 1
-                Action.BuildClay -> current.robots["clay"] = current.robots["clay"]!! + 1
-                Action.BuildObsidian -> current.robots["obsidian"] = current.robots["obsidian"]!! + 1
-                Action.BuildGeode -> current.robots["geode"] = current.robots["geode"]!! + 1
+                Action.BuildOre -> current.robots.ore += 1
+                Action.BuildClay -> current.robots.clay += 1
+                Action.BuildObsidian -> current.robots.obsidian += 1
+                Action.BuildGeode -> current.robots.geode += 1
             }
 
             // add branches
             if (current.minute < minutes) {
+
+                val minutesRemain = minutes - current.minute
+
+                fun triangle(n: Int): Int {
+                    return n * (n + 1) / 2
+                }
+
+                // Is it possible to get more than maxGeodes?
+                val maxTheoreticalGeodes =
+                    current.resources.geode + (current.robots.geode * minutesRemain) + triangle(minutesRemain - 1)
+                if (maxTheoreticalGeodes <= maxGeodes) continue
+
+                nodes.add(State(current.minute + 1, current.robots.copy(), current.resources.copy(), Action.Mine))
+                nodes.add(State(current.minute + 1, current.robots.copy(), current.resources.copy(), Action.BuildOre))
+                nodes.add(State(current.minute + 1, current.robots.copy(), current.resources.copy(), Action.BuildClay))
                 nodes.add(
                     State(
                         current.minute + 1,
-                        current.robots.toMutableMap(),
-                        current.resources.toMutableMap(),
-                        Action.Mine
-                    )
-                )
-                nodes.add(
-                    State(
-                        current.minute + 1,
-                        current.robots.toMutableMap(),
-                        current.resources.toMutableMap(),
-                        Action.BuildOre
-                    )
-                )
-                nodes.add(
-                    State(
-                        current.minute + 1,
-                        current.robots.toMutableMap(),
-                        current.resources.toMutableMap(),
-                        Action.BuildClay
-                    )
-                )
-                nodes.add(
-                    State(
-                        current.minute + 1,
-                        current.robots.toMutableMap(),
-                        current.resources.toMutableMap(),
+                        current.robots.copy(),
+                        current.resources.copy(),
                         Action.BuildObsidian
                     )
                 )
-                nodes.add(
-                    State(
-                        current.minute + 1,
-                        current.robots.toMutableMap(),
-                        current.resources.toMutableMap(),
-                        Action.BuildGeode
-                    )
-                )
+                nodes.add(State(current.minute + 1, current.robots.copy(), current.resources.copy(), Action.BuildGeode))
+
             } else {
-                leafNodes.add(current)
+//                leafNodes.add(current)
+            }
 
-                if (current.resources["geode"]!! > maxGeodes) {
-                    maxGeodes = current.resources["geode"]!!
-                    debugln("maxGeodes $maxGeodes")
-                }
-
+            if (current.resources.geode > maxGeodes) {
+                maxGeodes = current.resources.geode
+                bestNode = current
+                debugln("maxGeodes $maxGeodes. Best node $bestNode")
             }
 
 //            debugln()
         }
 
-        val blueprintMaxGeodes = leafNodes.maxOf { it.resources["geode"]!! }
-        debugln("blueprintMaxGeodes $blueprintMaxGeodes")
+//        val blueprintMaxGeodes = leafNodes.maxOf { it.resources.geode }
+//        debugln("blueprintMaxGeodes $blueprintMaxGeodes")
+        debugln("maxGeodes $maxGeodes")
         debugln()
     }
     println("part 1 $part1")
