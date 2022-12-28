@@ -52,3 +52,7 @@ fun within(range0: List<Int>, range1: List<Int>): Boolean {
 fun isUniqueChars(string: String, size: Int): Boolean {
     return string.toSet().size == size
 }
+
+fun triangle(n: Int): Int {
+    return n * (n + 1) / 2
+}
