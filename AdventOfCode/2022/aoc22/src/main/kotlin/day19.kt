@@ -100,7 +100,7 @@ private fun calcMaxGeodes(
     val startState = State(1, startRobots, startResources, Action.Mine)
     val nodes = mutableListOf(startState)
     var maxGeodes = 0
-    var bestNode: State
+    val maxOreNeeded = listOf(oreBotOre, clayBotOre, obsidianBotOre, geodeBotOre).max()
 
     var current: State
     while (nodes.isNotEmpty()) {
@@ -156,6 +156,7 @@ private fun calcMaxGeodes(
             }
         }
 
+        // TODO cache/memoize
         // Optimize here!
         // add branches
         if (current.minute < minutes) {
@@ -172,16 +173,18 @@ private fun calcMaxGeodes(
 
             nodes.add(State(current.minute + 1, current.robots.copy(), current.resources.copy(), Action.Mine))
 
+
+            // don't add if there will be more of this robot than any robot needs for creation
             // don't add if there aren't enough resources!
-            if (current.resources.ore >= oreBotOre) {
+            if (current.robots.ore < maxOreNeeded && current.resources.ore >= oreBotOre) {
                 nodes.add(State(current.minute + 1, current.robots.copy(), current.resources.copy(), Action.BuildOre))
             }
 
-            if (current.resources.ore >= clayBotOre) {
+            if (current.robots.clay < obsidianBotClay && current.resources.ore >= clayBotOre) {
                 nodes.add(State(current.minute + 1, current.robots.copy(), current.resources.copy(), Action.BuildClay))
             }
 
-            if (current.resources.clay >= obsidianBotClay && current.resources.ore >= obsidianBotOre) {
+            if (current.robots.obsidian < geodeBotObsidian && current.resources.clay >= obsidianBotClay && current.resources.ore >= obsidianBotOre) {
                 nodes.add(
                     State(
                         current.minute + 1,
