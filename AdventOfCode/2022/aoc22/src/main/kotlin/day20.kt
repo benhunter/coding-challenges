@@ -1,21 +1,33 @@
-fun dayx() {
-    val day = 0
+fun day20() {
+    val day = 20
     println("day $day")
     val startTime = System.nanoTime()
 
 //    val filename = "$day-input.txt"
     val filename = "$day-test.txt"
     val text = getTextFromResource(filename).trim()
-    val lines = text.split("\n")
+    val lines = text.split("\n").map { it.toInt() }
     debugln(lines)
 
+    val decrypted = lines.toMutableList()
 
     var part1 = 0
-    lines.forEach { line ->
-        debug("$line ")
+    lines.forEachIndexed() { index, line ->
+        debug("index $index. line $line. ")
 
-        debugln("score $part1 ")
+        val currentPosition = decrypted.indexOf(line)
+        debug("currentPosition $currentPosition. ")
+        var newPosition = (currentPosition + line) % lines.size
+        if (newPosition < 0) newPosition += lines.size - 1
+        debug("newPosition $newPosition. ")
+        decrypted.add(newPosition + 1, line)
+        decrypted.remove(line)
+
+        debug("decrypted $decrypted. ")
+
+        debugln()
     }
+    debugln()
     println("part 1 $part1")
 
     val timeSeconds = elapsedTimeInSecondsSince(startTime)

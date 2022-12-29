@@ -25,16 +25,15 @@ fun day19() {
         val startTimeBlueprint = System.nanoTime()
         val maxGeode =
             calcMaxGeodes(
-            orebot_ore,
-            claybot_ore,
-            obsidianbot_ore,
-            obsidianbot_clay,
-            geodebot_ore,
-            geodebot_obsidian,
-            minutesPart1
-        )
-        val stopTimeBlueprint = System.nanoTime()
-        val timeSeconds = (stopTimeBlueprint - startTimeBlueprint) / 1_000_000_000.0
+                orebot_ore,
+                claybot_ore,
+                obsidianbot_ore,
+                obsidianbot_clay,
+                geodebot_ore,
+                geodebot_obsidian,
+                minutesPart1
+            )
+        val timeSeconds = elapsedTimeInSecondsSince(startTimeBlueprint)
         println("Elapsed time: $timeSeconds seconds")
 
         return@map maxGeode
@@ -69,8 +68,7 @@ fun day19() {
             geodebot_obsidian,
             minutesPart2
         )
-        val stopTimeBlueprint = System.nanoTime()
-        val timeSeconds = (stopTimeBlueprint - startTimeBlueprint) / 1_000_000_000.0
+        val timeSeconds = elapsedTimeInSecondsSince(startTime)
         println("Elapsed time: $timeSeconds seconds")
 
         return@map maxGeode
@@ -79,8 +77,7 @@ fun day19() {
     part2 = maxGeodes2.reduce { acc, i -> acc * i }
     println("part 2 $part2") // 4216
 
-    val stopTime = System.nanoTime()
-    val timeSeconds = (stopTime - startTime) / 1_000_000_000.0
+    val timeSeconds = elapsedTimeInSecondsSince(startTime)
     println("Elapsed time: $timeSeconds seconds")
 }
 
@@ -157,6 +154,8 @@ private fun calcMaxGeodes(
         }
 
         // TODO cache/memoize
+        // - triangle()
+        // - don't add any States that have already been seen!
         // Optimize here!
         // add branches
         if (current.minute < minutes) {
@@ -203,7 +202,7 @@ private fun calcMaxGeodes(
         if (current.resources.geode > maxGeodes) {
             maxGeodes = current.resources.geode
 
-            val timeSeconds = (System.nanoTime() - startTime) / 1_000_000_000.0
+            val timeSeconds = elapsedTimeInSecondsSince(startTime)
             debug("$timeSeconds seconds... ")
 
             debugln("maxGeodes $maxGeodes. Best node $current")
@@ -225,8 +224,7 @@ data class Rock(
     var clay: Int = 0,
     var obsidian: Int = 0,
     var geode: Int = 0
-)
-{
+) {
     operator fun plusAssign(rock: Rock) {
         ore += rock.ore
         clay += rock.clay

@@ -5,7 +5,7 @@ fun debug(out: Any) {
     if (DEBUG) print(out)
 }
 
-fun debugln(out: Any="") {
+fun debugln(out: Any = "") {
     if (DEBUG) println(out)
 }
 
@@ -56,3 +56,8 @@ fun isUniqueChars(string: String, size: Int): Boolean {
 fun triangle(n: Int): Int {
     return n * (n + 1) / 2
 }
+
+fun elapsedTimeInSecondsSince(time: Long): Long {
+    return (System.nanoTime() - time) / 1_000_000_000
+}
+
