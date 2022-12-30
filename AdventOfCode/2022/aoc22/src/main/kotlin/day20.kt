@@ -29,7 +29,7 @@ fun day20() {
     lines.forEachIndexed { index, line ->
         debug("$line. ")
 
-        val currentPosition = decrypted.indexOf(line)
+        val currentPosition = decrypted.indexOf(line) // TODO fails here because input lines are not unique!
         debug("currentPosition $currentPosition. ")
 
         var newPosition: Int
