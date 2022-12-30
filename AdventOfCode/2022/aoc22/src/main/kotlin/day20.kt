@@ -1,105 +1,89 @@
+import java.math.BigInteger
+
+data class ValueStartIndexPair(val value: BigInteger, val startIndex: Int)
+
 fun day20() {
-
-//    val list = List(7) { it }.toMutableList()
-//    list.forEach { debugln(it) }
-//
-//    list.removeAt(2)
-//    list.add(4, 2)
-//    list.add(7, 7)
-
-
     val day = 20
     println("day $day")
     val startTime = System.nanoTime()
 
     val filename = "$day-input.txt"
-//    val filename = "$day-test.txt"
-//    val filename = "$day-test2.txt"
     val text = getTextFromResource(filename).trim()
-    val lines = text.split("\n").map { it.toInt() }
-//    debugln(lines)
+    val lines = text.split("\n").map { it.toLong() }
 
-    val decrypted = lines.toMutableList()
+    val input = lines.mapIndexed { index, i -> ValueStartIndexPair(i.toBigInteger(), index) }
+    val decrypted = input.toMutableList()
 
-    val answer = getTextFromResource("20-test-answer.txt").trim().split("\n")
-//    val answer = getTextFromResource("20-test2-answer.txt").trim().split("\n")
-        .map { line -> line.split(",").map { it.trim().toInt() } }
+    input.forEachIndexed(rotate(decrypted))
 
-    var part1 = 0
-    lines.forEachIndexed { index, line ->
-        debug("$line. ")
+    println("part 1 ${score(decrypted)}") // 19070
+    println("part 1 time: ${elapsedTimeInSecondsSince(startTime)} seconds")
 
-        val currentPosition = decrypted.indexOf(line) // TODO fails here because input lines are not unique!
-        debug("currentPosition $currentPosition. ")
 
-        var newPosition: Int
-        if (line > 0) {
-            newPosition = currentPosition + line
+    debugln("part 2")
+    val part2StartTime = System.nanoTime()
 
-            // wrap
-            if (newPosition > (lines.size - 1)) {
-                newPosition %= lines.size - 1
-                if (newPosition == 0) {
-                    newPosition = lines.size - 1
-                }
-            }
-            debug("newPosition $newPosition. ")
-        } else if (line < 0) {
-            newPosition = currentPosition + line
+    val magic = 811589153.toBigInteger()
+    val keyed = lines.mapIndexed { index, i -> ValueStartIndexPair(i.toBigInteger() * magic, index) }
+    val decrypted2 = keyed.toMutableList()
+    debugln("initial")
+    debugln(decrypted2.map { it.value })
 
-            // wrap
-            if (newPosition < 1) {
-                newPosition %= lines.size - 1
-                newPosition += lines.size - 1
-                if (newPosition == 0) {
-                    newPosition = lines.size - 1
-                }
-            }
-            debug("newPosition $newPosition. ")
-        } else {
-            // line == 0
-            newPosition = currentPosition
-        }
-
-        if (newPosition != currentPosition) {
-            decrypted.remove(line)
-            decrypted.add(newPosition, line)
-        }
-
-        debug("decrypted $decrypted. ")
-//        debug("answer: ${answer[index]} ")
-//        val match = answer[index] == decrypted
-//        debug("match: $match ")
-//        if (!match) throw Exception("failed to match answer")
-        debugln()
+    repeat(10) { iteration ->
+        keyed.toList().forEachIndexed(rotate(decrypted2))
+        debugln("after ${iteration + 1}")
+        debugln(decrypted2.map { it.value })
     }
-    debugln()
-    val posn0 = decrypted.indexOf(0)
-    part1 += decrypted[(posn0 + 1000) % decrypted.size]
-    part1 += decrypted[(posn0 + 2000) % decrypted.size]
-    part1 += decrypted[(posn0 + 3000) % decrypted.size]
-    println("part 1 $part1")
-    // wrong:
-    // -5067
-    // 8722 too low
 
-    val timeSeconds = elapsedTimeInSecondsSince(startTime)
-    println("part 1 time: $timeSeconds seconds")
+    val part2 = score(decrypted2)
+    println("part 2 $part2") // 14773357352059
+    println("part 2 time: ${elapsedTimeInSecondsSince(part2StartTime)} seconds")
+    println("total time: ${elapsedTimeInSecondsSince(startTime)} seconds")
+}
 
+fun score(decrypted: List<ValueStartIndexPair>): BigInteger {
+    val zero = decrypted.find { it.value == 0.toBigInteger() }
+    val posn0 = decrypted.indexOf(zero)
+    var sum = decrypted[(posn0 + 1000) % decrypted.size].value
+    sum += decrypted[(posn0 + 2000) % decrypted.size].value
+    sum += decrypted[(posn0 + 3000) % decrypted.size].value
+    return sum
+}
 
-//    val part2StartTime = System.nanoTime()
-//    debugln("part 2")
-//
-//    var part2 = 0
-//    lines.forEach { line ->
-//        debug("input: $line ### ")
-//
-//        debugln("score $part2")
-//    }
-//    println("part 2 $part2")
-//
-//    val part2timeSeconds = elapsedTimeInSecondsSince(part2StartTime)
-//    println("part 2 time: $part2timeSeconds seconds")
-//    val timeSeconds = elapsedTimeInSecondsSince(startTimeBlueprint)
-//    println("total time: $timeSeconds seconds")
+private fun rotate(
+    decrypted: MutableList<ValueStartIndexPair>,
+) = { index: Int, pair: ValueStartIndexPair ->
+    val currentPosition = decrypted.indexOf(pair).toBigInteger()
+
+    var newPosition: BigInteger
+    if (pair.value > 0.toBigInteger()) {
+        newPosition = currentPosition + pair.value
+
+        // wrap
+        if (newPosition > (decrypted.size - 1).toBigInteger()) {
+            newPosition %= (decrypted.size - 1).toBigInteger()
+            if (newPosition == 0.toBigInteger()) {
+                newPosition = (decrypted.size - 1).toBigInteger()
+            }
+        }
+    } else if (pair.value < 0.toBigInteger()) {
+        newPosition = currentPosition + pair.value
+
+        // wrap
+        if (newPosition < 1.toBigInteger()) {
+            newPosition %= (decrypted.size - 1).toBigInteger()
+            newPosition += (decrypted.size - 1).toBigInteger()
+            if (newPosition == 0.toBigInteger()) {
+                newPosition = (decrypted.size - 1).toBigInteger()
+            }
+        }
+    } else {
+        // pair.value == 0
+        newPosition = currentPosition
+    }
+
+    if (newPosition != currentPosition) {
+        decrypted.remove(pair)
+        decrypted.add(newPosition.toInt(), pair)
+    }
 }

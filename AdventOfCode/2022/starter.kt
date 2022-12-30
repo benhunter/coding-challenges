@@ -35,6 +35,6 @@ fun dayx() {
 //
 //    val part2timeSeconds = elapsedTimeInSecondsSince(part2StartTime)
 //    println("part 2 time: $part2timeSeconds seconds")
-//    val timeSeconds = elapsedTimeInSecondsSince(startTimeBlueprint)
+//    val timeSeconds = elapsedTimeInSecondsSince(startTime)
 //    println("total time: $timeSeconds seconds")
 }
