@@ -14,7 +14,7 @@ fun day20() {
     val input = lines.mapIndexed { index, i -> ValueStartIndexPair(i.toBigInteger(), index) }
     val decrypted = input.toMutableList()
 
-    input.forEachIndexed(rotate(decrypted))
+    input.forEach(rotate(decrypted))
 
     println("part 1 ${score(decrypted)}") // 19070
     println("part 1 time: ${elapsedTimeInSecondsSince(startTime)} seconds")
@@ -26,17 +26,14 @@ fun day20() {
     val magic = 811589153.toBigInteger()
     val keyed = lines.mapIndexed { index, i -> ValueStartIndexPair(i.toBigInteger() * magic, index) }
     val decrypted2 = keyed.toMutableList()
-    debugln("initial")
-    debugln(decrypted2.map { it.value })
 
-    repeat(10) { iteration ->
-        keyed.toList().forEachIndexed(rotate(decrypted2))
-        debugln("after ${iteration + 1}")
-        debugln(decrypted2.map { it.value })
+    repeat(10) {
+        keyed.toList().forEach(rotate(decrypted2))
     }
 
     val part2 = score(decrypted2)
     println("part 2 $part2") // 14773357352059
+    if (part2 != 14773357352059.toBigInteger()) throw Exception("wrong part 2")
     println("part 2 time: ${elapsedTimeInSecondsSince(part2StartTime)} seconds")
     println("total time: ${elapsedTimeInSecondsSince(startTime)} seconds")
 }
@@ -52,34 +49,19 @@ fun score(decrypted: List<ValueStartIndexPair>): BigInteger {
 
 private fun rotate(
     decrypted: MutableList<ValueStartIndexPair>,
-) = { index: Int, pair: ValueStartIndexPair ->
+) = rotateAction@{ pair: ValueStartIndexPair ->
     val currentPosition = decrypted.indexOf(pair).toBigInteger()
-
     var newPosition: BigInteger
-    if (pair.value > 0.toBigInteger()) {
-        newPosition = currentPosition + pair.value
 
-        // wrap
-        if (newPosition > (decrypted.size - 1).toBigInteger()) {
-            newPosition %= (decrypted.size - 1).toBigInteger()
-            if (newPosition == 0.toBigInteger()) {
-                newPosition = (decrypted.size - 1).toBigInteger()
-            }
-        }
-    } else if (pair.value < 0.toBigInteger()) {
-        newPosition = currentPosition + pair.value
+    if (pair.value == 0.toBigInteger()) return@rotateAction
 
-        // wrap
-        if (newPosition < 1.toBigInteger()) {
-            newPosition %= (decrypted.size - 1).toBigInteger()
-            newPosition += (decrypted.size - 1).toBigInteger()
-            if (newPosition == 0.toBigInteger()) {
-                newPosition = (decrypted.size - 1).toBigInteger()
-            }
-        }
-    } else {
-        // pair.value == 0
-        newPosition = currentPosition
+    newPosition = currentPosition + pair.value
+    newPosition %= (decrypted.size - 1).toBigInteger()
+
+    if (newPosition < 1.toBigInteger()) {
+        newPosition += (decrypted.size - 1).toBigInteger()
+    } else if (newPosition == 0.toBigInteger()) {
+        newPosition = (decrypted.size - 1).toBigInteger()
     }
 
     if (newPosition != currentPosition) {

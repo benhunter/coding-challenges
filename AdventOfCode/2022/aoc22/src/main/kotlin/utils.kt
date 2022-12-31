@@ -57,7 +57,7 @@ fun triangle(n: Int): Int {
     return n * (n + 1) / 2
 }
 
-fun elapsedTimeInSecondsSince(time: Long): Long {
-    return (System.nanoTime() - time) / 1_000_000_000
+fun elapsedTimeInSecondsSince(time: Long): Double {
+    return (System.nanoTime() - time) / 1_000_000_000.0
 }
 
