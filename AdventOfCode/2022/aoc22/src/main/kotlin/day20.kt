@@ -39,11 +39,10 @@ fun day20() {
 }
 
 fun score(decrypted: List<ValueStartIndexPair>): BigInteger {
-    val zero = decrypted.find { it.value == 0.toBigInteger() }
-    val posn0 = decrypted.indexOf(zero)
-    var sum = decrypted[(posn0 + 1000) % decrypted.size].value
-    sum += decrypted[(posn0 + 2000) % decrypted.size].value
-    sum += decrypted[(posn0 + 3000) % decrypted.size].value
+    val posn0 = decrypted.withIndex().find { it.value.value == 0.toBigInteger() }?.index ?: throw Exception()
+    val sum = listOf(1000, 2000, 3000).map {
+        decrypted[(posn0 + it) % decrypted.size].value
+    }.sumOf { it }
     return sum
 }
 

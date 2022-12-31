@@ -26,11 +26,13 @@ fun <T> MutableList<T>.mapInPlace(mutator: (T) -> (T)) {
 }
 
 fun getTextFromResource(resourceName: String): String {
-    val resourceStream = ClassLoader.getSystemResourceAsStream(resourceName)
-    val reader = BufferedReader(InputStreamReader(resourceStream))
-    val text = reader.readText()
-    resourceStream.close()
-    return text
+    ClassLoader.getSystemResourceAsStream(resourceName)?.let {
+        val reader = BufferedReader(InputStreamReader(it))
+        val text = reader.readText()
+        it.close()
+        return text
+    }
+    throw RuntimeException("Could not open resource: $resourceName")
 }
 
 // Check if two ranges overlap.
