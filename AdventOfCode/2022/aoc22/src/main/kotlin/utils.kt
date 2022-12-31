@@ -35,6 +35,8 @@ fun getTextFromResource(resourceName: String): String {
     throw RuntimeException("Could not open resource: $resourceName")
 }
 
+fun getTrimmedLinesFromResource(testFilename: String) = getTextFromResource(testFilename).trim().split("\n")
+
 // Check if two ranges overlap.
 fun overlap(range0: List<Int>, range1: List<Int>): Boolean {
     if (range0[0] >= range1[0] && range0[0] <= range1[1]) return true
