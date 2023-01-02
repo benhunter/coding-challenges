@@ -9,7 +9,7 @@ class Day21 {
         val startTime = System.nanoTime()
         val part1Test = part1(test)
         println("day $day part 1 test $part1Test")
-        if (part1Test != 152.toLong()) throw Exception("wrong answer")
+        if (part1Test != 152.toLong()) throw Exception("wrong")
         println("day $day part 1 test time: ${elapsedTimeInSecondsSince(startTime)} seconds")
 
         val part1StartTime = System.nanoTime()
@@ -19,19 +19,29 @@ class Day21 {
         if (part1 <= 571353930) throw Exception("too low")
         if (part1 != 121868120894282) throw Exception("wrong")
 
-//        val part2StartTime = System.nanoTime()
-//        val part2 = part2(input)
-//        println("day $day part 2 $part2")
-//        println("day $day part 2 time: ${elapsedTimeInSecondsSince(part2StartTime)} seconds")
-//        println("day $day total time: ${elapsedTimeInSecondsSince(startTime)} seconds")
+        val part2TestStartTime = System.nanoTime()
+        val part2Test = part2(test)
+        println("day $day part 2 test $part2Test")
+        if (part2Test != 301.toLong()) throw Exception("wrong")
+        println("day $day part 2 test time: ${elapsedTimeInSecondsSince(part2TestStartTime)} seconds")
+
+        val part2StartTime = System.nanoTime()
+        val part2 = part2(input)
+        println("day $day part 2 $part2")
+        println("day $day part 2 time: ${elapsedTimeInSecondsSince(part2StartTime)} seconds")
+        println("day $day total time: ${elapsedTimeInSecondsSince(startTime)} seconds")
     }
 
     fun part1(input: List<String>): Long {
-        val operations = input.associate {
-            val tokens = it.split(":")
-            tokens[0] to tokens[1].trim()
-        }
+        val operations = getOperations(input)
 
+        return calc("root", operations)
+    }
+
+    fun part2(input: List<String>): Long {
+        val operations = getOperations(input)
+        val humn = operations["humn"]
+        debugln("$humn")
         return calc("root", operations)
     }
 
@@ -50,7 +60,8 @@ class Day21 {
         return result
     }
 
-    fun part2(input: List<String>): Long {
-        return part1(input)
+    private fun getOperations(input: List<String>) = input.associate {
+        val tokens = it.split(":")
+        tokens[0] to tokens[1].trim()
     }
 }
