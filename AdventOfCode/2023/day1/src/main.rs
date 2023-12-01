@@ -1,5 +1,3 @@
-use std::io::prelude::*;
-
 fn main() {
     let input = include_str!("../input.txt");
     let result = solve_part1(input);
@@ -49,7 +47,6 @@ fn first_digit(line: &str) -> i32 {
             None => (),
         }
         for j in 1..10 {
-            let s2 = format!("{}", j);
             if s.starts_with(NUMS[j]) {
                 return j as i32;
             }
@@ -66,17 +63,12 @@ fn last_digit(line: &str) -> i32 {
             None => (),
         }
         for j in 1..10 {
-            let s2 = format!("{}", j);
             if slice.starts_with(NUMS[j]) {
                 return j as i32;
             }
         }
     }
     panic!("😅");
-}
-
-fn string_to_str(s: String) -> &'static str {
-    Box::leak(s.into_boxed_str())
 }
 
 #[cfg(test)]
