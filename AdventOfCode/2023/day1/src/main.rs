@@ -1,12 +1,12 @@
 use std::io::prelude::*;
 
 fn main() {
-    let input = include_str!("../part1.txt");
+    let input = include_str!("../input.txt");
     let result = solve_part1(input);
-    println!("part1: {}", result);
+    println!("✅ part1: {}", result);
 
     let result = solve_part2(input);
-    println!("part2: {}", result);
+    println!("✅ part2: {}", result);
 }
 
 fn solve_part1(input: &str) -> i32 {
@@ -32,38 +32,47 @@ fn solve_part2(input: &str) -> i32 {
         .sum::<i32>()
 }
 
+static NUMS: [&'static str; 10] = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
+fn get_digit_if_first_char_is_digit(line: &str) -> Option<i32> {
+    if line.chars().next().unwrap().is_digit(10) {
+        return Some(line.chars().next().unwrap().to_digit(10).unwrap() as i32);
+    }
+    None
+}
+
 fn first_digit(line: &str) -> i32 {
     for i in 0..line.len() {
         let s = &line[i..];
-        if s.chars().next().unwrap().is_digit(10) {
-            return s.chars().next().unwrap().to_digit(10).unwrap() as i32;
+        match get_digit_if_first_char_is_digit(s) {
+            Some(d) => return d,
+            None => (),
         }
-        let nums = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
         for j in 1..10 {
             let s2 = format!("{}", j);
-            if s.starts_with(nums[j]) {
+            if s.starts_with(NUMS[j]) {
                 return j as i32;
             }
         }
     }
-    panic!("no digit found");
+    panic!("😅");
 }
 
 fn last_digit(line: &str) -> i32 {
     for i in (0..line.len()).rev() {
         let slice = &line[i..];
-        if slice.chars().next().unwrap().is_digit(10) {
-            return slice.chars().next().unwrap().to_digit(10).unwrap() as i32;
+        match get_digit_if_first_char_is_digit(slice) {
+            Some(d) => return d,
+            None => (),
         }
-        let nums = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
         for j in 1..10 {
             let s2 = format!("{}", j);
-            if slice.starts_with(nums[j]) {
+            if slice.starts_with(NUMS[j]) {
                 return j as i32;
             }
         }
     }
-    panic!("no digit found");
+    panic!("😅");
 }
 
 fn string_to_str(s: String) -> &'static str {
@@ -99,5 +108,17 @@ mod tests {
         assert_eq!(last_digit("2one"), 1);
         assert_eq!(last_digit("three2one"), 1);
         assert_eq!(last_digit("three2on"), 2);
+    }
+
+    #[test]
+    fn test_part1() {
+        let input = include_str!("../input.txt");
+        assert_eq!(solve_part1(input), 54388);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = include_str!("../input.txt");
+        assert_eq!(solve_part2(input), 53515);
     }
 }
