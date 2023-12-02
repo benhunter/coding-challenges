@@ -21,12 +21,12 @@ struct Game {
 }
 
 fn parse_record(record: &str) -> Cubes {
-    let mut record = record.split(", ");
+    let record = record.split(", ");
     let mut red = 0;
     let mut green = 0;
     let mut blue = 0;
-    while let Some(part) = record.next() {
-        let mut part = part.split(" ");
+    for part in record {
+        let mut part = part.split(' ');
         let num = part.next().unwrap().parse::<i32>().unwrap();
         let color = part.next().unwrap();
         match color {
@@ -41,7 +41,7 @@ fn parse_record(record: &str) -> Cubes {
 
 fn combine_records(input: &str) -> Cubes {
     input.split("; ")
-        .map(|record| parse_record(record))
+        .map(parse_record)
         .fold(Cubes {red: 0, green: 0, blue: 0}, |acc, record| {
             Cubes {
                 red: acc.red.max(record.red),
@@ -56,7 +56,7 @@ fn solve_part1(input: &str) -> i32 {
     input.lines()
         .map(|games| {
             let mut games = games.split(": ");
-            let id = games.next().unwrap().split(" ").nth(1).unwrap().parse::<i32>().unwrap();
+            let id = games.next().unwrap().split(' ').nth(1).unwrap().parse::<i32>().unwrap();
             let record = combine_records(games.next().unwrap());
             Game {id, record}
         })
