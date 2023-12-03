@@ -44,7 +44,7 @@ impl Computer {
     fn add(&mut self) {
         let value1 = self.memory[self.memory[self.ip + 1]];
         let value2 = self.memory[self.memory[self.ip + 2]];
-        let target = self.memory[self.ip + 3] as usize;
+        let target = self.memory[self.ip + 3];
         self.memory[target] = value1 + value2;
         self.ip += 4;
     }
@@ -52,7 +52,7 @@ impl Computer {
     fn multiply(&mut self) {
         let value1 = self.memory[self.memory[self.ip + 1]];
         let value2 = self.memory[self.memory[self.ip + 2]];
-        let target = self.memory[self.ip + 3] as usize;
+        let target = self.memory[self.ip + 3];
         self.memory[target] = value1 * value2;
         self.ip += 4;
     }
