@@ -14,14 +14,8 @@ fn solve_part1(input: &str) -> i32 {
     let mut sum = 0;
     let mut current = Coordinate { x: 0, y: 0 };
 
-    loop {
-        let span = engine.next_part_location(current);
-        if span.is_none() {
-            break;
-        }
-        let span = span.unwrap();
+    while let Some(span) = engine.next_part_location(current) {
         if engine.is_adjacent_to_symbol(span.clone(), is_symbol) {
-            // part_count += 1;
             let x = if span.end.x == 0 {
                 engine.schematic[span.end.y as usize].len() as i32
             } else {
@@ -43,25 +37,19 @@ fn solve_part1(input: &str) -> i32 {
 
 fn solve_part2(input: &str) -> i32 {
     let mut engine = parse(input);
-    let mut part = engine.next_gear_part(Coordinate { x: 0, y: 0 }, is_asterisk);
+    let mut coordinate = Coordinate{ x: 0, y: 0};
 
-    while part.is_some() {
-        engine.add_gear_part(part.clone().unwrap());
-        part = engine.next_gear_part(part.unwrap().span.end, is_asterisk);
+    while let Some(part) = engine.next_gear_part(coordinate, is_asterisk) {
+        engine.add_gear_part(part.clone());
+        coordinate = part.span.end
     }
 
     let mut solution = 0;
-    let mut count_matches = 0;
-    let mut count_misses = 0;
-
     while let Some(current) = engine.gear_parts.pop() {
         engine.gear_parts.iter()
             .for_each(|x| {
                 if x.gear == current.gear {
                     solution += current.value * x.value;
-                    count_matches += 1;
-                } else {
-                    count_misses += 1;
                 }
             });
     }
