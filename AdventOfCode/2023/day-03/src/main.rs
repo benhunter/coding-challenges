@@ -37,7 +37,7 @@ fn solve_part1(input: &str) -> i32 {
 
 fn solve_part2(input: &str) -> i32 {
     let mut engine = parse(input);
-    let mut coordinate = Coordinate{ x: 0, y: 0};
+    let mut coordinate = Coordinate { x: 0, y: 0 };
 
     while let Some(part) = engine.next_gear_part(coordinate, is_asterisk) {
         engine.add_gear_part(part.clone());
@@ -109,7 +109,7 @@ impl Engine {
                     break;
                 }
             } else {
-                panic!("?? wut: {:?}", current_char);
+                panic!("🧐 wut: {:?}", current_char);
             }
 
             current.x += 1;
@@ -138,13 +138,11 @@ impl Engine {
         let x = part_location.start.x;
         let end = self.calculate_end(&part_location, y);
 
-        if self.get_symbol_above(is_symbol, y, x, end).is_some() {
+        if self.get_symbol_above(is_symbol, y, x, end).is_some() ||
+            self.get_symbol_below(is_symbol, y, x, end).is_some() {
             return true;
-        }
+        };
 
-        if self.get_symbol_below(is_symbol, y, x, end).is_some() {
-            return true;
-        }
 
         let x = part_location.start.x;
         if self.get_symbol_left(&part_location, is_symbol, y, x).is_some() {
@@ -203,28 +201,23 @@ impl Engine {
 
         let end = self.calculate_end(&part_location, y);
 
-        // above
         if let Some(value) = self.get_symbol_above(is_gear, y, x, end) {
             return value;
         }
 
-        // below
         if let Some(value) = self.get_symbol_below(is_gear, y, x, end) {
             return value;
         }
 
         let x = part_location.start.x;
-        // left
         if let Some(value) = self.get_symbol_left(&part_location, is_gear, y, x) {
             return value;
         }
 
         let x = part_location.end.x;
-        // right
         if let Some(value) = self.get_symbol_right(part_location, is_gear, y, x) {
             return value;
         }
-
         None
     }
 
