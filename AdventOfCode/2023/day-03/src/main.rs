@@ -107,11 +107,23 @@ impl Engine {
         let y = part_number_location.start.y;
         let x = part_number_location.start.x;
 
+        let end = if part_number_location.end.x == 0 {
+            self.schematic[y as usize - 1].len() as i32
+        } else {
+            part_number_location.end.x + 1
+        };
+
         // above
-        // dbg!("checking above");
+        dbg!("checking above");
+        dbg!(y);
         if y > 0 {
-            // dbg!("found row above");
-            for x in x - 1..(part_number_location.end.x + 1) {
+            dbg!("found row above");
+            dbg!(self.schematic[y as usize - 1].len());
+            dbg!(part_number_location.end.x);
+
+
+            for x in (x - 1)..end {
+                dbg!(x);
                 if x < 0 {
                     continue;
                 } else if x >= self.schematic[y as usize - 1].len() as i32 {
@@ -121,9 +133,6 @@ impl Engine {
                 if above != '.' && !above.is_ascii_digit() {
                     return true;
                 }
-                // if is_symbol(above) {
-                //     return true;
-                // }
             }
         }
 
@@ -133,7 +142,7 @@ impl Engine {
         // dbg!(y);
         if y + 1 < self.schematic.len() as i32 {
             // dbg!("checking below");
-            for x in (x - 1..part_number_location.end.x + 1) {
+            for x in (x - 1)..end {
                 // dbg!(x);
                 if x < 0 {
                     continue;
@@ -145,9 +154,6 @@ impl Engine {
                 if below != '.' && !below.is_ascii_digit() {
                     return true;
                 }
-                // if is_symbol(below) {
-                //     return true;
-                // }
             }
         }
 
@@ -166,9 +172,6 @@ impl Engine {
                 if left != '.' && !left.is_ascii_digit() {
                     return true;
                 }
-                // if is_symbol(left) {
-                //     return true;
-                // }
             }
         }
 
@@ -192,13 +195,59 @@ impl Engine {
                 if right != '.' && !right.is_ascii_digit() {
                     return true;
                 }
-                // if is_symbol(right) {
-                //     return true;
-                // }
             }
         }
 
+        // print the line above and below the same width as the part number:
+        if y > 0 {
+            if x <= 0 {
+                eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip(0).take((part_number_location.end.x + 2) as usize).collect::<String>());
+            } else if x >= self.schematic[y as usize - 1].len() as i32 {
+                eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize - 1].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
+            } else {
+                eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
+            }
+            // eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
+        }
+
+        if x <= 0 {
+            eprintln!(" part: {}", self.schematic[y as usize].chars().skip(0).take((part_number_location.end.x + 2) as usize).collect::<String>());
+        } else if x >= self.schematic[y as usize].len() as i32 {
+            eprintln!(" part: {}", self.schematic[y as usize].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
+        } else {
+            eprintln!(" part: {}", self.schematic[y as usize].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
+        }
+        // eprintln!(" part: {}", self.schematic[y as usize].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
+
+        if y + 1 < self.schematic.len() as i32 {
+            // if x <= 0 {
+            //     eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip(0).take((part_number_location.end.x + 2) as usize).collect::<String>());
+            // } else if x >= self.schematic[y as usize + 1].len() as i32 {
+            //     eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize + 1].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
+            // } else {
+            //     eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
+            // }
+
+            // dbg!(part_number_location.clone());
+            // eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
+        }
+
         false
+    }
+
+    pub(crate) fn part_at_span(&self, span: Span) -> i32 {
+        let x = if span.end.x == 0 {
+            self.schematic[span.end.y as usize].len() as i32
+        } else {
+            span.end.x
+        };
+        let part_number = self.schematic[span.start.y as usize]
+            .chars()
+            .skip(span.start.x as usize)
+            .take(x as usize - span.start.x as usize)
+            .collect::<String>();
+        let part_value = part_number.parse::<i32>().unwrap();
+        part_value
     }
 }
 
@@ -255,8 +304,29 @@ fn solve_part1(input: &str) -> i32 {
                 .collect::<String>();
             // dbg!(part_number.clone());
             let part_value = part_number.parse::<i32>().unwrap();
-            dbg!(part_value);
+            // dbg!(part_value);
             sum += part_value;
+        } else {
+            // part is not adjacent to symbol
+            // dbg!(span.clone());
+
+            let x = if span.end.x == 0 {
+                engine.schematic[span.end.y as usize].len() as i32
+            } else {
+                span.end.x
+            };
+            // not adjacent to symbol
+            let part_number = engine.schematic[span.start.y as usize]
+                .chars()
+                .skip(span.start.x as usize)
+                .take(x as usize - span.start.x as usize)
+                .collect::<String>();
+            eprintln!("skipped: {}\n", part_number);
+            if part_number == "134" {
+                dbg!(part_number);
+                dbg!(span.clone());
+                dbg!(engine.is_adjacent_to_symbol(span.clone()));
+            }
         }
         current = span.end;
         loop_count += 1;
@@ -555,6 +625,33 @@ mod tests {
     }
 
     #[test]
+    fn test_bug() {
+        let input =
+            "............%.........................*770.............253..*....515..926..................................=........45.946..............*...\n\
+             ....155..573..103.24..............................@......*...179..*........275......................*...................*................134\n\
+             ....*............*......963...........444......801...656.796.....524.84#......*433.......997.....122.500....711.......447...................";
+        let engine = parse(input);
+        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        dbg!(engine.part_at_span(part_span.clone()));
+        dbg!(part_span.clone());
+        let actual = engine.is_adjacent_to_symbol(part_span);
+        let expected = true;
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn test_part1() {
         // two numbers are not part numbers because they are not adjacent to a symbol: 114 (top right) and 58 (middle right). Every other number is adjacent to a symbol and so is a part number; their sum is 4361.
         let input = include_str!("../test1.txt");
@@ -572,14 +669,8 @@ mod tests {
     #[test]
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
-        let lower_bound = 545185; // too low
-        // assert_eq!(solve_part1(input), solution);
-        let upper_bound = 612377; // too high
-        let solution = solve_part1(input);
-        println!("solution: {}", solution);
-
-        assert!(solution > lower_bound);
-        assert!(solution < upper_bound);
+        let solution = 546312;
+        assert_eq!(solve_part1(input), solution);
     }
 
     // #[test]
