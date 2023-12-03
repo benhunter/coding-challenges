@@ -1,47 +1,91 @@
-use std::os::unix::raw::off_t;
-
 fn main() {
-    // let test = include_str!("../test1.txt");
-    // let engine = parse(test);
-    // let start = Coordinate { x: 0, y: 0 };
-    // let span = engine.next_part_number_location(start).unwrap();
-    // dbg!(span.clone());
-    // let span = engine.next_part_number_location(span.end).unwrap();
-    // dbg!(span);
-
     let input = include_str!("../input.txt");
     let result = solve_part1(input);
     println!("✅ part1: {}", result);
 
-    // let count_of_nums_in_input = count_numbers(include_str!("../input.txt"));
-    // dbg!(count_of_nums_in_input);
-
     let result = solve_part2(input);
     println!("✅ part2: {}", result);
+
+    count_numbers(include_str!("../input.txt"));
 }
 
-fn count_numbers(input: &str) -> i32 {
-    let mut count = 0;
-    for line in input.split('\n') {
-        // count integers, not digits
-        line.split(|c: char| !c.is_ascii_digit())
-            .filter(|x| !x.is_empty())
-            .for_each(|_| count += 1)
+fn solve_part1(input: &str) -> i32 {
+    let engine = parse(input);
+    let mut sum = 0;
+    let mut current = Coordinate { x: 0, y: 0 };
+
+    loop {
+        let span = engine.next_part_location(current);
+        if span.is_none() {
+            break;
+        }
+        let span = span.unwrap();
+        if engine.is_adjacent_to_symbol(span.clone(), is_symbol) {
+            // part_count += 1;
+            let x = if span.end.x == 0 {
+                engine.schematic[span.end.y as usize].len() as i32
+            } else {
+                span.end.x
+            };
+
+            let part_number = engine.schematic[span.start.y as usize]
+                .chars()
+                .skip(span.start.x as usize)
+                .take(x as usize - span.start.x as usize)
+                .collect::<String>();
+            let part_value = part_number.parse::<i32>().unwrap();
+            sum += part_value;
+        }
+        current = span.end;
     }
-    count
+    sum
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
-struct Span {
-    start: Coordinate,
-    end: Coordinate,
+fn solve_part2(input: &str) -> i32 {
+    let mut engine = parse(input);
+    let mut part = engine.next_gear_part(Coordinate { x: 0, y: 0 }, is_asterisk);
+
+    while part.is_some() {
+        engine.add_gear_part(part.clone().unwrap());
+        part = engine.next_gear_part(part.unwrap().span.end, is_asterisk);
+    }
+
+    let mut solution = 0;
+    let mut count_matches = 0;
+    let mut count_misses = 0;
+
+    while let Some(current) = engine.gear_parts.pop() {
+        engine.gear_parts.iter()
+            .for_each(|x| {
+                if x.gear == current.gear {
+                    solution += current.value * x.value;
+                    count_matches += 1;
+                } else {
+                    count_misses += 1;
+                }
+            });
+    }
+    solution
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
-struct GearPart {
-    span: Span,
-    gear: Coordinate,
-    value: i32,
+fn parse(input: &str) -> Engine {
+    Engine {
+        schematic:
+        input
+            .split('\n')
+            .map(String::from)
+            .collect(),
+        ..Default::default()
+    }
+}
+
+fn count_numbers(input: &str) -> usize {
+    input.split('\n')
+        .map(|line| line.split(|c: char| !c.is_ascii_digit())
+            .filter(|x| !x.is_empty())
+            .count()
+        )
+        .sum()
 }
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -51,13 +95,11 @@ struct Engine {
 }
 
 impl Engine {
-    /* returns the start and end coordinates of the part number
-        end is exclusive
-    */
-    pub(crate) fn next_part_number_location(&self, start: Coordinate) -> Option<Span> {
-        let mut current = start.clone();
+    // returns the start and end coordinates of the part number. end is exclusive
+    pub(crate) fn next_part_location(&self, start: Coordinate) -> Option<Span> {
+        let mut current = start;
         let mut started = false;
-        let mut next_start = start.clone();
+        let mut next_start = start;
 
         loop {
             if current.x >= self.schematic[current.y as usize].len() as i32 {
@@ -72,7 +114,7 @@ impl Engine {
             } else if current_char.is_ascii_digit() {
                 if !started {
                     started = true;
-                    next_start = current.clone();
+                    next_start = current;
                 }
             } else if is_symbol(current_char) {
                 if started {
@@ -95,115 +137,36 @@ impl Engine {
             }
         }
 
-        return if started {
+        if started {
             Some(Span { start: next_start, end: current })
         } else {
             None
-        };
+        }
     }
 
 
-    pub(crate) fn is_adjacent_to_symbol(&self, part_number_location: Span, is_symbol: fn(char) -> bool) -> bool {
-        let y = part_number_location.start.y;
-        let x = part_number_location.start.x;
+    pub(crate) fn is_adjacent_to_symbol(&self, part_location: Span, is_symbol: fn(char) -> bool) -> bool {
+        let y = part_location.start.y;
+        let x = part_location.start.x;
+        let end = self.calculate_end(&part_location, y);
 
-        let end = if part_number_location.end.x == 0 {
-            self.schematic[y as usize - 1].len() as i32
-        } else {
-            part_number_location.end.x + 1
-        };
-
-        // above
-        if y > 0 {
-            for x in (x - 1)..end {
-                if x < 0 {
-                    continue;
-                } else if x >= self.schematic[y as usize - 1].len() as i32 {
-                    continue;
-                }
-                let above = self.schematic[y as usize - 1].chars().nth(x as usize).unwrap();
-                if is_symbol(above) {
-                    return true;
-                }
-            }
+        if self.get_symbol_above(is_symbol, y, x, end).is_some() {
+            return true;
         }
 
-        // below
-        if y + 1 < self.schematic.len() as i32 {
-            for x in (x - 1)..end {
-                if x < 0 {
-                    continue;
-                } else if x >= self.schematic[y as usize + 1].len() as i32 {
-                    continue;
-                }
-                let below = self.schematic[y as usize + 1].chars().nth(x as usize).unwrap();
-                if is_symbol(below) {
-                    return true;
-                }
-            }
+        if self.get_symbol_below(is_symbol, y, x, end).is_some() {
+            return true;
         }
 
-        let x = part_number_location.start.x;
-        // left
-        if x > 0 {
-            for y in y..(part_number_location.end.y + 1) {
-                if y < 0 {
-                    continue;
-                } else if y >= self.schematic.len() as i32 {
-                    continue;
-                }
-                let left = self.schematic[y as usize].chars().nth(x as usize - 1).unwrap();
-                if is_symbol(left) {
-                    return true;
-                }
-            }
+        let x = part_location.start.x;
+        if self.get_symbol_left(&part_location, is_symbol, y, x).is_some() {
+            return true;
         }
 
-        let x = part_number_location.end.x;
-        // right
-        if x < self.schematic[y as usize].len() as i32 {
-            for y in y - 1..(part_number_location.end.y + 1) {
-                if y < 0 {
-                    continue;
-                } else if y >= self.schematic.len() as i32 {
-                    continue;
-                }
-                let right = self.schematic[y as usize].chars().nth(x as usize).unwrap();
-                if is_symbol(right) {
-                    return true;
-                }
-            }
+        let x = part_location.end.x;
+        if self.get_symbol_right(part_location, is_symbol, y, x).is_some() {
+            return true;
         }
-
-        // Debug output
-        // print the line above and below the same width as the part number:
-        // if y > 0 {
-        //     if x <= 0 {
-        //         eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip(0).take((part_number_location.end.x + 2) as usize).collect::<String>());
-        //     } else if x >= self.schematic[y as usize - 1].len() as i32 {
-        //         eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize - 1].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
-        //     } else {
-        //         eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
-        //     }
-        // }
-
-        // if x <= 0 {
-        //     eprintln!(" part: {}", self.schematic[y as usize].chars().skip(0).take((part_number_location.end.x + 2) as usize).collect::<String>());
-        // } else if x >= self.schematic[y as usize].len() as i32 {
-        //     eprintln!(" part: {}", self.schematic[y as usize].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
-        // } else {
-        //     eprintln!(" part: {}", self.schematic[y as usize].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
-        // }
-
-        // if y + 1 < self.schematic.len() as i32 {
-        //     if x <= 0 {
-        //         eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip(0).take((part_number_location.end.x + 2) as usize).collect::<String>());
-        //     } else if x >= self.schematic[y as usize + 1].len() as i32 {
-        //         eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize + 1].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
-        //     } else {
-        //         eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip((part_number_location.start.x - 1) as usize).take((part_number_location.end.x + 2) as usize - part_number_location.start.x as usize).collect::<String>());
-        //     }
-        // }
 
         false
     }
@@ -219,32 +182,22 @@ impl Engine {
             .skip(span.start.x as usize)
             .take(x as usize - span.start.x as usize)
             .collect::<String>();
-        let part_value = part_number.parse::<i32>().unwrap();
-        part_value
+        part_number.parse::<i32>().unwrap()
     }
 
     pub(crate) fn add_gear_part(&mut self, partial_gear: GearPart) {
         self.gear_parts.push(partial_gear);
     }
 
-    pub(crate) fn clone_gear_parts(&self) -> Vec<GearPart> {
-        self.gear_parts.clone()
-    }
-
     pub(crate) fn next_gear_part(&self, coord: Coordinate, is_gear: fn(char) -> bool) -> Option<GearPart> {
         let mut current = coord;
         loop {
-            let span = self.next_part_number_location(current);
+            let span = self.next_part_location(current);
             current = if span.is_none() {
                 return None;
             } else {
                 span.clone().unwrap().end
             };
-
-            let value = self.part_at_span(span.clone().unwrap());
-            if value == 747 {
-                dbg!(span.clone());
-            }
 
             if self.is_adjacent_to_symbol(span.clone().unwrap(), is_gear) {
                 return Some(GearPart {
@@ -252,157 +205,121 @@ impl Engine {
                     gear: self.get_gear_location(span.clone().unwrap(), is_gear).unwrap(),
                     value: self.part_at_span(span.unwrap()),
                 });
-            } else {
-                // Debug output
-                // print the line above and below the same width as the part number:
-                // eprintln!("\nskipped: {:?}\n", span.clone().unwrap());
-                eprintln!("");
-
-                let part_number_location = span.unwrap();
-                let y = part_number_location.start.y;
-                let x = part_number_location.start.x;
-
-                let end = if part_number_location.end.x == 0 {
-                    self.schematic[y as usize - 1].len() as i32
-                } else {
-                    part_number_location.end.x + 2
-                };
-
-                if self.part_at_span(part_number_location.clone()) == 747 {
-                    eprintln!("skipped: {:?}\n", part_number_location.clone());
-                }
-
-                if y > 0 {
-                    if x <= 0 {
-                        eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip(0).take((part_number_location.end.x + 1) as usize).collect::<String>());
-                    } else if x >= self.schematic[y as usize - 1].len() as i32 {
-                        eprintln!("above: {}", self.schematic[y as usize - 1].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize - 1].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
-                    } else {
-                        let above = self.schematic[y as usize - 1]
-                            .chars()
-                            .skip((part_number_location.start.x - 1) as usize)
-                            .take(end as usize - part_number_location.start.x as usize)
-                            .collect::<String>();
-                        eprintln!("above: {}", above);
-                    }
-                }
-
-                if x <= 0 {
-                    eprintln!(" part: {}", self.schematic[y as usize].chars().skip(0).take((part_number_location.end.x + 1) as usize).collect::<String>());
-                } else if x >= self.schematic[y as usize].len() as i32 {
-                    eprintln!(" part: {}", self.schematic[y as usize].chars().skip((part_number_location.start.x - 1) as usize).take(self.schematic[y as usize].len() as usize - (part_number_location.start.x - 1) as usize).collect::<String>());
-                } else {
-                    let part = self.schematic[y as usize]
-                        .chars()
-                        .skip((part_number_location.start.x - 1) as usize)
-                        .take(end as usize - part_number_location.start.x as usize)
-                        .collect::<String>();
-                    eprintln!(" part: {}", part);
-                }
-
-                if y + 1 < self.schematic.len() as i32 {
-                    if x <= 0 {
-                        eprintln!("below: {}", self.schematic[y as usize + 1].chars().skip(0).take((part_number_location.end.x + 2) as usize).collect::<String>());
-                    } else if x >= self.schematic[y as usize + 1].len() as i32 {
-                        let below = self.schematic[y as usize + 1].chars()
-                            .skip((part_number_location.start.x - 1) as usize)
-                            .take(self.schematic[y as usize + 1].len() as usize - (part_number_location.start.x - 1) as usize)
-                            .collect::<String>();
-                        eprintln!("below: {}", below);
-                    } else {
-                        let below = self.schematic[y as usize + 1]
-                            .chars()
-                            .skip((part_number_location.start.x - 1) as usize)
-                            .take(end as usize - part_number_location.start.x as usize)
-                            .collect::<String>();
-                        eprintln!("below: {}", below);
-                    }
-                }
-
-                continue;
             }
         };
     }
 
-    fn get_gear_location(&self, span: Span, is_gear: fn(char) -> bool) -> Option<Coordinate> {
-        let part_number_location = span.clone();
+    fn get_gear_location(&self, part_location: Span, is_gear: fn(char) -> bool) -> Option<Coordinate> {
+        let y = part_location.start.y;
+        let x = part_location.start.x;
 
-        let y = part_number_location.start.y;
-        let x = part_number_location.start.x;
-
-        let end = if part_number_location.end.x == 0 {
-            self.schematic[y as usize - 1].len() as i32
-        } else {
-            part_number_location.end.x + 1
-        };
+        let end = self.calculate_end(&part_location, y);
 
         // above
-        if y > 0 {
-            for x in (x - 1)..end {
-                if x < 0 {
-                    continue;
-                } else if x >= self.schematic[y as usize - 1].len() as i32 {
-                    continue;
-                }
-                let above = self.schematic[y as usize - 1].chars().nth(x as usize).unwrap();
-                if is_gear(above) {
-                    return Some(Coordinate { x, y: y - 1 });
-                }
-            }
+        if let Some(value) = self.get_symbol_above(is_gear, y, x, end) {
+            return value;
         }
 
         // below
-        if y + 1 < self.schematic.len() as i32 {
-            for x in (x - 1)..end {
-                if x < 0 {
-                    continue;
-                } else if x >= self.schematic[y as usize + 1].len() as i32 {
-                    continue;
-                }
-                let below = self.schematic[y as usize + 1].chars().nth(x as usize).unwrap();
-                if is_gear(below) {
-                    return Some(Coordinate { x, y: y + 1 });
-                }
-            }
+        if let Some(value) = self.get_symbol_below(is_gear, y, x, end) {
+            return value;
         }
 
-        let x = part_number_location.start.x;
+        let x = part_location.start.x;
         // left
-        if x > 0 {
-            for y in y..(part_number_location.end.y + 1) {
-                if y < 0 {
-                    continue;
-                } else if y >= self.schematic.len() as i32 {
-                    continue;
-                }
-                let left = self.schematic[y as usize].chars().nth(x as usize - 1).unwrap();
-                if is_gear(left) {
-                    return Some(Coordinate { x: x - 1, y });
-                }
-            }
+        if let Some(value) = self.get_symbol_left(&part_location, is_gear, y, x) {
+            return value;
         }
 
-        let x = part_number_location.end.x;
+        let x = part_location.end.x;
         // right
-        if x < self.schematic[y as usize].len() as i32 {
-            for y in y - 1..(part_number_location.end.y + 1) {
-                if y < 0 {
-                    continue;
-                } else if y >= self.schematic.len() as i32 {
+        if let Some(value) = self.get_symbol_right(part_location, is_gear, y, x) {
+            return value;
+        }
+
+        None
+    }
+
+    fn get_symbol_above(&self, is_symbol: fn(char) -> bool, y: i32, x: i32, end: i32) -> Option<Option<Coordinate>> {
+        if y > 0 {
+            for x in (x - 1)..end {
+                if x < 0 || x >= self.schematic[y as usize - 1].len() as i32 {
                     continue;
                 }
-                let right = self.schematic[y as usize].chars().nth(x as usize).unwrap();
-                if is_gear(right) {
-                    return Some(Coordinate { x, y });
+                let above = self.schematic[y as usize - 1].chars().nth(x as usize).unwrap();
+                if is_symbol(above) {
+                    return Some(Some(Coordinate { x, y: y - 1 }));
                 }
             }
         }
         None
     }
+
+    fn get_symbol_below(&self, is_symbol: fn(char) -> bool, y: i32, x: i32, end: i32) -> Option<Option<Coordinate>> {
+        if y + 1 < self.schematic.len() as i32 {
+            for x in (x - 1)..end {
+                if x < 0 || x >= self.schematic[y as usize + 1].len() as i32 {
+                    continue;
+                }
+                let below = self.schematic[y as usize + 1].chars().nth(x as usize).unwrap();
+                if is_symbol(below) {
+                    return Some(Some(Coordinate { x, y: y + 1 }));
+                }
+            }
+        }
+        None
+    }
+
+    fn get_symbol_right(&self, part_location: Span, is_gear: fn(char) -> bool, y: i32, x: i32) -> Option<Option<Coordinate>> {
+        if x < self.schematic[y as usize].len() as i32 {
+            for y in y - 1..(part_location.end.y + 1) {
+                if y < 0 || y >= self.schematic.len() as i32 {
+                    continue;
+                }
+                let right = self.schematic[y as usize].chars().nth(x as usize).unwrap();
+                if is_gear(right) {
+                    return Some(Some(Coordinate { x, y }));
+                }
+            }
+        }
+        None
+    }
+
+    fn get_symbol_left(&self, part_location: &Span, is_gear: fn(char) -> bool, y: i32, x: i32) -> Option<Option<Coordinate>> {
+        if x > 0 {
+            for y in y..(part_location.end.y + 1) {
+                if y < 0 || y >= self.schematic.len() as i32 {
+                    continue;
+                }
+                let left = self.schematic[y as usize].chars().nth(x as usize - 1).unwrap();
+                if is_gear(left) {
+                    return Some(Some(Coordinate { x: x - 1, y }));
+                }
+            }
+        }
+        None
+    }
+
+    fn calculate_end(&self, part_location: &Span, y: i32) -> i32 {
+        if part_location.end.x == 0 {
+            self.schematic[y as usize - 1].len() as i32
+        } else {
+            part_location.end.x + 1
+        }
+    }
 }
 
-fn is_symbol(c: char) -> bool {
-    "*#+$&-/@%=".contains(c)
+#[derive(Debug, PartialEq, Clone, Default)]
+struct GearPart {
+    span: Span,
+    gear: Coordinate,
+    value: i32,
+}
+
+#[derive(Debug, PartialEq, Clone, Default)]
+struct Span {
+    start: Coordinate,
+    end: Coordinate,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
@@ -411,131 +328,12 @@ struct Coordinate {
     y: i32,
 }
 
-fn parse(input: &str) -> Engine {
-    Engine {
-        schematic:
-        input
-            .split('\n')
-            .map(|x| String::from(x))
-            .collect(),
-        ..Default::default()
-    }
-}
-
-fn solve_part1(input: &str) -> i32 {
-    let engine = parse(input);
-    let mut sum = 0;
-    let mut current = Coordinate { x: 0, y: 0 };
-    // let mut loop_count = 0;
-    // let mut part_count = 0;
-
-    loop {
-        let span = engine.next_part_number_location(current);
-        if span.is_none() {
-            break;
-        }
-        let span = span.unwrap();
-        if engine.is_adjacent_to_symbol(span.clone(), is_symbol) {
-            // part_count += 1;
-            let x = if span.end.x == 0 {
-                engine.schematic[span.end.y as usize].len() as i32
-            } else {
-                span.end.x
-            };
-
-            let part_number = engine.schematic[span.start.y as usize]
-                .chars()
-                .skip(span.start.x as usize)
-                .take(x as usize - span.start.x as usize)
-                .collect::<String>();
-            let part_value = part_number.parse::<i32>().unwrap();
-            sum += part_value;
-        } else {
-            // part is not adjacent to symbol
-
-            // let x = if span.end.x == 0 {
-            //     engine.schematic[span.end.y as usize].len() as i32
-            // } else {
-            //     span.end.x
-            // };
-            // let part_number = engine.schematic[span.start.y as usize]
-            //     .chars()
-            //     .skip(span.start.x as usize)
-            //     .take(x as usize - span.start.x as usize)
-            //     .collect::<String>();
-            // eprintln!("skipped: {}\n", part_number);
-        }
-        current = span.end;
-        // loop_count += 1;
-    }
-    // dbg!(loop_count);
-    // dbg!(part_count);
-    sum
+fn is_symbol(c: char) -> bool {
+    "*#+$&-/@%=".contains(c)
 }
 
 fn is_asterisk(c: char) -> bool {
     c == '*'
-}
-
-fn solve_part2(input: &str) -> i32 {
-    let mut engine = parse(input);
-    let mut part = engine.next_gear_part(Coordinate { x: 0, y: 0 }, is_asterisk);
-
-    while part.is_some() {
-        engine.add_gear_part(part.clone().unwrap());
-        part = engine.next_gear_part(part.unwrap().span.end, is_asterisk);
-    }
-
-    let possible_gear_parts = engine.clone_gear_parts().len();
-    dbg!(possible_gear_parts);
-
-    let mut solution = 0;
-    let mut count_matches = 0;
-    let mut count_misses = 0;
-    while engine.gear_parts.len() > 0 {
-        let current = engine.gear_parts.pop().unwrap();
-
-        if current.value == 747 {
-            dbg!(current.clone());
-        }
-        if current.value == 29 {
-            dbg!(current.clone());
-        }
-
-        let possible_gear_parts = engine.clone_gear_parts().len();
-
-        // engine.gear_parts.iter().filter(|x| x.gear == current.gear).for_each(|x| {
-        //     solution += current.value * x.value;
-        //     count_matches += 1;
-        // });
-        let before = count_matches;
-        engine.gear_parts.iter().
-            inspect(|x| {
-                if x.gear == current.gear {
-                    // eprintln!("matched: gear: {:?},\t one: {:?},\t two: {:?},\t len(possible_gear_parts): {}", x.gear, current.value, x.value, possible_gear_parts);
-                    // dbg!(possible_gear_parts);
-                } else {
-                    // eprintln!("missed: {:?} != {:?}", x.gear, current.gear);
-                }
-            })
-            .for_each(|x| {
-                if x.gear == current.gear {
-                    solution += current.value * x.value;
-                    count_matches += 1;
-                } else {
-                    count_misses += 1;
-                }
-            });
-
-        // TODO 747 has the wrong gear coordinate
-        if before == count_matches && (current.value == 747 || current.value == 29) {
-            eprintln!("missed: {:?}", current);
-        }
-    }
-
-    dbg!(count_matches);
-    // dbg!(count_misses);
-    solution
 }
 
 #[cfg(test)]
@@ -558,14 +356,14 @@ mod tests {
     fn test_next_part_number_location() {
         let input = "467..114..";
         let engine = parse(input);
-        let actual = engine.next_part_number_location(Coordinate { x: 0, y: 0 });
+        let actual = engine.next_part_location(Coordinate { x: 0, y: 0 });
         let expected = Span {
             start: Coordinate { x: 0, y: 0 },
             end: Coordinate { x: 3, y: 0 },
         };
         assert_eq!(actual.unwrap(), expected);
 
-        let actual = engine.next_part_number_location(expected.end);
+        let actual = engine.next_part_location(expected.end);
         let expected = Span { start: Coordinate { x: 5, y: 0 }, end: Coordinate { x: 8, y: 0 } };
         assert_eq!(actual.unwrap(), expected);
     }
@@ -578,7 +376,7 @@ mod tests {
          */
         let input = "..*.......\n467..114..";
         let engine = parse(input);
-        let actual = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let actual = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let expected = Span {
             start: Coordinate { x: 0, y: 1 },
             end: Coordinate { x: 3, y: 1 },
@@ -594,7 +392,7 @@ mod tests {
          */
         let input = "-.........\n467..114..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -605,7 +403,7 @@ mod tests {
          */
         let input = ".-.........\n.467..114..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -616,7 +414,7 @@ mod tests {
          */
         let input = ".&........\n467..114..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -627,7 +425,7 @@ mod tests {
          */
         let input = "..*.......\n467..114..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -641,7 +439,7 @@ mod tests {
          */
         let input = "...*......\n467..114..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -655,7 +453,7 @@ mod tests {
          */
         let input = "*.........\n.467..114.";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -666,7 +464,7 @@ mod tests {
          */
         let input = ".*.........\n..467..114.";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -679,7 +477,7 @@ mod tests {
          */
         let input = "467#.114..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -690,7 +488,7 @@ mod tests {
          */
         let input = "..........\n467#.114..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -701,7 +499,7 @@ mod tests {
          */
         let input = "..........\n......145%";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -715,7 +513,7 @@ mod tests {
          */
         let input = "467..114..\n...*......";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -726,7 +524,7 @@ mod tests {
          */
         let input = "467.\n...*";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -740,7 +538,7 @@ mod tests {
          */
         let input = ".467..114.\n.&........";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -751,7 +549,7 @@ mod tests {
          */
         let input = ".467..114.\n..*.......";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -762,7 +560,7 @@ mod tests {
          */
         let input = ".467..114.\n.../......";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -776,7 +574,7 @@ mod tests {
          */
         let input = ".467..114.\n*.........";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -791,7 +589,7 @@ mod tests {
          */
         let input = "*467..114.\n..........";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -803,7 +601,7 @@ mod tests {
          */
         let input = "..........\n*467..114.\n..........";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -817,8 +615,8 @@ mod tests {
          */
         let input = ".467...114\n112.......";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap().end;
-        let actual = engine.next_part_number_location(part_span).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap().end;
+        let actual = engine.next_part_location(part_span).unwrap();
         let expected = Span { start: Coordinate { x: 7, y: 0 }, end: Coordinate { x: 0, y: 1 } };
         assert_eq!(actual, expected);
     }
@@ -830,19 +628,19 @@ mod tests {
              ....155..573..103.24..............................@......*...179..*........275......................*...................*................134\n\
              ....*............*......963...........444......801...656.796.....524.84#......*433.......997.....122.500....711.......447...................";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 0 }).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
-        let part_span = engine.next_part_number_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
+        let part_span = engine.next_part_location(part_span.end).unwrap();
         // dbg!(engine.part_at_span(part_span.clone()));
         // dbg!(part_span.clone());
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
@@ -857,7 +655,7 @@ mod tests {
              *123.\n\
              .....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -870,7 +668,7 @@ mod tests {
              .123*\n\
              .....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -883,7 +681,7 @@ mod tests {
              .123.\n\
              .....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -896,7 +694,7 @@ mod tests {
              .123.\n\
              .....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -909,7 +707,7 @@ mod tests {
              .123.\n\
              .....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -919,7 +717,7 @@ mod tests {
              123.\n\
              ....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -929,7 +727,7 @@ mod tests {
              .123.\n\
              .....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -939,7 +737,7 @@ mod tests {
              .123.\n\
              .....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -949,7 +747,7 @@ mod tests {
              .123\n\
              ....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -962,7 +760,7 @@ mod tests {
              .123.\n\
              *....";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -975,7 +773,7 @@ mod tests {
              .123.\n\
              ....*";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -988,7 +786,7 @@ mod tests {
              .123.\n\
              .*...";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -998,7 +796,7 @@ mod tests {
              123.\n\
              *...";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -1008,7 +806,7 @@ mod tests {
              .123.\n\
              ..*..";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -1018,7 +816,7 @@ mod tests {
              .123.\n\
              ...*.";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -1028,7 +826,7 @@ mod tests {
              .123\n\
              ...*";
         let engine = parse(input);
-        let part_span = engine.next_part_number_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
