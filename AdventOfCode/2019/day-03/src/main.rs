@@ -8,12 +8,38 @@ fn main() {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct Item {
-    attribute: i32,
+struct Wire {
+    path: Vec<Segment>,
 }
 
-fn parse(input: &str) -> Item {
-    Item {attribute: 0}
+struct Segment {
+    direction: Direction,
+    distance: u32,
+}
+
+impl Segment {
+    fn new(direction: Direction, distance: u32) -> Self {
+        Segment { direction, distance }
+    }
+}
+
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+fn parse_wire(input: &str) -> Wire {
+    Wire {
+        path: input
+            .split(',')
+            .map(|x| Segment {
+                direction: Direction::from_char(x.chars().next()),
+                distance: 0,
+            })
+            .collect()
+    }
 }
 
 fn solve_part1(input: &str) -> i32 {
@@ -26,13 +52,21 @@ fn solve_part2(input: &str) -> i32 {
 
 #[cfg(test)]
 mod tests {
+    use crate::Direction::{Down, Left, Right, Up};
     use super::*;
 
     #[test]
     fn test_parse() {
-        let input= "simple input";
-        let output = Item {attribute: 0};
-        assert_eq!(parse(input), output);
+        let input = "R8,U5,L5,D3";
+        let output = Wire {
+            path: vec!(
+                Segment::new(Right, 8),
+                Segment::new(Up, 5),
+                Segment::new(Left, 5),
+                Segment::new(Down, 3),
+            )
+        };
+        assert_eq!(parse_wire(input), output);
     }
 
     #[test]
