@@ -1,10 +1,10 @@
 fn main() {
     let input = include_str!("../input.txt");
-    let result = solve_part1(input, true);
+    let result = solve_part1(input, Some(Inputs { noun: 12, verb: 2 }));
     println!("✅ part1: {}", result);
 
-    // let result = solve_part2(input);
-    // println!("✅ part2: {}", result);
+    let result = solve_part2(input);
+    println!("✅ part2: {}", result);
 }
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -17,9 +17,9 @@ struct Computer {
 impl Computer {}
 
 impl Computer {
-    fn modify_input(&mut self) -> &mut Computer {
-        self.memory[1] = 12;
-        self.memory[2] = 2;
+    fn modify_input(&mut self, inputs: Inputs) -> &mut Computer {
+        self.memory[1] = inputs.noun;
+        self.memory[2] = inputs.verb;
         self
     }
     fn step(&mut self) -> &mut Computer {
@@ -88,22 +88,47 @@ impl Instruction {
     }
 }
 
+struct Inputs {
+    noun: usize,
+    verb: usize,
+}
+
 fn parse(input: &str) -> Computer {
-    let memory = input.split(',').map(|x| x.parse::<usize>().unwrap()).collect();
+    let memory = input
+        .split(',')
+        .map(|x|
+            x.parse::<usize>()
+                .unwrap_or_else(|_| panic!("out of range"))
+        )
+        .inspect(|x| {
+            if x < &0 { panic!("out of range") }
+        })
+        .collect();
     Computer { memory, ..Default::default() }
 }
 
-fn solve_part1(input: &str, modify: bool) -> usize {
+fn solve_part1(input: &str, modify: Option<Inputs>) -> usize {
     let mut computer = parse(input);
-    if modify { computer.modify_input(); }
+    if modify.is_some() {
+        let inputs = modify.unwrap();
+        computer.modify_input(inputs);
+    }
     while !computer.is_halted() {
         computer.step();
     }
     computer.value_zero()
 }
 
-fn solve_part2(input: &str) -> i32 {
-    0
+fn solve_part2(input: &str) -> usize {
+    for noun in 0..99 {
+        for verb in 0..99 {
+            let part1 = solve_part1(input, Some(Inputs { noun, verb }));
+            if part1 == 19690720 {
+                return 100 * noun + verb
+            }
+        }
+    }
+    panic!("no solution")
 }
 
 #[cfg(test)]
@@ -115,6 +140,13 @@ mod tests {
         let input = "1,9,10,3,2,3,11,0,99,30,40,50";
         let output = Computer { memory: vec![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50], ..Default::default() };
         assert_eq!(parse(input), output);
+    }
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_parse_panic_below_0() {
+        let input = "-1,9,10,3,2,3,11,0,99,30,40,50";
+        parse(input);
     }
 
     #[test]
@@ -195,7 +227,7 @@ mod tests {
         let input = include_str!("../test1.txt");
         let expected_final_state = "3500,9,10,70,2,3,11,0,99,30,40,50";
         let expected = 3500;
-        let actual = solve_part1(input, false);
+        let actual = solve_part1(input, None);
         assert_eq!(actual, expected);
     }
 
@@ -205,7 +237,7 @@ mod tests {
         let input = "1,0,0,0,99";
         let final_state = "2,0,0,0,99";
         let expected = 2;
-        assert_eq!(solve_part1(input, false), expected);
+        assert_eq!(solve_part1(input, None), expected);
     }
 
     #[test]
@@ -214,7 +246,7 @@ mod tests {
         let input = "2,3,0,3,99";
         let final_state = "2,3,0,6,99";
         let expected = 2;
-        assert_eq!(solve_part1(input, false), expected);
+        assert_eq!(solve_part1(input, None), expected);
     }
 
     #[test]
@@ -223,7 +255,7 @@ mod tests {
         let input = "2,4,4,5,99,0";
         let final_state = "2,4,4,5,99,9801";
         let expected = 2;
-        assert_eq!(solve_part1(input, false), expected);
+        assert_eq!(solve_part1(input, None), expected);
     }
 
     #[test]
@@ -232,7 +264,7 @@ mod tests {
         let input = "1,1,1,4,99,5,6,0,99";
         let final_state = "30,1,1,4,2,5,6,0,99";
         let expected = 30;
-        assert_eq!(solve_part1(input, false), expected);
+        assert_eq!(solve_part1(input, None), expected);
     }
 
     // #[test]
@@ -246,13 +278,13 @@ mod tests {
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
         let solution = 4023471;
-        assert_eq!(solve_part1(input, true), solution);
+        assert_eq!(solve_part1(input, Some(Inputs { noun: 12, verb: 2 })), solution);
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
-        let solution = 0;
+        let solution = 8051;
         assert_eq!(solve_part2(input), solution);
     }
 }
