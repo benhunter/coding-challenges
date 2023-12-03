@@ -46,7 +46,7 @@ impl Computer {
         let value2 = self.memory[self.memory[self.ip + 2]];
         let target = self.memory[self.ip + 3];
         self.memory[target] = value1 + value2;
-        self.ip += 4;
+        self.ip += Instruction::Add.length();
     }
 
     fn multiply(&mut self) {
@@ -54,14 +54,16 @@ impl Computer {
         let value2 = self.memory[self.memory[self.ip + 2]];
         let target = self.memory[self.ip + 3];
         self.memory[target] = value1 * value2;
-        self.ip += 4;
+        self.ip += Instruction::Multiply.length();
     }
 
     pub(crate) fn is_halted(&self) -> bool {
         self.halted
     }
+
     fn halt(&mut self) {
         self.halted = true;
+        self.ip += Instruction::Halt.length();
     }
 
     fn value_zero(&self) -> usize {
@@ -74,6 +76,16 @@ enum Instruction {
     Add = 1,
     Multiply = 2,
     Halt = 99,
+}
+
+impl Instruction {
+    pub(crate) fn length(&self) -> usize {
+        match self {
+            Instruction::Add => 4,
+            Instruction::Multiply => 4,
+            Instruction::Halt => 1,
+        }
+    }
 }
 
 fn parse(input: &str) -> Computer {
@@ -170,7 +182,7 @@ mod tests {
         };
         let expected = Computer {
             memory: vec![3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50],
-            ip: 8,
+            ip: 9,
             halted: true,
         };
         let actual = computer.step();
