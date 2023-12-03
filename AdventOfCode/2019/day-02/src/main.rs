@@ -1,3 +1,5 @@
+// https://adventofcode.com/2019/day/2
+
 fn main() {
     let input = include_str!("../input.txt");
     let result = solve_part1(input, Some(Inputs { noun: 12, verb: 2 }));
@@ -13,8 +15,6 @@ struct Computer {
     ip: usize,
     halted: bool,
 }
-
-impl Computer {}
 
 impl Computer {
     fn modify_input(&mut self, inputs: Inputs) -> &mut Computer {
