@@ -16,16 +16,12 @@ fn solve_part1(input: &str) -> i32 {
 
     while let Some(span) = engine.next_part_location(current) {
         if engine.is_adjacent_to_symbol(span.clone(), is_symbol) {
-            let x = if span.end.x == 0 {
-                engine.schematic[span.end.y as usize].len() as i32
-            } else {
-                span.end.x
-            };
+            let size = engine.get_part_len(&span);
 
             let part_number = engine.schematic[span.start.y as usize]
                 .chars()
                 .skip(span.start.x as usize)
-                .take(x as usize - span.start.x as usize)
+                .take(size as usize)
                 .collect::<String>();
             let part_value = part_number.parse::<i32>().unwrap();
             sum += part_value;
@@ -80,11 +76,26 @@ fn count_numbers(input: &str) -> usize {
 struct Engine {
     schematic: Vec<String>,
     gear_parts: Vec<GearPart>,
+    current: Coordinate,
 }
 
 impl Engine {
+    pub(crate) fn next_part(&mut self) -> Option<Part> {
+        let span = self.next_part_location(self.current);
+        if span.is_none() {
+            return None;
+        }
+        let span = span.unwrap();
+        let value = self.part_at_span(span.clone());
+        let len = self.get_part_len(&span);
+
+        self.current = span.end;
+
+        Some(Part { span, value, len })
+    }
+
     // returns the start and end coordinates of the part number. end is exclusive
-    pub(crate) fn next_part_location(&self, start: Coordinate) -> Option<Span> {
+    fn next_part_location(&self, start: Coordinate) -> Option<Span> {
         let mut current = start;
         let mut started = false;
         let mut next_start = start;
@@ -131,8 +142,6 @@ impl Engine {
             None
         }
     }
-
-
     pub(crate) fn is_adjacent_to_symbol(&self, part_location: Span, is_symbol: fn(char) -> bool) -> bool {
         let y = part_location.start.y;
         let x = part_location.start.x;
@@ -157,18 +166,25 @@ impl Engine {
         false
     }
 
+
     pub(crate) fn part_at_span(&self, span: Span) -> i32 {
-        let x = if span.end.x == 0 {
-            self.schematic[span.end.y as usize].len() as i32
-        } else {
-            span.end.x
-        };
+        let len = self.get_part_len(&span);
         let part_number = self.schematic[span.start.y as usize]
             .chars()
             .skip(span.start.x as usize)
-            .take(x as usize - span.start.x as usize)
+            .take(len)
             .collect::<String>();
         part_number.parse::<i32>().unwrap()
+    }
+
+    pub(crate) fn get_part_len(&self, part_location: &Span) -> usize {
+        let end = if part_location.end.x == 0 {
+            self.schematic[part_location.end.y as usize].len() as i32
+        } else {
+            part_location.end.x
+        };
+
+        (end - part_location.start.x) as usize
     }
 
     pub(crate) fn add_gear_part(&mut self, partial_gear: GearPart) {
@@ -290,6 +306,12 @@ impl Engine {
     }
 }
 
+struct Part {
+    span: Span, // span.end is exclusive and wraps to next line
+    len: usize,
+    value: i32,
+}
+
 #[derive(Debug, PartialEq, Clone, Default)]
 struct GearPart {
     span: Span,
@@ -336,17 +358,17 @@ mod tests {
     #[test]
     fn test_next_part_number_location() {
         let input = "467..114..";
-        let engine = parse(input);
-        let actual = engine.next_part_location(Coordinate { x: 0, y: 0 });
+        let mut engine = parse(input);
+        let actual = engine.next_part().unwrap().span;
         let expected = Span {
             start: Coordinate { x: 0, y: 0 },
             end: Coordinate { x: 3, y: 0 },
         };
-        assert_eq!(actual.unwrap(), expected);
+        assert_eq!(actual, expected);
 
-        let actual = engine.next_part_location(expected.end);
+        let actual = engine.next_part().unwrap().span;
         let expected = Span { start: Coordinate { x: 5, y: 0 }, end: Coordinate { x: 8, y: 0 } };
-        assert_eq!(actual.unwrap(), expected);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -356,8 +378,8 @@ mod tests {
             467..114..
          */
         let input = "..*.......\n467..114..";
-        let engine = parse(input);
-        let actual = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let actual = engine.next_part().unwrap().span;
         let expected = Span {
             start: Coordinate { x: 0, y: 1 },
             end: Coordinate { x: 3, y: 1 },
@@ -372,8 +394,8 @@ mod tests {
             467..114..
          */
         let input = "-.........\n467..114..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -383,8 +405,8 @@ mod tests {
             .467..114..
          */
         let input = ".-.........\n.467..114..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -394,8 +416,8 @@ mod tests {
             467..114..
          */
         let input = ".&........\n467..114..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -405,8 +427,8 @@ mod tests {
             467..114..
          */
         let input = "..*.......\n467..114..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -419,8 +441,8 @@ mod tests {
             467..114..
          */
         let input = "...*......\n467..114..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -433,8 +455,8 @@ mod tests {
             .467..114.
          */
         let input = "*.........\n.467..114.";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut  engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -444,8 +466,8 @@ mod tests {
             ..467..114.
          */
         let input = ".*.........\n..467..114.";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -457,8 +479,8 @@ mod tests {
             467#.114..
          */
         let input = "467#.114..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -468,8 +490,8 @@ mod tests {
             467#.114..
          */
         let input = "..........\n467#.114..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -479,8 +501,8 @@ mod tests {
             ......145%
          */
         let input = "..........\n......145%";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -493,8 +515,8 @@ mod tests {
             ...*......
          */
         let input = "467..114..\n...*......";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -504,8 +526,8 @@ mod tests {
             ...*
          */
         let input = "467.\n...*";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut  engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -518,8 +540,8 @@ mod tests {
             .&........
          */
         let input = ".467..114.\n.&........";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -529,8 +551,8 @@ mod tests {
             ..*.......
          */
         let input = ".467..114.\n..*.......";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -540,8 +562,8 @@ mod tests {
             .../......
          */
         let input = ".467..114.\n.../......";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -554,8 +576,8 @@ mod tests {
             *.........
          */
         let input = ".467..114.\n*.........";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -569,8 +591,8 @@ mod tests {
             ..........
          */
         let input = "*467..114.\n..........";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -581,8 +603,8 @@ mod tests {
             ..........
          */
         let input = "..........\n*467..114.\n..........";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
@@ -595,10 +617,20 @@ mod tests {
             123.......
          */
         let input = ".467...114\n112.......";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap().end;
-        let actual = engine.next_part_location(part_span).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
+        let actual = engine.next_part().unwrap().span;
         let expected = Span { start: Coordinate { x: 7, y: 0 }, end: Coordinate { x: 0, y: 1 } };
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_engine_get_part_len() {
+        let input = include_str!("../test1.txt");
+        let mut engine = parse(input);
+        let first_part = engine.next_part().unwrap();
+        let actual = first_part.len;
+        let expected = 3;
         assert_eq!(actual, expected);
     }
 
@@ -608,23 +640,14 @@ mod tests {
             "............%.........................*770.............253..*....515..926..................................=........45.946..............*...\n\
              ....155..573..103.24..............................@......*...179..*........275......................*...................*................134\n\
              ....*............*......963...........444......801...656.796.....524.84#......*433.......997.....122.500....711.......447...................";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 0 }).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        let part_span = engine.next_part_location(part_span.end).unwrap();
-        // dbg!(engine.part_at_span(part_span.clone()));
-        // dbg!(part_span.clone());
-        let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
+        let mut engine = parse(input);
+        for i in 0..12 {
+            engine.next_part();
+        }
+        let part = engine.next_part().unwrap();
+        assert_eq!(part.value, 134);
+
+        let actual = engine.is_adjacent_to_symbol(part.span, is_symbol);
         let expected = true;
         assert_eq!(actual, expected);
     }
@@ -635,8 +658,8 @@ mod tests {
             ".....\n\
              *123.\n\
              .....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -648,8 +671,8 @@ mod tests {
             ".....\n\
              .123*\n\
              .....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -661,8 +684,8 @@ mod tests {
             "*....\n\
              .123.\n\
              .....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -674,8 +697,8 @@ mod tests {
             "....*\n\
              .123.\n\
              .....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -687,8 +710,8 @@ mod tests {
             ".*...\n\
              .123.\n\
              .....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -697,8 +720,8 @@ mod tests {
             "*...\n\
              123.\n\
              ....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -707,8 +730,8 @@ mod tests {
             "..*..\n\
              .123.\n\
              .....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -717,8 +740,8 @@ mod tests {
             "...*.\n\
              .123.\n\
              .....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -727,8 +750,8 @@ mod tests {
             "...*\n\
              .123\n\
              ....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -740,8 +763,8 @@ mod tests {
             ".....\n\
              .123.\n\
              *....";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -753,8 +776,8 @@ mod tests {
             ".....\n\
              .123.\n\
              ....*";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -766,8 +789,8 @@ mod tests {
             ".....\n\
              .123.\n\
              .*...";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -776,8 +799,8 @@ mod tests {
             "....\n\
              123.\n\
              *...";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -786,8 +809,8 @@ mod tests {
             ".....\n\
              .123.\n\
              ..*..";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -796,8 +819,8 @@ mod tests {
             ".....\n\
              .123.\n\
              ...*.";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
@@ -806,8 +829,8 @@ mod tests {
             "....\n\
              .123\n\
              ...*";
-        let engine = parse(input);
-        let part_span = engine.next_part_location(Coordinate { x: 0, y: 1 }).unwrap();
+        let mut engine = parse(input);
+        let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_asterisk);
         let expected = true;
         assert_eq!(actual, expected);
