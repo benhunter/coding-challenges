@@ -142,21 +142,17 @@ impl Engine {
             None
         }
     }
+
     pub(crate) fn is_adjacent_to_symbol(&self, part_location: Span, is_symbol: fn(char) -> bool) -> bool {
         let y = part_location.start.y;
         let x = part_location.start.x;
         let end = self.calculate_end(&part_location, y);
 
         if self.get_symbol_above(is_symbol, y, x, end).is_some() ||
-            self.get_symbol_below(is_symbol, y, x, end).is_some() {
+            self.get_symbol_below(is_symbol, y, x, end).is_some() ||
+            self.get_symbol_left(&part_location, is_symbol, y, x).is_some() {
             return true;
         };
-
-
-        let x = part_location.start.x;
-        if self.get_symbol_left(&part_location, is_symbol, y, x).is_some() {
-            return true;
-        }
 
         let x = part_location.end.x;
         if self.get_symbol_right(part_location, is_symbol, y, x).is_some() {
@@ -191,7 +187,23 @@ impl Engine {
         self.gear_parts.push(partial_gear);
     }
 
-    pub(crate) fn next_gear_part(&self, coord: Coordinate, is_gear: fn(char) -> bool) -> Option<GearPart> {
+    pub(crate) fn next_gear_part(&mut self, coord: Coordinate, is_gear: fn(char) -> bool) -> Option<GearPart> {
+        // let next = self.next_part();
+        // if next.is_none() {
+        //     return None;
+        // }
+        // while !self.is_adjacent_to_symbol(next.clone().unwrap().span.clone(), is_gear) {
+        //     let next = self.next_part();
+        //     if next.is_none() {
+        //         return None;
+        //     }
+        // }
+        // Some(GearPart {
+        //     span: next.clone().unwrap().span,
+        //     gear: self.get_gear_location(next.clone().unwrap().span, is_gear).unwrap(),
+        //     value: next.clone().unwrap().value,
+        // })
+
         let mut current = coord;
         loop {
             let span = self.next_part_location(current);
@@ -306,20 +318,22 @@ impl Engine {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 struct Part {
-    span: Span, // span.end is exclusive and wraps to next line
+    span: Span,
+    // span.end is exclusive and wraps to next line
     len: usize,
     value: i32,
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 struct GearPart {
     span: Span,
     gear: Coordinate,
     value: i32,
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 struct Span {
     start: Coordinate,
     end: Coordinate,
@@ -346,17 +360,17 @@ mod tests {
     #[test]
     fn test_parse() {
         let input = "467..114..";
-        let output = Engine {
+        let expected = Engine {
             schematic: vec![
                 String::from("467..114.."),
             ],
             ..Default::default()
         };
-        assert_eq!(parse(input), output);
+        assert_eq!(parse(input), expected);
     }
 
     #[test]
-    fn test_next_part_number_location() {
+    fn test_next_part() {
         let input = "467..114..";
         let mut engine = parse(input);
         let actual = engine.next_part().unwrap().span;
@@ -455,7 +469,7 @@ mod tests {
             .467..114.
          */
         let input = "*.........\n.467..114.";
-        let mut  engine = parse(input);
+        let mut engine = parse(input);
         let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
@@ -526,7 +540,7 @@ mod tests {
             ...*
          */
         let input = "467.\n...*";
-        let mut  engine = parse(input);
+        let mut engine = parse(input);
         let part_span = engine.next_part().unwrap().span;
         let actual = engine.is_adjacent_to_symbol(part_span, is_symbol);
         let expected = true;
