@@ -16,9 +16,7 @@ fn parse(input: &str) -> Vec<Card> {
 fn solve_part1(input: &str) -> i32 {
     parse(input)
         .iter()
-        .inspect(|card| println!("{:?}", card))
         .map(|card| card.score() as i32)
-        .inspect(|score| println!("{:?}", score))
         .sum()
 }
 
@@ -61,26 +59,21 @@ impl<'a> Card<'a> {
 }
 
 fn solve_part2(input: &str) -> i32 {
-    let cardss = parse(input);
-    let mut cards = cardss.iter().map(|card| (card, 1)).collect::<Vec<(&Card, usize)>>();
+    let cards = parse(input);
+    let mut cards = cards.iter().map(|card| (card, 1)).collect::<Vec<(&Card, usize)>>();
 
     for index in 0..cards.len() {
-        for quantity in 0..cards[index].1 {
-            // println!("{} {}", index, quantity+1)
+        for _quantity in 0..cards[index].1 {
             let count = cards[index].0.count_winning();
             for extra in (index + 1)..(index + count + 1) {
-                // println!("index: {} extra: {}", index, extra);
                 cards[extra].1 += 1;
-                // println!("{:?}", cards[extra]);
             }
         }
     }
 
-    println!("{:?}", cards.iter().map(|card| card.1).collect::<Vec<usize>>());
     cards
         .iter()
         .map(|card| card.1 as i32)
-        // .collect::<Vec<usize>>()
         .sum()
 }
 
@@ -153,17 +146,17 @@ mod tests {
         assert_eq!(solve_part2(input), solution);
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
-        let solution = 0;
+        let solution = 26914;
         assert_eq!(solve_part1(input), solution);
     }
 
     // #[test]
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
-        let solution = 0;
+        let solution = 13080971;
         assert_eq!(solve_part2(input), solution);
     }
 }
