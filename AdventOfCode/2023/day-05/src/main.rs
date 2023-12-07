@@ -5,20 +5,36 @@ fn main() {
     let result = solve_part1(input);
     println!("✅ part1: {}", result);
 
-    // let result = solve_part2(input);
-    // println!("✅ part2: {}", result);
+    let result = solve_part2(input);
+    println!("✅ part2: {}", result);
 }
 
-fn solve_part1(input: &str) -> u32 {
+fn solve_part1(input: &str) -> u64 {
     let almanac = parse(input);
     almanac.seeds.iter()
         .map(|seed| almanac.seed_to_location(*seed))
         .min().unwrap()
 }
 
+fn solve_part2(input: &str) -> u64 {
+    let almanac = parse(input);
+    let mut pairs = almanac.seeds.chunks(2);
+    pairs.map(|pair| {
+        (pair[0]..(pair[0] + pair[1]))
+            // .filter(|seed| seed < &(pair[0] + 1))
+            // .inspect(|seed| println!("{}", seed))
+            .map(|seed| {
+                if seed % 100000000 == 0 {
+                    println!("pair: {:?}, seed: {}", pair, seed);
+                }
+                almanac.seed_to_location(seed)
+            }).min().unwrap()
+    }).min().unwrap()
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct Almanac {
-    seeds: Vec<u32>,
+    seeds: Vec<u64>,
     // Map: destination range start, the source range start, and the range length.
     seed_to_soil_map: Vec<Map>,
     soil_to_fertilizer_map: Vec<Map>,
@@ -30,21 +46,19 @@ struct Almanac {
 }
 
 impl Almanac {
-    pub(crate) fn map(&self, x_to_y_map: &Vec<Map>, value: u32) -> u32 {
+    pub(crate) fn map(&self, x_to_y_map: &Vec<Map>, value: u64) -> u64 {
         let range = x_to_y_map.iter()
-            .inspect(|map| { dbg!(map); })
-            .find(|map| value >= map.source_range_start && value < map.source_range_start.wrapping_add(map.range_length));
+            .find(|map| value >= map.source_range_start && value < (map.source_range_start + map.range_length));
         match range {
             None => { value }
             Some(range) => {
-                range.destination_range_start + value.wrapping_sub(range.source_range_start)
+                let offset = value - range.source_range_start;
+                range.destination_range_start + offset
             }
         }
     }
-}
 
-impl Almanac {
-    pub(crate) fn seed_to_location(&self, seed: u32) -> u32 {
+    pub(crate) fn seed_to_location(&self, seed: u64) -> u64 {
         let maps = vec![
             &self.seed_to_soil_map,
             &self.soil_to_fertilizer_map,
@@ -71,9 +85,9 @@ impl Almanac {
 
 #[derive(Clone, Debug, PartialEq)]
 struct Map {
-    destination_range_start: u32,
-    source_range_start: u32,
-    range_length: u32,
+    destination_range_start: u64,
+    source_range_start: u64,
+    range_length: u64,
 }
 
 fn parse(input: &str) -> Almanac {
@@ -91,12 +105,12 @@ fn parse(input: &str) -> Almanac {
     }
 }
 
-fn parse_seeds(input: &str) -> Vec<u32> {
+fn parse_seeds(input: &str) -> Vec<u64> {
     input.split(": ")
         .nth(1)
         .unwrap()
         .split(" ")
-        .map(|n| n.parse::<u32>().unwrap())
+        .map(|n| n.parse::<u64>().unwrap())
         .collect()
 }
 
@@ -105,8 +119,8 @@ fn parse_map(input: &str) -> Vec<Map> {
         .skip(1)
         .map(|list| {
             let split = list.split(' ')
-                .map(|n| n.parse::<u32>().unwrap())
-                .collect::<Vec<u32>>();
+                .map(|n| n.parse::<u64>().unwrap())
+                .collect::<Vec<u64>>();
             Map {
                 destination_range_start: split[0],
                 source_range_start: split[1],
@@ -114,10 +128,6 @@ fn parse_map(input: &str) -> Vec<Map> {
             }
         })
         .collect::<Vec<Map>>()
-}
-
-fn solve_part2(input: &str) -> i32 {
-    0
 }
 
 #[cfg(test)]
@@ -131,7 +141,7 @@ mod tests {
         assert_eq!(input.split(' ').collect::<Vec<&str>>(), expected);
 
         let expected = vec![50, 98, 2];
-        assert_eq!(input.split(' ').map(|n| n.parse::<u32>().unwrap()).collect::<Vec<u32>>(), expected);
+        assert_eq!(input.split(' ').map(|n| n.parse::<u64>().unwrap()).collect::<Vec<u64>>(), expected);
     }
 
     #[test]
@@ -211,10 +221,10 @@ mod tests {
         assert_eq!(solve_part1(input), solution);
     }
 
-    // #[test]
-    fn test_solve2() {
+    #[test]
+    fn test_part2() {
         let input = include_str!("../test1.txt");
-        let solution = 0;
+        let solution = 46;
         assert_eq!(solve_part2(input), solution);
     }
 
@@ -228,7 +238,7 @@ mod tests {
     // #[test]
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
-        let solution = 0;
+        let solution = 23738616;
         assert_eq!(solve_part2(input), solution);
     }
 }
