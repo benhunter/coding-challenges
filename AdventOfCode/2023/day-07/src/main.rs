@@ -25,14 +25,18 @@ fn solve_part2(input: &str) -> u32 {
 
     sorted.iter().rev().enumerate()
         .filter(|(i, hand)| {
-            hand.hand_type == Option::from(HandType::FullHouse) &&
+            hand.hand_type == Option::from(HandType::ThreeOfAKind)
+                &&
                 hand.cards.contains('J')
+            // !hand.cards.contains('J')
+            // true
+            // hand.cards.matches('J').count() == 5
         })
         .for_each(|(i, hand)| {
             let winnings = hand.bid * (i as u32 + 1);
-
             println!("{:?}, position: {}, winnings: {}", hand.clone(), i + 1, winnings);
         });
+
     sorted.iter().rev().enumerate().map(|(i, hand)| {
         let winnings = hand.bid * (i as u32 + 1);
         winnings
@@ -180,6 +184,7 @@ impl Hand {
             return true;
         }
 
+        let joker_count = self.cards.matches('J').count();
         let three = self.is_three_of_a_kind();
         if three.is_some() {
             let cards = self.cards.replace(three.unwrap().to_string().as_str(), "");
@@ -188,14 +193,15 @@ impl Hand {
             }
         }
 
-        // TODO
-        let pair = self.is_one_pair();
-        if self.is_one_pair().is_some() { // && self.cards.matches('J').count() == 2 {
-            let cards = self.cards.replace(pair.unwrap().to_string().as_str(), "");
-            if cards.matches('J').count() == 2 {
-                return true;
-            }
+        let cards = self.cards.replace('J', "");
+        if cards.chars().find(|c| cards.matches(*c).count() == 2).is_some() && joker_count == 2 {
+            return true;
         }
+
+        if joker_count == 3 {
+            return true;
+        }
+
         false
     }
 
@@ -220,28 +226,52 @@ impl Hand {
     }
 
     fn is_full_house_part2(&self) -> bool {
-        // three of kind with joker and pair
-        if self.cards.contains('J') {
-            let three_of_a_kind = self.is_three_of_a_kind_part2();
-            // dbg!(three_of_a_kind.clone());
-            if three_of_a_kind.is_none() {
+        // count jokers
+        let joker_count = self.cards.matches('J').count();
+        // remove joker, is two pair?
+        let cards = self.cards.replace('J', "");
+
+        fn is_two_pairs(cards: String) -> bool {
+            let first = cards.chars().find(|c| cards.matches(*c).count() == 2);
+            if first.is_none() {
                 return false;
             }
-            let cards = self.cards.replace(three_of_a_kind.unwrap().to_string().as_str(), "");
-            // dbg!(cards.clone());
-            let mut cards = cards.chars();
-            let one = cards.next().unwrap();
-            let two = cards.next().unwrap();
-            // dbg!(one.clone());
-            // dbg!(two.clone());
-            if one == two {
-                // if cards.next().unwrap() == cards.next().unwrap() {
-                return true;
+            let cards = cards.replace(first.unwrap().to_string().as_str(), "");
+            let second = cards.chars().find(|c| cards.matches(*c).count() == 2);
+            if second.is_none() {
+                return false;
             }
+            true
         }
 
-        // three of kind with pair
+        if is_two_pairs(cards.clone()) && joker_count == 1 {
+            return true;
+        }
         self.is_full_house()
+
+
+        // // three of kind with joker and pair
+        // if self.cards.contains('J') {
+        //     let three_of_a_kind = self.is_three_of_a_kind_part2();
+        //     // dbg!(three_of_a_kind.clone());
+        //     if three_of_a_kind.is_none() {
+        //         return false;
+        //     }
+        //     let cards = self.cards.replace(three_of_a_kind.unwrap().to_string().as_str(), "");
+        //     // dbg!(cards.clone());
+        //     let mut cards = cards.chars();
+        //     let one = cards.next().unwrap();
+        //     let two = cards.next().unwrap();
+        //     // dbg!(one.clone());
+        //     // dbg!(two.clone());
+        //     if one == two {
+        //         // if cards.next().unwrap() == cards.next().unwrap() {
+        //         return true;
+        //     }
+        // }
+        //
+        // // three of kind with pair
+        // self.is_full_house()
     }
 
     fn is_three_of_a_kind(&self) -> Option<char> {
@@ -373,6 +403,7 @@ fn parse(input: &str) -> Game {
 
 #[cfg(test)]
 mod tests {
+    use crate::HandType::FullHouse;
     use super::*;
 
     #[test]
@@ -481,21 +512,32 @@ QQQJA 483";
     }
 
     #[test]
+    fn test_part2_not_full_house() {
+        let four_of_a_kind = Hand { cards: "J55AJ".to_string(), bid: 518, hand_type: Some(HandType::FullHouse) }; //, position: 732, winnings: 379176
+        assert!(four_of_a_kind.is_four_of_a_kind_part2());
+
+        // Hand { cards: "J667J", bid: 15, hand_type: Some(FullHouse) }, position: 733, winnings: 10995
+        // Hand { cards: "J7J79", bid: 279, hand_type: Some(FullHouse) }, position: 734, winnings: 204786
+    }
+
+    #[test]
+    fn test_part2_should_be_full_house() {
+        let full_house = Hand { cards: "KKAJA".to_string(), bid: 444, hand_type: Some(FullHouse) }; //, position: 702, winnings: 311688
+        assert!(full_house.is_full_house_part2());
+    }
+
+    #[test]
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
         let solution = 248422077;
         assert_eq!(solve_part1(input), solution);
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input);
-
-        let too_high = 249897978;
-        assert!(actual < too_high);
-
-        let solution = 0;
+        let solution = 249817836;
         assert_eq!(actual, solution);
     }
 }
