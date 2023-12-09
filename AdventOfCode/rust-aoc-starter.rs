@@ -30,9 +30,10 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        let input= "simple input";
-        let output = Item {attribute: 0};
-        assert_eq!(parse(input), output);
+        let input = include_str!("../test.txt");
+        let actual = parse(input);
+        let expected = 1;
+        assert_eq!(actual, expected);
     }
 
     #[test]
