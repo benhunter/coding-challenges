@@ -21,6 +21,7 @@ fn solve_part2(input: &str) -> u32 {
     game.set_hand_types_part2();
     let sorted = game.sort_hands_part2();
 
+    // Filtered debug output
     // sorted.iter().rev().enumerate()
     // .filter(|(i, hand)| {
     //     hand.hand_type == Option::from(HandType::ThreeOfAKind)
@@ -171,41 +172,24 @@ impl Hand {
         }
 
         let cards = self.cards.replace('J', "");
-        if cards.chars().find(|c| cards.matches(*c).count() == 2).is_some() && joker_count == 2 {
-            return true;
-        }
 
-        if joker_count == 3 {
-            return true;
-        }
-
-        false
+        cards.chars().find(|c| cards.matches(*c).count() == 2).is_some() && joker_count == 2
+            || joker_count == 3
     }
 
     fn is_full_house(&self) -> bool {
         let three_of_a_kind = self.is_three_of_a_kind();
-        // dbg!(three_of_a_kind.clone());
         if three_of_a_kind.is_none() {
             return false;
         }
         let cards = self.cards.replace(three_of_a_kind.unwrap().to_string().as_str(), "");
-        // dbg!(cards.clone());
         let mut cards = cards.chars();
-        let one = cards.next().unwrap();
-        let two = cards.next().unwrap();
-        // dbg!(one.clone());
-        // dbg!(two.clone());
-        if one == two {
-            // if cards.next().unwrap() == cards.next().unwrap() {
-            return true;
-        }
-        false
+
+        cards.next().unwrap() == cards.next().unwrap()
     }
 
     fn is_full_house_part2(&self) -> bool {
-        // count jokers
         let joker_count = self.cards.matches('J').count();
-        // remove joker, is two pair?
         let cards = self.cards.replace('J', "");
 
         fn is_two_pairs(cards: String) -> bool {
@@ -215,16 +199,11 @@ impl Hand {
             }
             let cards = cards.replace(first.unwrap().to_string().as_str(), "");
             let second = cards.chars().find(|c| cards.matches(*c).count() == 2);
-            if second.is_none() {
-                return false;
-            }
-            true
+            return !second.is_none();
         }
 
-        if is_two_pairs(cards.clone()) && joker_count == 1 {
-            return true;
-        }
-        self.is_full_house()
+        is_two_pairs(cards.clone()) && joker_count == 1
+            || self.is_full_house()
     }
 
     fn is_three_of_a_kind(&self) -> Option<char> {
@@ -232,14 +211,12 @@ impl Hand {
     }
 
     fn is_three_of_a_kind_part2(&self) -> Option<char> {
-        // pair + joker
         if self.cards.contains('J') {
             let c = self.cards.chars().find(|c| self.cards.matches(*c).count() == 2);
             if c.is_some() {
                 return c;
             }
         }
-        // or regular three of a kind
         self.is_three_of_a_kind()
     }
 
@@ -256,27 +233,6 @@ impl Hand {
         true
     }
 
-    // TODO this is three of a kind!
-    // fn is_two_pairs_part2(&self) -> bool {
-    //     // two pair with J
-    //     if self.cards.contains('J') {
-    //         let first = self.cards.chars().find(|c| self.cards.matches(*c).count() == 2);
-    //         if first.is_none() {
-    //             return false;
-    //         }
-    //         let cards = self.cards.replace(first.unwrap().to_string().as_str(), "");
-    //         // let second = cards.chars().find(|c| self.cards.matches(*c).count() == 2);
-    //         // if second.is_none() {
-    //         //     return false;
-    //         // }
-    //         // true
-    //     }
-    //
-    //     // two regular pair
-    //     // todo!()
-    //     false
-    // }
-
     fn is_one_pair(&self) -> Option<char> {
         self.cards.chars().find(|c| self.cards.matches(*c).count() == 2)
     }
@@ -288,15 +244,11 @@ impl Hand {
 
 fn cmp_high_card(me: &String, other: &String, score_card: fn(c: char) -> u32) -> std::cmp::Ordering {
     // A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, or 2
-    // let me = me.chars().map(score_card).collect::<Vec<u32>>();
-    // me.iter().cmp(other.chars().map(score_card))
 
     for i in 0..me.len() {
         let me_score = score_card(me.chars().nth(i).unwrap());
-        // dbg!(me_score.clone());
         let other_score = score_card(other.chars().nth(i).unwrap());
-        // dbg!(other_score.clone());
-        match other_score.cmp(&me_score) { // TODO scary
+        match other_score.cmp(&me_score) { // scary switcheroo
             std::cmp::Ordering::Equal => continue,
             std::cmp::Ordering::Greater => return std::cmp::Ordering::Greater,
             std::cmp::Ordering::Less => return std::cmp::Ordering::Less,
@@ -339,10 +291,9 @@ enum HandType {
 }
 
 fn parse(input: &str) -> Game {
-    // dbg!(input);
     Game {
         hands: input.lines().map(|hand| {
-            let mut hand = hand.split(" "); //.collect::<Vec<&str>>().into_iter();
+            let mut hand = hand.split(" ");
             let cards = hand.next();
             let bid = hand.next();
             Hand {
@@ -398,7 +349,6 @@ QQQJA 483";
         let mut game = parse(input);
         game.set_hand_types();
         let actual = game.sort_hands();
-        // dbg!(actual.clone());
         let expected = vec![
             Hand { cards: "QQQJA".to_string(), bid: 483, hand_type: Option::from(HandType::ThreeOfAKind) },
             Hand { cards: "T55J5".to_string(), bid: 684, hand_type: Option::from(HandType::ThreeOfAKind) },
@@ -406,7 +356,6 @@ QQQJA 483";
         assert_eq!(actual, expected);
     }
 
-    // TODO
     #[test]
     fn test_full_house() {
         let input = "T55J5 684";
