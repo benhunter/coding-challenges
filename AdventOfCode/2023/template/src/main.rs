@@ -32,7 +32,7 @@ mod tests {
     fn test_parse() {
         let input = include_str!("../test.txt");
         let actual = parse(input);
-        let expected = 1;
+        let expected = Item {attribute: 0};
         assert_eq!(actual, expected);
     }
 
@@ -45,17 +45,17 @@ mod tests {
     }
 
     // #[test]
-    fn test_part2() {
-        let input = include_str!("../test.txt");
-        let actual = solve_part2(input);
+    fn test_solve_part1() {
+        let input = include_str!("../input.txt");
+        let actual = solve_part1(input);
         let solution = 0;
         assert_eq!(actual, solution);
     }
 
     // #[test]
-    fn test_solve_part1() {
-        let input = include_str!("../input.txt");
-        let actual = solve_part1(input);
+    fn test_part2() {
+        let input = include_str!("../test.txt");
+        let actual = solve_part2(input);
         let solution = 0;
         assert_eq!(actual, solution);
     }
