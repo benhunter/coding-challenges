@@ -3,8 +3,8 @@ fn main() {
     let result = solve_part1(input);
     println!("✅ part1: {}", result);
 
-    // let result = solve_part2(input);
-    // println!("✅ part2: {}", result);
+    let result = solve_part2(input);
+    println!("✅ part2: {}", result);
 }
 
 fn solve_part1(input: &str) -> i32 {
@@ -58,7 +58,53 @@ fn solve_part1(input: &str) -> i32 {
 }
 
 fn solve_part2(input: &str) -> i32 {
-    0
+    let values = parse(input);
+    let mut next_values: Vec<i32> = Vec::new();
+
+    values.iter().for_each(|value| {
+        let mut sequences: Vec<Vec<i32>> = Vec::new();
+        sequences.push(value.history.clone());
+
+        let mut count = 0;
+        while !sequences.last().unwrap().iter().all(|x| x == &0) {
+            let mut sequence: Vec<i32> = Vec::new();
+
+            let last = sequences.last().unwrap();
+            last.windows(2).for_each(|x| {
+                let diff = (x[1] - x[0]); // TODO ??? .abs();
+                sequence.push(diff);
+            });
+
+            sequences.push(sequence);
+
+            count += 1;
+        }
+
+        // extrapolation done
+        sequences.iter().for_each(|x| println!("{:?} len: {:?}", x, x.len()));
+        println!("sequences.last(): {:?}", sequences.last().unwrap());
+        assert!(sequences.last().unwrap().iter().all(|x| x == &0));
+        assert!(sequences.last().unwrap().len() > 0);
+
+        sequences.reverse();
+        sequences.iter().for_each(|x| println!("{:?} len: {:?}", x, x.len()));
+        println!("sequences[0]: {:?}", sequences[0].clone());
+        println!("sequences[1]: {:?}", sequences[1].clone());
+        for i in 0..(sequences.len() - 1) {
+            if sequences[i].len() == 0 {
+                continue;
+            }
+
+            // println!("before {}: {:?}", i + 1, sequences[i + 1]);
+            let curr = sequences[i][0];
+            let next = sequences[i + 1][0];
+            sequences[i + 1].insert(0, next - curr);
+            println!("after {}: {:?}", i + 1, sequences[i + 1]);
+        }
+        next_values.push(*sequences.last().unwrap().first().unwrap());
+    });
+
+    next_values.iter().sum()
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -136,11 +182,11 @@ mod tests {
         assert_eq!(actual, solution);
     }
 
-    // #[test]
+    #[test]
     fn test_part2() {
         let input = include_str!("../test.txt");
         let actual = solve_part2(input);
-        let solution = 0;
+        let solution = 2;
         assert_eq!(actual, solution);
     }
 
