@@ -56,7 +56,7 @@ impl Field {
             return Ok(());
         }
 
-        let next_a = self.find_next_pipe(self.a.as_ref().unwrap(), self.a.as_ref().unwrap().coord);
+        let next_a = self.find_next_pipe(self.a.as_ref().unwrap());
 
         let mut last_a = self.a.as_mut().unwrap();
         let mut distance = 1;
@@ -67,7 +67,7 @@ impl Field {
         last_a.next = Some(Box::new(next_a.clone()));
         self.distances[next_a.coord.0][next_a.coord.1] = distance + 1;
 
-        let next_b = self.find_next_pipe(self.b.as_ref().unwrap(), self.b.as_ref().unwrap().coord);
+        let next_b = self.find_next_pipe(self.b.as_ref().unwrap());
 
         let mut last_b = self.b.as_mut().unwrap();
         let mut distance = 1;
@@ -81,8 +81,8 @@ impl Field {
         Ok(())
     }
 
-    fn find_next_pipe(&self, pipe: &Pipe, prev: (usize, usize)) -> Pipe {
-        let mut previous_coord = prev;
+    fn find_next_pipe(&self, pipe: &Pipe) -> Pipe {
+        let mut previous_coord = self.start.coord;
         let mut current: &Pipe = pipe;
         while current.next.is_some() {
             previous_coord = current.coord;
