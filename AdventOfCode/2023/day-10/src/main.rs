@@ -46,7 +46,6 @@ struct Field {
 impl Field {
     pub(crate) fn step(&mut self) -> Result<(), &'static str> {
         if self.a.is_none() && self.b.is_none() {
-            // find pipes pointing to the start
             self.a = Some(self.next_pipes_from_start(&self.start, None, None));
             self.b = Some(self.next_pipes_from_start(&self.start, None, Some(self.a.as_ref().unwrap().coord)));
 
@@ -57,48 +56,49 @@ impl Field {
             return Ok(());
         }
 
-        self.a = Option::from(self.find_next_pipe(self.a.clone().unwrap()));
+        let next_a = self.find_next_pipe(self.a.as_ref().unwrap(), self.a.as_ref().unwrap().coord);
 
-        let mut last_a = self.a.as_ref().unwrap();
+        let mut last_a = self.a.as_mut().unwrap();
         let mut distance = 1;
         while last_a.next.is_some() {
-            last_a = last_a.next.as_ref().unwrap();
+            last_a = last_a.next.as_mut().unwrap();
             distance += 1;
         }
-        self.distances[last_a.coord.0][last_a.coord.1] = distance;
+        last_a.next = Some(Box::new(next_a.clone()));
+        self.distances[next_a.coord.0][next_a.coord.1] = distance + 1;
 
-        self.b = Option::from(self.find_next_pipe(self.b.clone().unwrap()));
+        let next_b = self.find_next_pipe(self.b.as_ref().unwrap(), self.b.as_ref().unwrap().coord);
 
-        let mut last_b = self.b.as_ref().unwrap();
+        let mut last_b = self.b.as_mut().unwrap();
         let mut distance = 1;
         while last_b.next.is_some() {
-            last_b = last_b.next.as_ref().unwrap();
+            last_b = last_b.next.as_mut().unwrap();
             distance += 1;
         }
-        self.distances[last_b.coord.0][last_b.coord.1] = distance;
+        last_b.next = Some(Box::new(next_b.clone()));
+        self.distances[next_b.coord.0][next_b.coord.1] = distance + 1;
 
         Ok(())
     }
 
-    fn find_next_pipe(&self, mut pipe: Pipe) -> Pipe {
-        let mut previous_coord = self.start.coord;
-        let mut current: &mut Pipe = &mut pipe;
+    fn find_next_pipe(&self, pipe: &Pipe, prev: (usize, usize)) -> Pipe {
+        let mut previous_coord = prev;
+        let mut current: &Pipe = pipe;
         while current.next.is_some() {
             previous_coord = current.coord;
-            current = current.next.as_mut().unwrap();
+            current = current.next.as_ref().unwrap();
         }
 
-        let next = self.next_pipe(current, None, Some(previous_coord));
-        current.next = Some(Box::new(next));
-        pipe
+        self.next_pipe(current, None, Some(previous_coord))
     }
 
     pub(crate) fn next_pipes_from_start(&self, from: &Pipe, ignore: Option<Direction>, ignore_coord: Option<(usize, usize)>) -> Pipe {
-        let mut coords: Vec<Option<(usize, usize)>> = Vec::new();
-        coords.push(self.get_north(from, &ignore));
-        coords.push(self.get_east(from, &ignore));
-        coords.push(self.get_south(from, &ignore));
-        coords.push(self.get_west(from, &ignore));
+        let mut coords: Vec<Option<(usize, usize)>> = vec![
+            self.get_north(from, &ignore),
+            self.get_east(from, &ignore),
+            self.get_south(from, &ignore),
+            self.get_west(from, &ignore),
+        ];
 
         coords.retain(|c| c.is_some());
         coords.retain(|c| ignore_coord.is_none() || ignore_coord.is_some_and(|ic| c.unwrap() != ic));
@@ -144,8 +144,8 @@ impl Field {
                 Direction::South => self.get_south(from, &ignore),
                 Direction::West => self.get_west(from, &ignore),
             };
-            if coord.is_some() {
-                coords.push(coord.unwrap());
+            if let Some(coord) = coord {
+                coords.push(coord);
             }
         }
 
