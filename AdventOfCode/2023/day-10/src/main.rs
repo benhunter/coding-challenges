@@ -46,13 +46,13 @@ struct Field {
 impl Field {
     pub(crate) fn step(&mut self) -> Result<(), &'static str> {
         if self.a.is_none() && self.b.is_none() {
-            // find a pipe pointing to the start
+            // find pipes pointing to the start
             self.a = Some(self.next_pipes_from_start(&self.start, None, None));
-            self.b = Some(self.next_pipes_from_start(&self.start, None, Some(self.a.clone().unwrap().coord)));
+            self.b = Some(self.next_pipes_from_start(&self.start, None, Some(self.a.as_ref().unwrap().coord)));
 
-            let coord = self.a.clone().unwrap().coord;
+            let coord = self.a.as_ref().unwrap().coord;
             self.distances[coord.0][coord.1] = 1;
-            let coord = self.b.clone().unwrap().coord;
+            let coord = self.b.as_ref().unwrap().coord;
             self.distances[coord.0][coord.1] = 1;
             return Ok(());
         }
