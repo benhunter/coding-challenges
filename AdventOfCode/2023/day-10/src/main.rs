@@ -11,16 +11,14 @@ fn solve_part1(input: &str) -> i32 {
     let mut field = parse(input);
     let mut steps = 0;
     loop {
-        println!("step: {}", steps);
         let step = field.step();
-        // dbg!(&field);
 
-        // when a and b are on the same pipe, return the distance
         let a_last = field.a.clone().unwrap().last();
         let b_last = field.b.clone().unwrap().last();
-        println!("a: {:?}, b: {:?}", a_last, b_last);
+        // when a and b are on the same pipe, loop is complete
         if a_last.coord == b_last.coord {
-            return steps;
+            print!("{} ", steps);
+            return steps + 1;
         }
 
         match step {
@@ -28,13 +26,13 @@ fn solve_part1(input: &str) -> i32 {
             Err(_) => break,
         }
 
-        println!("{:?}", field.visualize_distances());
+        // println!("{}", field.visualize_distances(true));
 
-        if steps > 10 {
-            break;
-        }
+        // if steps > 10 {
+        //     break;
+        // }
     }
-    0
+    panic!("No solution found. steps: {}", steps);
 }
 
 // fn solve_part2(input: &str) -> i32 {
@@ -54,8 +52,8 @@ impl Field {
     pub(crate) fn step(&mut self) -> Result<(), &'static str> {
         if self.a.is_none() && self.b.is_none() {
             // find a pipe pointing to the start
-            self.a = Some(self.next_pipes(&self.start, None, None));
-            self.b = Some(self.next_pipes(&self.start, None, Some(self.a.clone().unwrap().coord)));
+            self.a = Some(self.next_pipes_from_start(&self.start, None, None));
+            self.b = Some(self.next_pipes_from_start(&self.start, None, Some(self.a.clone().unwrap().coord)));
 
             // set distance to 1
             let coord = self.a.clone().unwrap().coord;
@@ -75,11 +73,9 @@ impl Field {
         }
         self.distances[last_a.coord.0][last_a.coord.1] = distance;
 
-        println!("{}", self.visualize_distances());
+        // println!("{}", self.visualize_distances(true));
 
-        dbg!(&self.b);
         self.b = Option::from(self.find_next_pipe(self.b.clone().unwrap()));
-        dbg!(&self.b);
 
         let mut last_b = self.b.clone().unwrap();
         let mut distance = 1;
@@ -89,74 +85,162 @@ impl Field {
         }
         self.distances[last_b.coord.0][last_b.coord.1] = distance;
 
-        println!("{}", self.visualize_distances());
+        // println!("{}", self.visualize_distances(true));
         Ok(())
     }
 
     fn find_next_pipe(&self, mut pipe: Pipe) -> Pipe {
+        let mut previous_coord = self.start.coord;
         let mut current: &mut Pipe = &mut pipe;
         while current.next.is_some() {
+            previous_coord = current.coord;
             current = current.next.as_mut().unwrap();
         }
 
-        // TODO ignore previous coord
-        let next = self.next_pipes(&current, None, Some(current.coord));
-        dbg!(&next);
+        let next = self.next_pipe(current, None, Some(previous_coord));
         current.next = Some(Box::new(next));
         pipe
     }
 
-    pub(crate) fn next_pipes(&self, from: &Pipe, ignore: Option<Direction>, ignore_coord: Option<(usize, usize)>) -> Pipe {
+    pub(crate) fn next_pipes_from_start(&self, from: &Pipe, ignore: Option<Direction>, ignore_coord: Option<(usize, usize)>) -> Pipe {
         // up - check for |, 7, F
         let mut coords: Vec<(usize, usize)> = Vec::new();
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::Up)
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::North)
+            && (from.coord.0 > 0)
             && matches!(self.pipes[from.coord.0-1][from.coord.1], '|'|'7'|'F') {
             coords.push((from.coord.0 - 1, from.coord.1));
         }
 
         // right - check for -, J, 7
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::Right)
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::East)
+            && (from.coord.1 < self.pipes[from.coord.0].len() - 1)
             && matches!(self.pipes[from.coord.0][from.coord.1+1], '-'|'J'|'7') {
             println!("right");
             coords.push((from.coord.0, from.coord.1 + 1));
         }
 
         // down - check for |, L, J
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::Down)
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::South)
+            && (from.coord.0 < self.pipes.len() - 1)
             && matches!(self.pipes[from.coord.0+1][from.coord.1], '|'|'L'|'J') {
             coords.push((from.coord.0 + 1, from.coord.1));
         }
 
         // left - check for -, L, F
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::Left)
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::West)
+            && (from.coord.1 > 0)
             && matches!(self.pipes[from.coord.0][from.coord.1-1], '-'|'L'|'F') {
             coords.push((from.coord.0, from.coord.1 - 1));
         }
 
         // filter the ignored coord
-        dbg!(ignore_coord);
         coords.retain(|c| ignore_coord.is_none() || *c != ignore_coord.unwrap());
         let mut pipes: Vec<Pipe> = coords.iter().map(|c| Pipe { coord: *c, next: None }).collect();
         pipes.remove(0)
     }
 
+    pub(crate) fn next_pipe(&self, from: &Pipe, ignore: Option<Direction>, ignore_coord: Option<(usize, usize)>) -> Pipe {
+        // | is a vertical pipe connecting north and south.
+        // - is a horizontal pipe connecting east and west.
+        // L is a 90-degree bend connecting north and east.
+        // J is a 90-degree bend connecting north and west.
+        // 7 is a 90-degree bend connecting south and west.
+        // F is a 90-degree bend connecting south and east.
+        // . is ground; there is no pipe in this tile.
+        // S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+
+        // what directions should we look?
+        let mut directions: Vec<Direction> = Vec::new();
+        match self.pipes[from.coord.0][from.coord.1] {
+            '|' => {
+                directions.push(Direction::North);
+                directions.push(Direction::South);
+            }
+            '-' => {
+                directions.push(Direction::West);
+                directions.push(Direction::East);
+            }
+            'L' => {
+                directions.push(Direction::North);
+                directions.push(Direction::East);
+            }
+            'J' => {
+                directions.push(Direction::North);
+                directions.push(Direction::West);
+            }
+            '7' => {
+                directions.push(Direction::South);
+                directions.push(Direction::West);
+            }
+            'F' => {
+                directions.push(Direction::South);
+                directions.push(Direction::East);
+            }
+            _ => panic!("Unknown pipe: {}", self.pipes[from.coord.0][from.coord.1]),
+        }
+
+        let mut coords: Vec<(usize, usize)> = Vec::new();
+        for dir in directions {
+            match dir {
+                Direction::North => {
+                    if !ignore.as_ref().is_some_and(|d| *d == Direction::North)
+                        && (from.coord.0 > 0)
+                        && matches!(self.pipes[from.coord.0-1][from.coord.1], '|'|'7'|'F') {
+                        coords.push((from.coord.0 - 1, from.coord.1));
+                    }
+                }
+                Direction::East => {
+                    if !ignore.as_ref().is_some_and(|d| *d == Direction::East)
+                        && (from.coord.1 < self.pipes[from.coord.0].len() - 1)
+                        && matches!(self.pipes[from.coord.0][from.coord.1+1], '-'|'J'|'7') {
+                        coords.push((from.coord.0, from.coord.1 + 1));
+                    }
+                }
+                Direction::South => {
+                    if !ignore.as_ref().is_some_and(|d| *d == Direction::South)
+                        && (from.coord.0 < self.pipes.len() - 1)
+                        && matches!(self.pipes[from.coord.0+1][from.coord.1], '|'|'L'|'J') {
+                        coords.push((from.coord.0 + 1, from.coord.1));
+                    }
+                }
+                Direction::West => {
+                    if !ignore.as_ref().is_some_and(|d| *d == Direction::West)
+                        && (from.coord.1 > 0)
+                        && matches!(self.pipes[from.coord.0][from.coord.1-1], '-'|'L'|'F') {
+                        coords.push((from.coord.0, from.coord.1 - 1));
+                    }
+                }
+            }
+        }
+
+        coords.retain(|c| ignore_coord.is_none() || *c != ignore_coord.unwrap());
+        Pipe { coord: coords[0], next: None }
+    }
+
+    #[allow(dead_code)]
     pub(crate) fn distance(&self, coord: (usize, usize)) -> Option<i32> {
         let dist = self.distances[coord.0][coord.1];
         Some(dist)
     }
 
-    pub(crate) fn visualize_distances(&self) -> String {
+    pub(crate) fn visualize_distances(&self, with_pipes: bool) -> String {
         let mut result = String::new();
-        for row in self.distances.iter() {
+        for (i, row) in self.distances.iter().enumerate() {
             for col in row.iter() {
                 if *col == -1 {
                     result.push_str(" .");
                 } else {
                     result.push_str(&format!("{:2}", col));
                 }
-                result.push_str(" ");
+                result.push(' ');
             }
-            result.push_str("\n");
+            if with_pipes {
+                // let line = self.pipes[i].iter().collect::<String>();
+                result.push_str(
+                    &format!("\t{}", self.pipes[i].iter().collect::<String>())
+                );
+            }
+            result.push('\n');
         }
         result
     }
@@ -180,18 +264,18 @@ impl Pipe {
 
 #[derive(Debug, PartialEq)]
 enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
+    North,
+    East,
+    South,
+    West,
 }
 
 fn parse(input: &str) -> Field {
     let pipes = input.lines().map(|line| line.chars().collect()).collect::<Vec<Vec<char>>>();
     let mut start = Pipe { coord: (0, 0), next: None };
     for (i, pipe) in pipes.iter().enumerate() {
-        for j in 0..pipe.len() {
-            if pipe[j] == 'S' {
+        for (j, char) in pipe.iter().enumerate() {
+            if *char == 'S' {
                 start.coord = (i, j); // = Node{ coord: (i, j), a: None, b: None };
             }
         }
@@ -228,11 +312,11 @@ mod tests {
 .....";
         let mut field = parse(input);
         assert_eq!(field.start, Pipe { coord: (1, 1), next: None });
-        field.step().expect("TODO: panic message");
+        field.step().expect("Testing field.step() failed");
         assert_eq!(field.distance((1, 2)).unwrap(), 1);
         assert_eq!(field.distance((2, 1)).unwrap(), 1);
 
-        let actual = field.visualize_distances();
+        let actual = field.visualize_distances(false);
         println!("{}", actual);
         let expected = " .  .  .  .  . \n \
             .  0  1  .  . \n \
@@ -241,17 +325,31 @@ mod tests {
             .  .  .  .  . \n";
         assert_eq!(actual, expected);
 
-        field.step().expect("TODO: panic message");
+        field.step().expect("Testing field.step() failed");
         assert_eq!(field.distance((1, 3)).unwrap(), 2);
         assert_eq!(field.distance((3, 1)).unwrap(), 2);
 
-        field.step().expect("TODO: panic message");
+        field.step().expect("Testing field.step() failed");
         assert_eq!(field.distance((2, 3)).unwrap(), 3);
         assert_eq!(field.distance((3, 2)).unwrap(), 3);
 
-        // let actual = solve_part1(input);
-        // let solution = 4;
-        // assert_eq!(actual, solution);
+        field.step().expect("Testing field.step() failed");
+        assert_eq!(field.distance((3, 3)).unwrap(), 4);
+
+        // stop when a and b are on the same pipe
+        // field.step().expect("Testing field.step() failed");
+        let a_last = field.a.clone().unwrap().last();
+        let b_last = field.b.clone().unwrap().last();
+        assert_eq!(a_last.coord, b_last.coord);
+        assert_eq!(field.distance((1, 3)).unwrap(), 2);
+        assert_eq!(field.distance((3, 1)).unwrap(), 2);
+        assert_eq!(field.distance((2, 3)).unwrap(), 3);
+        assert_eq!(field.distance((3, 2)).unwrap(), 3);
+        assert_eq!(field.distance((3, 3)).unwrap(), 4);
+
+        let actual = solve_part1(input);
+        let solution = 4;
+        assert_eq!(actual, solution);
     }
 
     #[test]
@@ -262,11 +360,11 @@ mod tests {
         assert_eq!(actual, solution);
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
         let actual = solve_part1(input);
-        let solution = 0;
+        let solution = 6842;
         assert_eq!(actual, solution);
     }
 
