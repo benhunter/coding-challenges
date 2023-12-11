@@ -35,9 +35,16 @@ fn solve_part2(input: &str) -> (Field, i32) {
     let mut field = part1.0;
     println!("field:\n{}", field.visualize_distances(true));
 
+    // replace S with correct pipe
+    field.pipes[field.start.coord.0][field.start.coord.1] = field.calculate_start_pipe();
+    print!("DEBUG new start pipe: {}", field.pipes[field.start.coord.0][field.start.coord.1]);
+    println!(" at coord: {:?}", field.start.coord);
+
     for (i, line) in field.pipes.iter().enumerate() {
         for (j, char) in line.iter().enumerate() {
-            if *char == '.' {
+            if field.distances[i][j] == -1 {
+                // include junk
+                // if *char == '.' {
                 field.in_out[i][j] = field.calculate_in_out((i, j));
             }
         }
@@ -234,7 +241,77 @@ impl Field {
         result
     }
 
+    pub(crate) fn visualize_without_junk(&self, with_pipes: bool) -> String {
+        let mut result = String::new();
+        for (i, row) in self.distances.iter().enumerate() {
+            for (j, col) in row.iter().enumerate() {
+                if *col == -1 {
+                    result.push_str(".");
+                } else {
+                    result.push_str(&format!("{}", self.pipes[i][j]));
+                }
+            }
+            if with_pipes {
+                // let line = self.pipes[i].iter().collect::<String>();
+                result.push_str(
+                    &format!("\t{}", self.pipes[i].iter().collect::<String>())
+                );
+            }
+            result.push('\n');
+        }
+        result
+    }
+
+    fn calculate_start_pipe(&self) -> char {
+        let a_rel_start = self.a.as_ref().unwrap().relative_to(self.start.coord);
+        let b_rel_start = self.b.as_ref().unwrap().relative_to(self.start.coord);
+
+        println!("DEBUG a_rel_start: {:?} b_rel_start: {:?}", a_rel_start, b_rel_start);
+
+        match a_rel_start {
+            Direction::North => {
+                match b_rel_start {
+                    Direction::East => 'L',
+                    Direction::South => '|',
+                    Direction::West => 'J',
+                    _ => panic!("a_rel_start: {:?} b_rel_start: {:?}", a_rel_start, b_rel_start),
+                }
+            }
+
+            Direction::East => {
+                match b_rel_start {
+                    Direction::North => 'L',
+                    Direction::South => 'F',
+                    Direction::West => '-',
+                    _ => panic!("a_rel_start: {:?} b_rel_start: {:?}", a_rel_start, b_rel_start),
+                }
+            }
+
+            Direction::South => {
+                match b_rel_start {
+                    Direction::North => '|',
+                    Direction::East => 'F',
+                    Direction::West => '7',
+                    _ => panic!("a_rel_start: {:?} b_rel_start: {:?}", a_rel_start, b_rel_start),
+                }
+            }
+            Direction::West => {
+                match b_rel_start {
+                    Direction::North => 'J',
+                    Direction::East => '-',
+                    Direction::South => '7',
+                    _ => panic!("a_rel_start: {:?} b_rel_start: {:?}", a_rel_start, b_rel_start),
+                }
+            }
+        }
+    }
+
     fn calculate_in_out(&self, coord: (usize, usize)) -> char {
+        let mut debug = false;
+        // if coord == (4, 8) {
+        if coord == (8, 12) {
+            debug = true;
+        }
         // out:
         // out if touching border
         // out if touching another out
@@ -242,17 +319,64 @@ impl Field {
         // out if count loops up is even number
         let mut count = 0;
         let mut pipe_count = 0;
-        for i in 0..coord.0 {
-            if self.distances[i][coord.1] != -1 {
-                // except for '|'
-                match self.pipes[i][coord.1] {
-                    '|' => pipe_count += 1,
-                    'J' => (),
-                    '7' => (),
-                    _ => count += 1,
+        let mut touch_stack: Vec<char> = Vec::new();
+
+        for i in (0..coord.0).rev() {
+            // ignore junk
+            if self.distances[i][coord.1] == -1 {
+                continue;
+            }
+            // except for '|'
+            if debug {
+                // println!("DEBUG {} {}", i, coord.1);
+                print!("DEBUG {}", self.pipes[i][coord.1]);
+            }
+
+            match self.pipes[i][coord.1] {
+                'S' => panic!("S should not be in the middle of the field"),
+                '|' => pipe_count += 1,
+                'J' => {
+                    touch_stack.push('J');
+                }
+                'L' => {
+                    touch_stack.push('L');
+                }
+                '7' => {
+                    if touch_stack.last().is_some() && *touch_stack.last().unwrap() == 'J' {
+                        touch_stack.pop();
+                    } else if touch_stack.last().is_some() && *touch_stack.last().unwrap() == 'L' {
+                        touch_stack.pop();
+                        count += 1;
+                    } else {
+                        panic!("match 7: {:?}", touch_stack);
+                        touch_stack.push('7');
+                    }
+                }
+                'F' => {
+                    if touch_stack.last().is_some() && *touch_stack.last().unwrap() == 'J' {
+                        touch_stack.pop();
+                        count += 1;
+                    } else if touch_stack.last().is_some() && *touch_stack.last().unwrap() == 'L' {
+                        touch_stack.pop();
+                    } else {
+                        panic!("match F: {:?}", touch_stack);
+                        touch_stack.push('F');
+                    }
+                }
+                _ => {
+                    if debug {
+                        panic!("match _: {}", self.pipes[i][coord.1]);
+                    }
+                    count += 1
                 }
             }
+
+            if debug {
+                print!(" stack: {:?}", touch_stack);
+                println!(" count: {}", count);
+            }
         }
+
         // if pipe_count > 0 {
         //     count -= 1; // TODO does this underflow?
         // }
@@ -284,6 +408,30 @@ impl Field {
 struct Pipe {
     coord: (usize, usize),
     next: Option<Box<Pipe>>,
+}
+
+impl Pipe {
+    pub(crate) fn relative_to(&self, other: (usize, usize)) -> Direction {
+        if self.coord.0 < other.0 {
+            Direction::North
+        } else if self.coord.0 > other.0 {
+            Direction::South
+        } else {
+            // match (self.coord.1 - other.1) as i32 {
+            //     0 => panic!("relative_to: same coord"),
+            //     1 => Direction::East,
+            //     -1 => Direction::West,
+            //     _ => panic!("relative_to: same coord"),
+            // }
+            if self.coord.1 < other.1 {
+                Direction::West
+            } else if self.coord.1 > other.1 {
+                Direction::East
+            } else {
+                panic!("relative_to: same coord");
+            }
+        }
+    }
 }
 
 impl Pipe {
@@ -483,14 +631,38 @@ OOOOOOOOOO\n";
     }
 
     #[test]
+    fn test_part2_test5() {
+        let input = include_str!("../test5.txt");
+        let actual = solve_part2(input);
+        let field = actual.0;
+        println!("field:\n{}", field.visualize_distances(true));
+        println!("field without junk:\n{}", field.visualize_without_junk(true));
+        println!("field in_out:\n{}", field.visualize_in_out(true));
+
+        let actual_in_out = field.visualize_in_out(false);
+        let expected_in_out = "OF7FSF7F7F7F7F7F---7
+O|LJ||||||||||||F--J
+OL-7LJLJ||||||LJL-7O
+F--JF--7||LJLJIF7FJO
+L---JF-JLJIIIIFJLJOO
+OOOF-JF---7IIIL7OOOO
+OOFJF7L7F-JF7IIL---7
+OOL-JL7||F7|L7F-7F7|
+OOOOOFJ|||||FJL7||LJ
+OOOOOL-JLJLJL--JLJOO\n";
+
+        assert_eq!(actual_in_out, expected_in_out);
+
+        let solution = 10;
+        assert_eq!(actual.1, solution);
+    }
+
+    #[test]
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input);
         let actual = actual.1;
-        let too_low = 158;
-        assert!(actual > too_low);
-
-        let solution = 0;
+        let solution = 393;
         assert_eq!(actual, solution);
     }
 }
