@@ -41,10 +41,8 @@ fn solve_part2(input: &str) -> (Field, i32) {
     println!(" at coord: {:?}", field.start.coord);
 
     for (i, line) in field.pipes.iter().enumerate() {
-        for (j, char) in line.iter().enumerate() {
+        for j in 0..line.len() {
             if field.distances[i][j] == -1 {
-                // include junk
-                // if *char == '.' {
                 field.in_out[i][j] = field.calculate_in_out((i, j));
             }
         }
@@ -246,7 +244,7 @@ impl Field {
         for (i, row) in self.distances.iter().enumerate() {
             for (j, col) in row.iter().enumerate() {
                 if *col == -1 {
-                    result.push_str(".");
+                    result.push('.');
                 } else {
                     result.push_str(&format!("{}", self.pipes[i][j]));
                 }
@@ -318,7 +316,6 @@ impl Field {
 
         // out if count loops up is even number
         let mut count = 0;
-        let mut pipe_count = 0;
         let mut touch_stack: Vec<char> = Vec::new();
 
         for i in (0..coord.0).rev() {
@@ -334,7 +331,7 @@ impl Field {
 
             match self.pipes[i][coord.1] {
                 'S' => panic!("S should not be in the middle of the field"),
-                '|' => pipe_count += 1,
+                '|' => (),
                 'J' => {
                     touch_stack.push('J');
                 }
@@ -349,7 +346,6 @@ impl Field {
                         count += 1;
                     } else {
                         panic!("match 7: {:?}", touch_stack);
-                        touch_stack.push('7');
                     }
                 }
                 'F' => {
@@ -360,7 +356,6 @@ impl Field {
                         touch_stack.pop();
                     } else {
                         panic!("match F: {:?}", touch_stack);
-                        touch_stack.push('F');
                     }
                 }
                 _ => {
@@ -377,9 +372,6 @@ impl Field {
             }
         }
 
-        // if pipe_count > 0 {
-        //     count -= 1; // TODO does this underflow?
-        // }
         if count % 2 == 0 {
             return 'O';
         }
@@ -412,24 +404,17 @@ struct Pipe {
 
 impl Pipe {
     pub(crate) fn relative_to(&self, other: (usize, usize)) -> Direction {
-        if self.coord.0 < other.0 {
-            Direction::North
-        } else if self.coord.0 > other.0 {
-            Direction::South
-        } else {
-            // match (self.coord.1 - other.1) as i32 {
-            //     0 => panic!("relative_to: same coord"),
-            //     1 => Direction::East,
-            //     -1 => Direction::West,
-            //     _ => panic!("relative_to: same coord"),
-            // }
-            if self.coord.1 < other.1 {
-                Direction::West
-            } else if self.coord.1 > other.1 {
-                Direction::East
-            } else {
-                panic!("relative_to: same coord");
-            }
+        match self.coord.0 < other.0 {
+            true => Direction::North,
+            false =>
+                match self.coord.1 < other.1 {
+                    true => Direction::West,
+                    false =>
+                        match self.coord.0 > other.0 {
+                            true => Direction::South,
+                            false => Direction::East,
+                        }
+                }
         }
     }
 }
