@@ -1,13 +1,13 @@
 fn main() {
     let input = include_str!("../input.txt");
     let result = solve_part1(input);
-    println!("✅ part1: {}", result);
+    println!("✅ part1: {}", result.1);
 
-    // let result = solve_part2(input);
-    // println!("✅ part2: {}", result);
+    let result = solve_part2(input);
+    println!("✅ part2: {}", result.1);
 }
 
-fn solve_part1(input: &str) -> i32 {
+fn solve_part1(input: &str) -> (Field, i32) {
     let mut field = parse(input);
     let mut steps = 0;
     loop {
@@ -15,24 +15,40 @@ fn solve_part1(input: &str) -> i32 {
         let a_last = field.a.as_mut().unwrap().last();
         let b_last = field.b.as_mut().unwrap().last();
 
-        // when a and b are on the same pipe, loop is complete
-        if a_last.coord == b_last.coord {
-            print!("{} ", steps);
-            return steps + 1;
-        }
 
         match step {
             Ok(_) => steps += 1,
             Err(_) => break,
         }
-        // println!("{}", field.visualize_distances(true));
+
+        // when a and b are on the same pipe, loop is complete
+        if a_last.coord == b_last.coord {
+            print!("{} ", steps);
+            break;
+        }
     }
-    panic!("No solution found. steps: {}", steps);
+    (field, steps)
 }
 
-// fn solve_part2(input: &str) -> i32 {
-//     0
-// }
+fn solve_part2(input: &str) -> (Field, i32) {
+    let part1 = solve_part1(input);
+    let mut field = part1.0;
+    println!("field:\n{}", field.visualize_distances(true));
+
+    for (i, line) in field.pipes.iter().enumerate() {
+        for (j, char) in line.iter().enumerate() {
+            if *char == '.' {
+                field.in_out[i][j] = field.calculate_in_out((i, j));
+            }
+        }
+    }
+
+    println!("field:\n{}", field.visualize_in_out(true));
+
+    let count_in = field.in_out.iter().map(|line| line.iter().filter(|c| **c == 'I').count()).sum::<usize>() as i32;
+
+    (field, count_in)
+}
 
 #[derive(Debug, PartialEq, Clone)]
 struct Field {
@@ -41,6 +57,7 @@ struct Field {
     distances: Vec<Vec<i32>>,
     a: Option<Pipe>,
     b: Option<Pipe>,
+    in_out: Vec<Vec<char>>,
 }
 
 impl Field {
@@ -216,6 +233,51 @@ impl Field {
         }
         result
     }
+
+    fn calculate_in_out(&self, coord: (usize, usize)) -> char {
+        // out:
+        // out if touching border
+        // out if touching another out
+
+        // out if count loops up is even number
+        let mut count = 0;
+        let mut pipe_count = 0;
+        for i in 0..coord.0 {
+            if self.distances[i][coord.1] != -1 {
+                // except for '|'
+                match self.pipes[i][coord.1] {
+                    '|' => pipe_count += 1,
+                    'J' => (),
+                    '7' => (),
+                    _ => count += 1,
+                }
+            }
+        }
+        // if pipe_count > 0 {
+        //     count -= 1; // TODO does this underflow?
+        // }
+        if count % 2 == 0 {
+            return 'O';
+        }
+        'I'
+    }
+
+    pub(crate) fn visualize_in_out(&self, with_pipes: bool) -> String {
+        let mut result = String::new();
+        for (i, row) in self.in_out.iter().enumerate() {
+            for col in row.iter() {
+                result.push_str(&format!("{}", col));
+            }
+            if with_pipes {
+                // let line = self.pipes[i].iter().collect::<String>();
+                result.push_str(
+                    &format!("\t{}", self.pipes[i].iter().collect::<String>())
+                );
+            }
+            result.push('\n');
+        }
+        result
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -260,7 +322,7 @@ fn parse(input: &str) -> Field {
             }
         }
     }
-    Field { pipes, start, distances, a: None, b: None }
+    Field { pipes: pipes.clone(), start, distances, a: None, b: None, in_out: pipes }
 }
 
 #[cfg(test)]
@@ -321,7 +383,7 @@ mod tests {
         assert_eq!(field.distance((3, 2)).unwrap(), 3);
         assert_eq!(field.distance((3, 3)).unwrap(), 4);
 
-        let actual = solve_part1(input);
+        let actual = solve_part1(input).1;
         let solution = 4;
         assert_eq!(actual, solution);
     }
@@ -329,7 +391,7 @@ mod tests {
     #[test]
     fn test_part1() {
         let input = include_str!("../test.txt");
-        let actual = solve_part1(input);
+        let actual = solve_part1(input).1;
         let solution = 8;
         assert_eq!(actual, solution);
     }
@@ -337,24 +399,98 @@ mod tests {
     #[test]
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
-        let actual = solve_part1(input);
+        let actual = solve_part1(input).1;
         let solution = 6842;
         assert_eq!(actual, solution);
     }
 
-    // #[test]
-    // fn test_part2() {
-    //     let input = include_str!("../test.txt");
-    //     let actual = solve_part2(input);
-    //     let solution = 0;
-    //     assert_eq!(actual, solution);
-    // }
+    #[test]
+    fn test_part2() {
+        let input = include_str!("../test2.txt");
+        let actual = solve_part2(input);
+        let field = actual.0;
+        println!("field:\n{}", field.visualize_distances(true));
+        println!("field:\n{}", field.visualize_in_out(true));
 
-    // #[test]
-    // fn test_solve_part2() {
-    //     let input = include_str!("../input.txt");
-    //     let actual = solve_part2(input);
-    //     let solution = 0;
-    //     assert_eq!(actual, solution);
-    // }
+        let actual_in_out = field.visualize_in_out(false);
+        let expected_in_out = "OOOOOOOOOOO
+OS-------7O
+O|F-----7|O
+O||OOOOO||O
+O||OOOOO||O
+O|L-7OF-J|O
+O|II|O|II|O
+OL--JOL--JO
+OOOOOOOOOOO
+";
+        assert_eq!(actual_in_out, expected_in_out);
+
+        let solution = 4;
+        assert_eq!(actual.1, solution);
+    }
+
+    #[test]
+    fn test_part2_test3() {
+        let input = include_str!("../test3.txt");
+        let actual = solve_part2(input);
+        let field = actual.0;
+        println!("field distances:\n{}", field.visualize_distances(true));
+        println!("field in_out:\n{}", field.visualize_in_out(true));
+
+        let actual_in_out = field.visualize_in_out(false);
+        let expected_in_out = "OF----7F7F7F7F-7OOOO
+O|F--7||||||||FJOOOO
+O||OFJ||||||||L7OOOO
+FJL7L7LJLJ||LJIL-7OO
+L--JOL7IIILJS7F-7L7O
+OOOOF-JIIF7FJ|L7L7L7
+OOOOL7IF7||L7|IL7L7|
+OOOOO|FJLJ|FJ|F7|OLJ
+OOOOFJL-7O||O||||OOO
+OOOOL---JOLJOLJLJOOO\n";
+
+        println!("actual_in_out:\n{}", actual_in_out);
+        println!("expected_in_out:\n{}", expected_in_out);
+        assert_eq!(actual_in_out, expected_in_out);
+
+        let solution = 8;
+        assert_eq!(actual.1, solution);
+    }
+
+    #[test]
+    fn test_part2_test4() {
+        let input = include_str!("../test4.txt");
+        let actual = solve_part2(input);
+        let field = actual.0;
+        println!("field:\n{}", field.visualize_distances(true));
+        println!("field:\n{}", field.visualize_in_out(true));
+
+        let actual_in_out = field.visualize_in_out(false);
+        let expected_in_out = "OOOOOOOOOO
+OS------7O
+O|F----7|O
+O||OOOO||O
+O||OOOO||O
+O|L-7F-J|O
+O|II||II|O
+OL--JL--JO
+OOOOOOOOOO\n";
+
+        assert_eq!(actual_in_out, expected_in_out);
+
+        let solution = 4;
+        assert_eq!(actual.1, solution);
+    }
+
+    #[test]
+    fn test_solve_part2() {
+        let input = include_str!("../input.txt");
+        let actual = solve_part2(input);
+        let actual = actual.1;
+        let too_low = 158;
+        assert!(actual > too_low);
+
+        let solution = 0;
+        assert_eq!(actual, solution);
+    }
 }
