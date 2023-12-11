@@ -103,53 +103,19 @@ impl Field {
     }
 
     pub(crate) fn next_pipes_from_start(&self, from: &Pipe, ignore: Option<Direction>, ignore_coord: Option<(usize, usize)>) -> Pipe {
-        // up - check for |, 7, F
-        let mut coords: Vec<(usize, usize)> = Vec::new();
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::North)
-            && (from.coord.0 > 0)
-            && matches!(self.pipes[from.coord.0-1][from.coord.1], '|'|'7'|'F') {
-            coords.push((from.coord.0 - 1, from.coord.1));
-        }
+        let mut coords: Vec<Option<(usize, usize)>> = Vec::new();
+        coords.push(self.get_north(from, &ignore));
+        coords.push(self.get_east(from, &ignore));
+        coords.push(self.get_south(from, &ignore));
+        coords.push(self.get_west(from, &ignore));
 
-        // right - check for -, J, 7
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::East)
-            && (from.coord.1 < self.pipes[from.coord.0].len() - 1)
-            && matches!(self.pipes[from.coord.0][from.coord.1+1], '-'|'J'|'7') {
-            println!("right");
-            coords.push((from.coord.0, from.coord.1 + 1));
-        }
+        coords.retain(|c| c.is_some());
+        coords.retain(|c| ignore_coord.is_none() || ignore_coord.is_some_and(|ic| c.unwrap() != ic));
 
-        // down - check for |, L, J
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::South)
-            && (from.coord.0 < self.pipes.len() - 1)
-            && matches!(self.pipes[from.coord.0+1][from.coord.1], '|'|'L'|'J') {
-            coords.push((from.coord.0 + 1, from.coord.1));
-        }
-
-        // left - check for -, L, F
-        if !ignore.as_ref().is_some_and(|d| *d == Direction::West)
-            && (from.coord.1 > 0)
-            && matches!(self.pipes[from.coord.0][from.coord.1-1], '-'|'L'|'F') {
-            coords.push((from.coord.0, from.coord.1 - 1));
-        }
-
-        // filter the ignored coord
-        coords.retain(|c| ignore_coord.is_none() || *c != ignore_coord.unwrap());
-        let mut pipes: Vec<Pipe> = coords.iter().map(|c| Pipe { coord: *c, next: None }).collect();
-        pipes.remove(0)
+        Pipe { coord: coords[0].unwrap(), next: None }
     }
 
     pub(crate) fn next_pipe(&self, from: &Pipe, ignore: Option<Direction>, ignore_coord: Option<(usize, usize)>) -> Pipe {
-        // | is a vertical pipe connecting north and south.
-        // - is a horizontal pipe connecting east and west.
-        // L is a 90-degree bend connecting north and east.
-        // J is a 90-degree bend connecting north and west.
-        // 7 is a 90-degree bend connecting south and west.
-        // F is a 90-degree bend connecting south and east.
-        // . is ground; there is no pipe in this tile.
-        // S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
-
-        // what directions should we look?
         let mut directions: Vec<Direction> = Vec::new();
         match self.pipes[from.coord.0][from.coord.1] {
             '|' => {
@@ -183,31 +149,27 @@ impl Field {
         for dir in directions {
             match dir {
                 Direction::North => {
-                    if !ignore.as_ref().is_some_and(|d| *d == Direction::North)
-                        && (from.coord.0 > 0)
-                        && matches!(self.pipes[from.coord.0-1][from.coord.1], '|'|'7'|'F') {
-                        coords.push((from.coord.0 - 1, from.coord.1));
+                    let north = self.get_north(from, &ignore);
+                    if north.is_some() {
+                        coords.push(north.unwrap());
                     }
                 }
                 Direction::East => {
-                    if !ignore.as_ref().is_some_and(|d| *d == Direction::East)
-                        && (from.coord.1 < self.pipes[from.coord.0].len() - 1)
-                        && matches!(self.pipes[from.coord.0][from.coord.1+1], '-'|'J'|'7') {
-                        coords.push((from.coord.0, from.coord.1 + 1));
+                    let east = self.get_east(from, &ignore);
+                    if east.is_some() {
+                        coords.push(east.unwrap());
                     }
                 }
                 Direction::South => {
-                    if !ignore.as_ref().is_some_and(|d| *d == Direction::South)
-                        && (from.coord.0 < self.pipes.len() - 1)
-                        && matches!(self.pipes[from.coord.0+1][from.coord.1], '|'|'L'|'J') {
-                        coords.push((from.coord.0 + 1, from.coord.1));
+                    let south = self.get_south(from, &ignore);
+                    if south.is_some() {
+                        coords.push(south.unwrap());
                     }
                 }
                 Direction::West => {
-                    if !ignore.as_ref().is_some_and(|d| *d == Direction::West)
-                        && (from.coord.1 > 0)
-                        && matches!(self.pipes[from.coord.0][from.coord.1-1], '-'|'L'|'F') {
-                        coords.push((from.coord.0, from.coord.1 - 1));
+                    let west = self.get_west(from, &ignore);
+                    if west.is_some() {
+                        coords.push(west.unwrap());
                     }
                 }
             }
@@ -215,6 +177,42 @@ impl Field {
 
         coords.retain(|c| ignore_coord.is_none() || *c != ignore_coord.unwrap());
         Pipe { coord: coords[0], next: None }
+    }
+
+    fn get_north(&self, from: &Pipe, ignore: &Option<Direction>) -> Option<(usize, usize)> {
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::North)
+            && (from.coord.0 > 0)
+            && matches!(self.pipes[from.coord.0-1][from.coord.1], '|'|'7'|'F') {
+            return Some((from.coord.0 - 1, from.coord.1));
+        }
+        None
+    }
+
+    fn get_east(&self, from: &Pipe, ignore: &Option<Direction>) -> Option<(usize, usize)> {
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::East)
+            && (from.coord.1 < self.pipes[from.coord.0].len() - 1)
+            && matches!(self.pipes[from.coord.0][from.coord.1+1], '-'|'J'|'7') {
+            return Some((from.coord.0, from.coord.1 + 1));
+        }
+        None
+    }
+
+    fn get_south(&self, from: &Pipe, ignore: &Option<Direction>) -> Option<(usize, usize)> {
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::South)
+            && (from.coord.0 < self.pipes.len() - 1)
+            && matches!(self.pipes[from.coord.0+1][from.coord.1], '|'|'L'|'J') {
+            return Some((from.coord.0 + 1, from.coord.1));
+        }
+        None
+    }
+
+    fn get_west(&self, from: &Pipe, ignore: &Option<Direction>) -> Option<(usize, usize)> {
+        if !ignore.as_ref().is_some_and(|d| *d == Direction::West)
+            && (from.coord.1 > 0)
+            && matches!(self.pipes[from.coord.0][from.coord.1-1], '-'|'L'|'F') {
+            return Some((from.coord.0, from.coord.1 - 1));
+        }
+        None
     }
 
     #[allow(dead_code)]
