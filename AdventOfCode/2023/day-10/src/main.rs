@@ -59,20 +59,20 @@ impl Field {
 
         self.a = Option::from(self.find_next_pipe(self.a.clone().unwrap()));
 
-        let mut last_a = self.a.clone().unwrap();
+        let mut last_a = self.a.as_ref().unwrap();
         let mut distance = 1;
         while last_a.next.is_some() {
-            last_a = *last_a.next.unwrap();
+            last_a = last_a.next.as_ref().unwrap();
             distance += 1;
         }
         self.distances[last_a.coord.0][last_a.coord.1] = distance;
 
         self.b = Option::from(self.find_next_pipe(self.b.clone().unwrap()));
 
-        let mut last_b = self.b.clone().unwrap();
+        let mut last_b = self.b.as_ref().unwrap();
         let mut distance = 1;
         while last_b.next.is_some() {
-            last_b = *last_b.next.unwrap();
+            last_b = last_b.next.as_ref().unwrap();
             distance += 1;
         }
         self.distances[last_b.coord.0][last_b.coord.1] = distance;
@@ -225,10 +225,10 @@ struct Pipe {
 }
 
 impl Pipe {
-    fn last(&mut self) -> &Pipe {
+    fn last(&self) -> &Pipe {
         let mut current = self;
         while current.next.is_some() {
-            current = current.next.as_mut().unwrap();
+            current = current.next.as_deref().unwrap();
         }
         current
     }
@@ -310,9 +310,9 @@ mod tests {
 
         // stop when a and b are on the same pipe
         // field.step().expect("Testing field.step() failed");
-        let mut a = field.a.clone().unwrap();
+        let a = field.a.as_ref().unwrap();
         let a_last = a.last();
-        let mut b = field.b.clone().unwrap();
+        let b = field.b.as_ref().unwrap();
         let b_last = b.last();
         assert_eq!(a_last.coord, b_last.coord);
         assert_eq!(field.distance((1, 3)).unwrap(), 2);
