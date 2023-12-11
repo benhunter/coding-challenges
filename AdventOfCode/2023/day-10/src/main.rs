@@ -12,9 +12,9 @@ fn solve_part1(input: &str) -> i32 {
     let mut steps = 0;
     loop {
         let step = field.step();
+        let a_last = field.a.as_ref().unwrap().last();
+        let b_last = field.b.as_ref().unwrap().last();
 
-        let a_last = field.a.clone().unwrap().last();
-        let b_last = field.b.clone().unwrap().last();
         // when a and b are on the same pipe, loop is complete
         if a_last.coord == b_last.coord {
             print!("{} ", steps);
@@ -25,12 +25,7 @@ fn solve_part1(input: &str) -> i32 {
             Ok(_) => steps += 1,
             Err(_) => break,
         }
-
         // println!("{}", field.visualize_distances(true));
-
-        // if steps > 10 {
-        //     break;
-        // }
     }
     panic!("No solution found. steps: {}", steps);
 }
@@ -55,7 +50,6 @@ impl Field {
             self.a = Some(self.next_pipes_from_start(&self.start, None, None));
             self.b = Some(self.next_pipes_from_start(&self.start, None, Some(self.a.clone().unwrap().coord)));
 
-            // set distance to 1
             let coord = self.a.clone().unwrap().coord;
             self.distances[coord.0][coord.1] = 1;
             let coord = self.b.clone().unwrap().coord;
@@ -73,8 +67,6 @@ impl Field {
         }
         self.distances[last_a.coord.0][last_a.coord.1] = distance;
 
-        // println!("{}", self.visualize_distances(true));
-
         self.b = Option::from(self.find_next_pipe(self.b.clone().unwrap()));
 
         let mut last_b = self.b.clone().unwrap();
@@ -85,7 +77,6 @@ impl Field {
         }
         self.distances[last_b.coord.0][last_b.coord.1] = distance;
 
-        // println!("{}", self.visualize_distances(true));
         Ok(())
     }
 
@@ -147,31 +138,14 @@ impl Field {
 
         let mut coords: Vec<(usize, usize)> = Vec::new();
         for dir in directions {
-            match dir {
-                Direction::North => {
-                    let north = self.get_north(from, &ignore);
-                    if north.is_some() {
-                        coords.push(north.unwrap());
-                    }
-                }
-                Direction::East => {
-                    let east = self.get_east(from, &ignore);
-                    if east.is_some() {
-                        coords.push(east.unwrap());
-                    }
-                }
-                Direction::South => {
-                    let south = self.get_south(from, &ignore);
-                    if south.is_some() {
-                        coords.push(south.unwrap());
-                    }
-                }
-                Direction::West => {
-                    let west = self.get_west(from, &ignore);
-                    if west.is_some() {
-                        coords.push(west.unwrap());
-                    }
-                }
+            let coord = match dir {
+                Direction::North => self.get_north(from, &ignore),
+                Direction::East => self.get_east(from, &ignore),
+                Direction::South => self.get_south(from, &ignore),
+                Direction::West => self.get_west(from, &ignore),
+            };
+            if coord.is_some() {
+                coords.push(coord.unwrap());
             }
         }
 
