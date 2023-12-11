@@ -12,8 +12,8 @@ fn solve_part1(input: &str) -> i32 {
     let mut steps = 0;
     loop {
         let step = field.step();
-        let a_last = field.a.as_ref().unwrap().last();
-        let b_last = field.b.as_ref().unwrap().last();
+        let a_last = field.a.as_mut().unwrap().last();
+        let b_last = field.b.as_mut().unwrap().last();
 
         // when a and b are on the same pipe, loop is complete
         if a_last.coord == b_last.coord {
@@ -225,10 +225,10 @@ struct Pipe {
 }
 
 impl Pipe {
-    fn last(&self) -> Pipe {
-        let mut current = self.clone();
+    fn last(&mut self) -> &Pipe {
+        let mut current = self;
         while current.next.is_some() {
-            current = *current.next.unwrap();
+            current = current.next.as_mut().unwrap();
         }
         current
     }
@@ -310,8 +310,10 @@ mod tests {
 
         // stop when a and b are on the same pipe
         // field.step().expect("Testing field.step() failed");
-        let a_last = field.a.clone().unwrap().last();
-        let b_last = field.b.clone().unwrap().last();
+        let mut a = field.a.clone().unwrap();
+        let a_last = a.last();
+        let mut b = field.b.clone().unwrap();
+        let b_last = b.last();
         assert_eq!(a_last.coord, b_last.coord);
         assert_eq!(field.distance((1, 3)).unwrap(), 2);
         assert_eq!(field.distance((3, 1)).unwrap(), 2);
