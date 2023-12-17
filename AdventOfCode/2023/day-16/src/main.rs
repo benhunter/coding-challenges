@@ -1,27 +1,94 @@
-use std::panic::panic_any;
 use crate::Direction::*;
 
 fn main() {
-    // let input = include_str!("../input.txt");
-    let input = include_str!("../test.txt");
+    let input = include_str!("../input.txt");
+    // let input = include_str!("../test.txt");
     let result = solve_part1(input);
     println!("✅ part1: {}", result);
 
-    // let result = solve_part2(input);
-    // println!("✅ part2: {}", result);
+    let result = solve_part2(input);
+    println!("✅ part2: {}", result);
 }
 
-#[derive(Debug)]
+fn solve_part1(input: &str) -> usize {
+    let mut contraption = parse(input);
+    let start = Node { coord: Coord { x: 0, y: 0 }, direction: Right };
+    contraption.calc_energized(start);
+    contraption.count_engergized()
+}
+
+
+fn solve_part2(input: &str) -> i32 {
+    let original = parse(input);
+    let mut contraption = original.clone();
+    let mut max = 0;
+    let mut max_contraption = original.clone();
+    let y = 0;
+    for x in 0..contraption.layout[0].len() {
+        let mut contraption = original.clone();
+        let start = Node { coord: Coord { x, y }, direction: Down };
+        contraption.calc_energized(start);
+        let count = contraption.count_engergized();
+        if count > max {
+            max = count;
+            max_contraption = contraption;
+        }
+    }
+
+    let y = contraption.layout.len() - 1;
+    for x in 0..contraption.layout[0].len() {
+        let mut contraption = original.clone();
+        let start = Node { coord: Coord { x, y }, direction: Up };
+        contraption.calc_energized(start);
+        let count = contraption.count_engergized();
+        if count > max {
+            max = count;
+            max_contraption = contraption;
+        }
+    }
+
+    let x = 0;
+    for y in 0..contraption.layout.len() - 1 {
+        let mut contraption = original.clone();
+        let start = Node { coord: Coord { x, y }, direction: Right };
+        contraption.calc_energized(start);
+        let count = contraption.count_engergized();
+        if count > max {
+            max = count;
+            max_contraption = contraption;
+        }
+    }
+
+    let x = contraption.layout[0].len() - 1;
+    for y in 0..contraption.layout.len() - 1 {
+        let mut contraption = original.clone();
+        let start = Node { coord: Coord { x, y }, direction: Right };
+        contraption.calc_energized(start);
+        let count = contraption.count_engergized();
+        if count > max {
+            max = count;
+            max_contraption = contraption;
+        }
+    }
+
+    // max_contraption.print_energized();
+    max as i32
+}
+
+#[derive(Debug, Clone)]
 struct Contraption {
     layout: Vec<Vec<char>>,
     paths: Vec<Path>,
+    visited: Vec<Vec<Vec<Direction>>>,
 }
 
 impl Contraption {
     fn new(layout: Vec<Vec<char>>) -> Self {
+        let visited = vec![vec![Vec::new(); layout[0].len()]; layout.len()];
         Self {
             layout,
             paths: Vec::new(),
+            visited,
         }
     }
 
@@ -57,6 +124,149 @@ impl Contraption {
             }
         }
     }
+
+    fn mark_visited(&mut self, direction: &Direction, x: usize, y: usize) {
+        self.visited[y][x].push(direction.clone());
+    }
+
+    pub(crate) fn is_visited(&self, direction: &Direction, x: usize, y: usize) -> bool {
+        return self.visited[y][x].contains(direction);
+    }
+
+    fn calc_energized(&mut self, start: Node) {
+        let mut partial_paths: Vec<Path> = Vec::new();
+        partial_paths.push(Path {
+            route: vec![start]
+        });
+        while !partial_paths.is_empty() {
+            let mut path = partial_paths.pop().unwrap();
+            let last = path.route.iter().last().unwrap();
+            let x = last.coord.x;
+            let y = last.coord.y;
+
+            if self.is_visited(&last.direction, x, y) {
+                continue;
+            } else {
+                self.mark_visited(&last.direction, x, y);
+            }
+
+            // println!("x: {}, y: {}, char: {}, direction: {:?}, paths: {}", x, y, self.layout[y][x], last.direction, partial_paths.len());
+            match self.layout[y][x] {
+                '.' => {
+                    let next = self.go_direction(&last.direction, x, y);
+                    if next.is_some() {
+                        path.route.push(next.unwrap());
+                        partial_paths.push(path);
+                    }
+                }
+
+                '|' => {
+                    match last.direction {
+                        Up | Down => {
+                            // continue like '.'
+                            let next = self.go_direction(&last.direction, x, y);
+                            if next.is_some() {
+                                path.route.push(next.unwrap());
+                                partial_paths.push(path);
+                            }
+                        }
+                        Left | Right => {
+                            let up = self.go_direction(&Up, x, y);
+                            if up.is_some() {
+                                let mut up_path = path.clone();
+                                up_path.route.push(up.unwrap());
+                                partial_paths.push(up_path);
+                            }
+                            let down = self.go_direction(&Down, x, y);
+                            if down.is_some() {
+                                path.route.push(down.unwrap());
+                                partial_paths.push(path);
+                            }
+                        }
+                    }
+                }
+
+                '-' => {
+                    match last.direction {
+                        Left | Right => {
+                            // continue like '.'
+                            let next = self.go_direction(&last.direction, x, y);
+                            if next.is_some() {
+                                path.route.push(next.unwrap());
+                                partial_paths.push(path);
+                            }
+                        }
+                        Up | Down => {
+                            let left = self.go_direction(&Left, x, y);
+                            if left.is_some() {
+                                let mut up_path = path.clone();
+                                up_path.route.push(left.unwrap());
+                                partial_paths.push(up_path);
+                            }
+                            let right = self.go_direction(&Right, x, y);
+                            if right.is_some() {
+                                path.route.push(right.unwrap());
+                                partial_paths.push(path);
+                            }
+                        }
+                    }
+                }
+
+                '/' => {
+                    let next = match last.direction {
+                        Right => self.go_direction(&Up, x, y),
+                        Up => self.go_direction(&Right, x, y),
+                        Left => self.go_direction(&Down, x, y),
+                        Down => self.go_direction(&Left, x, y),
+                    };
+                    if next.is_some() {
+                        path.route.push(next.unwrap());
+                        partial_paths.push(path);
+                    }
+                }
+
+                '\\' => {
+                    let next = match last.direction {
+                        Right => self.go_direction(&Down, x, y),
+                        Down => self.go_direction(&Right, x, y),
+                        Up => self.go_direction(&Left, x, y),
+                        Left => self.go_direction(&Up, x, y),
+                    };
+                    if next.is_some() {
+                        path.route.push(next.unwrap());
+                        partial_paths.push(path);
+                    }
+                }
+
+                _ => {
+                    // dbg!(y, x, self.layout[y][x]);
+                    todo!()
+                }
+            }
+        }
+    }
+
+    pub(crate) fn count_engergized(&self) -> usize {
+        let count: usize = self.visited.iter().map(|line| {
+            line.iter()
+                .filter(|coord| !coord.is_empty())
+                .count()
+        }).sum();
+        count
+    }
+
+    pub(crate) fn print_energized(&self) {
+        for y in 0..self.visited.len() - 1 {
+            for x in 0..self.visited[0].len() - 1 {
+                if self.visited[y][x].len() > 0 {
+                    print!("#");
+                } else {
+                    print!(".");
+                }
+            }
+            print!("\n");
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -85,154 +295,13 @@ struct Coord {
     y: usize,
 }
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, PartialEq)]
 enum Direction {
     Up,
     Down,
     Left,
     Right,
-}
-
-fn solve_part1(input: &str) -> i32 {
-    let contraption = parse(input);
-    let mut partial_paths: Vec<Path> = Vec::new();
-    partial_paths.push(Path {
-        route: vec![Node { coord: Coord { x: 0, y: 0 }, direction: Right }]
-    });
-    let mut completed_paths: Vec<Path> = Vec::new();
-
-    while !partial_paths.is_empty() {
-        if partial_paths.len() > 10 {
-            panic!("too many paths");
-        }
-        // dbg!(partial_paths.clone().len());
-        let mut path = partial_paths.pop().unwrap();
-        let last = path.route.iter().last().unwrap();
-        // dbg!(last.clone());
-        let x = last.coord.x;
-        let y = last.coord.y;
-
-        println!("x: {}, y: {}, char: {}, direction: {:?}, paths: {}", x, y, contraption.layout[y][x], last.direction, partial_paths.len());
-        match contraption.layout[y][x] {
-            '.' => {
-                let next = contraption.go_direction(&last.direction, x, y);
-                if next.is_some() {
-                    // dbg!(next.clone());
-                    path.route.push(next.unwrap());
-                    partial_paths.push(path);
-                } else {
-                    println!("completed path");
-                    completed_paths.push(path);
-                }
-            }
-
-            '|' => {
-                match last.direction {
-                    Up | Down => {
-                        // continue like '.'
-                        let next = contraption.go_direction(&last.direction, x, y);
-                        if next.is_some() {
-                            path.route.push(next.unwrap());
-                            partial_paths.push(path);
-                        } else {
-                            println!("completed path");
-                            completed_paths.push(path);
-                        }
-                    }
-                    Left | Right => {
-                        println!("split |");
-                        let up = contraption.go_direction(&Up, x, y);
-                        if up.is_some() {
-                            let mut up_path = path.clone();
-                            up_path.route.push(up.unwrap());
-                            partial_paths.push(up_path);
-                        }
-                        let down = contraption.go_direction(&Down, x, y);
-                        if down.is_some() {
-                            path.route.push(down.unwrap());
-                            partial_paths.push(path);
-                        }
-                    }
-                }
-            }
-
-            '-' => {
-                match last.direction {
-                    Left | Right => {
-                        // continue like '.'
-                        let next = contraption.go_direction(&last.direction, x, y);
-                        if next.is_some() {
-                            path.route.push(next.unwrap());
-                            partial_paths.push(path);
-                        } else {
-                            println!("completed path");
-                            completed_paths.push(path);
-                        }
-                    }
-                    Up | Down => {
-                        println!("split -");
-                        let left = contraption.go_direction(&Left, x, y);
-                        if left.is_some() {
-                            let mut up_path = path.clone();
-                            up_path.route.push(left.unwrap());
-                            partial_paths.push(up_path);
-                        }
-                        let right = contraption.go_direction(&Right, x, y);
-                        if right.is_some() {
-                            path.route.push(right.unwrap());
-                            partial_paths.push(path);
-                        }
-                    }
-                }
-            }
-
-            '/' => {
-                let next = match last.direction {
-                    Right => contraption.go_direction(&Up, x, y),
-                    Up => contraption.go_direction(&Right, x, y),
-                    Left => contraption.go_direction(&Down, x, y),
-                    Down => contraption.go_direction(&Left, x, y),
-                };
-                if next.is_some() {
-                    path.route.push(next.unwrap());
-                    partial_paths.push(path);
-                } else {
-                    println!("completed path");
-                    completed_paths.push(path);
-                }
-            }
-
-            '\\' => {
-                let next = match last.direction {
-                    Right => contraption.go_direction(&Down, x, y),
-                    Down => contraption.go_direction(&Right, x, y),
-                    Up => contraption.go_direction(&Left, x, y),
-                    Left => contraption.go_direction(&Up, x, y),
-                };
-                if next.is_some() {
-                    path.route.push(next.unwrap());
-                    partial_paths.push(path);
-                } else {
-                    println!("completed path");
-                    completed_paths.push(path);
-                }
-            }
-
-            _ => {
-                dbg!(y, x, contraption.layout[y][x]);
-                todo!()
-            }
-        }
-
-        // partial_paths.pop()
-    }
-
-    todo!()
-}
-
-
-fn solve_part2(input: &str) -> i32 {
-    0
 }
 
 fn parse(input: &str) -> Contraption {
@@ -263,27 +332,31 @@ mod tests {
         assert_eq!(actual, solution);
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
         let actual = solve_part1(input);
-        let solution = 0;
+        let solution = 6994;
         assert_eq!(actual, solution);
     }
 
-    // #[test]
+    #[test]
     fn test_part2() {
         let input = include_str!("../test.txt");
         let actual = solve_part2(input);
-        let solution = 0;
+        let solution = 51;
         assert_eq!(actual, solution);
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input);
-        let solution = 0;
+
+        let too_high = 10864;
+        assert!(actual < too_high);
+
+        let solution = 7488;
         assert_eq!(actual, solution);
     }
 }
