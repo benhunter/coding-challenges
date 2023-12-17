@@ -187,27 +187,22 @@ impl Contraption {
                 }
 
                 '-' => {
-                    match last.direction {
+                    let nexts: [Option<Node>; 2] = match last.direction {
                         Left | Right => {
                             // continue like '.'
-                            let next = self.go_direction(&last.direction, x, y);
-                            if next.is_some() {
-                                path.route.push(next.unwrap());
-                                partial_paths.push(path);
-                            }
+                            [self.go_direction(&last.direction, x, y),
+                                None]
                         }
                         Up | Down => {
-                            let left = self.go_direction(&Left, x, y);
-                            if left.is_some() {
-                                let mut up_path = path.clone();
-                                up_path.route.push(left.unwrap());
-                                partial_paths.push(up_path);
-                            }
-                            let right = self.go_direction(&Right, x, y);
-                            if right.is_some() {
-                                path.route.push(right.unwrap());
-                                partial_paths.push(path);
-                            }
+                            [self.go_direction(&Left, x, y),
+                                self.go_direction(&Right, x, y)]
+                        }
+                    };
+
+                    for next in nexts {
+                        if next.is_some() {
+                            path.route.push(next.unwrap());
+                            partial_paths.push(path.clone());
                         }
                     }
                 }
@@ -352,9 +347,6 @@ mod tests {
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input);
-
-        let too_high = 10864;
-        assert!(actual < too_high);
 
         let solution = 7488;
         assert_eq!(actual, solution);
