@@ -126,7 +126,7 @@ impl Contraption {
     }
 
     fn mark_visited(&mut self, direction: &Direction, x: usize, y: usize) {
-        self.visited[y][x].push(direction.clone());
+        self.visited[y][x].push(*direction);
     }
 
     pub(crate) fn is_visited(&self, direction: &Direction, x: usize, y: usize) -> bool {
@@ -296,7 +296,7 @@ struct Coord {
 }
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Direction {
     Up,
     Down,
