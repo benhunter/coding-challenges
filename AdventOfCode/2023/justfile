@@ -12,6 +12,10 @@ test day:
 lint day:
     cargo clippy -p {{day}}
 
+profile day:
+    cargo build --profile profiling -p {{day}}
+    samply record ./target/profiling/{{day}}
+
 # You can find SESSION by using Chrome tools:
 # 1) Go to https://adventofcode.com/2022/day/1/input
 # 2) right-click -> inspect -> click the "Application" tab.

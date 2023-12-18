@@ -76,12 +76,12 @@ fn solve_part2(input: &str) -> i32 {
 struct Contraption {
     layout: Vec<Vec<char>>,
     paths: Vec<Path>,
-    visited: Vec<Vec<Vec<Direction>>>,
+    visited: Vec<Vec<[bool; 4]>>, // Up, Down, Left, Right
 }
 
 impl Contraption {
     fn new(layout: Vec<Vec<char>>) -> Self {
-        let visited = vec![vec![Vec::new(); layout[0].len()]; layout.len()];
+        let visited = vec![vec![[false; 4]; layout[0].len()]; layout.len()];
         Self {
             layout,
             paths: Vec::new(),
@@ -100,11 +100,12 @@ impl Contraption {
     }
 
     fn mark_visited(&mut self, direction: &Direction, x: usize, y: usize) {
-        self.visited[y][x].push(*direction);
+        // self.visited[y][x].push(*direction);
+        self.visited[y][x][*direction as usize] = true
     }
 
     pub(crate) fn is_visited(&self, direction: &Direction, x: usize, y: usize) -> bool {
-        self.visited[y][x].contains(direction)
+        self.visited[y][x][*direction as usize]
     }
 
     fn calc_energized(&mut self, start: Node) {
@@ -173,7 +174,7 @@ impl Contraption {
     pub(crate) fn count_engergized(&self) -> usize {
         let count: usize = self.visited.iter().map(|line| {
             line.iter()
-                .filter(|coord| !coord.is_empty())
+                .filter(|coord| coord.contains(&true))
                 .count()
         }).sum();
         count
@@ -182,7 +183,7 @@ impl Contraption {
     pub(crate) fn print_energized(&self) {
         for y in 0..self.visited.len() - 1 {
             for x in 0..self.visited[0].len() - 1 {
-                if !self.visited[y][x].is_empty() {
+                if self.visited[y][x].contains(&true) {
                     print!("#");
                 } else {
                     print!(".");
@@ -190,6 +191,7 @@ impl Contraption {
             }
             println!();
         }
+        println!();
     }
 }
 
@@ -222,10 +224,10 @@ struct Coord {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
+    Up = 0,
+    Down = 1,
+    Left = 2,
+    Right = 3,
 }
 
 fn parse(input: &str) -> Contraption {
