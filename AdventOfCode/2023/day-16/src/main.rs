@@ -157,10 +157,7 @@ impl Contraption {
 
                 '|' => {
                     match last.direction {
-                        Up | Down => {
-                            // continue like '.'
-                            self.go_direction(&last.direction, x, y)
-                        }
+                        Up | Down => { self.go_direction(&last.direction, x, y) }
                         Left | Right => {
                             let up = self.go_direction(&Up, x, y);
                             if up.is_some() {
@@ -175,10 +172,7 @@ impl Contraption {
 
                 '-' => {
                     match last.direction {
-                        Left | Right => {
-                            // continue like '.'
-                            self.go_direction(&last.direction, x, y)
-                        }
+                        Left | Right => { self.go_direction(&last.direction, x, y) }
                         Up | Down => {
                             let left = self.go_direction(&Left, x, y);
                             if left.is_some() {
@@ -208,10 +202,7 @@ impl Contraption {
                     }
                 }
 
-                _ => {
-                    // dbg!(y, x, self.layout[y][x]);
-                    todo!()
-                }
+                _ => { todo!() }
             };
 
             if next.is_some() {
