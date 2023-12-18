@@ -22,7 +22,6 @@ fn solve_part2(input: &str) -> i32 {
     let original = parse(input);
     let mut contraption = original.clone();
     let mut max = 0;
-    let mut max_contraption = original.clone();
 
     for x in 0..contraption.layout[0].len() {
         let mut contraption = original.clone();
@@ -32,7 +31,6 @@ fn solve_part2(input: &str) -> i32 {
         let count = contraption.count_engergized();
         if count > max {
             max = count;
-            max_contraption = contraption;
         }
 
         let mut contraption = original.clone();
@@ -42,7 +40,6 @@ fn solve_part2(input: &str) -> i32 {
         let count = contraption.count_engergized();
         if count > max {
             max = count;
-            max_contraption = contraption;
         }
     }
 
@@ -54,7 +51,6 @@ fn solve_part2(input: &str) -> i32 {
         let count = contraption.count_engergized();
         if count > max {
             max = count;
-            max_contraption = contraption;
         }
 
         let mut contraption = original.clone();
@@ -64,11 +60,9 @@ fn solve_part2(input: &str) -> i32 {
         let count = contraption.count_engergized();
         if count > max {
             max = count;
-            max_contraption = contraption;
         }
     }
 
-    // max_contraption.print_energized();
     max as i32
 }
 
@@ -80,7 +74,7 @@ struct Contraption {
 }
 
 impl Contraption {
-    fn new(layout: Vec<Vec<char>>) -> Self {
+    pub(crate) fn new(layout: Vec<Vec<char>>) -> Self {
         let visited = vec![vec![[false; 4]; layout[0].len()]; layout.len()];
         Self {
             layout,
@@ -104,11 +98,11 @@ impl Contraption {
         self.visited[y][x][*direction as usize] = true
     }
 
-    pub(crate) fn is_visited(&self, direction: &Direction, x: usize, y: usize) -> bool {
+    fn is_visited(&self, direction: &Direction, x: usize, y: usize) -> bool {
         self.visited[y][x][*direction as usize]
     }
 
-    fn calc_energized(&mut self, start: Node) {
+    pub(crate) fn calc_energized(&mut self, start: Node) {
         let mut node_queue: Vec<Node> = vec![start];
 
         while let Some(mut node) = node_queue.pop() {
