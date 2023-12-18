@@ -19,48 +19,35 @@ fn solve_part1(input: &str) -> usize {
 
 
 fn solve_part2(input: &str) -> i32 {
-    let original = parse(input);
-    let mut contraption = original.clone();
+    let mut contraption= parse(input);
     let mut max = 0;
 
     for x in 0..contraption.layout[0].len() {
-        let mut contraption = original.clone();
+        contraption.reset();
         let y = 0;
         let start = Node { coord: Coord { x, y }, direction: Down };
         contraption.calc_energized(start);
-        let count = contraption.count_engergized();
-        if count > max {
-            max = count;
-        }
+        max = max.max(contraption.count_engergized());
 
-        let mut contraption = original.clone();
+        contraption.reset();
         let y = contraption.layout.len() - 1;
         let start = Node { coord: Coord { x, y }, direction: Up };
         contraption.calc_energized(start);
-        let count = contraption.count_engergized();
-        if count > max {
-            max = count;
-        }
+        max = max.max(contraption.count_engergized());
     }
 
     for y in 0..contraption.layout.len() - 1 {
-        let mut contraption = original.clone();
+        contraption.reset();
         let x = 0;
         let start = Node { coord: Coord { x, y }, direction: Right };
         contraption.calc_energized(start);
-        let count = contraption.count_engergized();
-        if count > max {
-            max = count;
-        }
+        max = max.max(contraption.count_engergized());
 
-        let mut contraption = original.clone();
+        contraption.reset();
         let x = contraption.layout[0].len() - 1;
         let start = Node { coord: Coord { x, y }, direction: Right };
         contraption.calc_energized(start);
-        let count = contraption.count_engergized();
-        if count > max {
-            max = count;
-        }
+        max = max.max(contraption.count_engergized());
     }
 
     max as i32
@@ -69,7 +56,6 @@ fn solve_part2(input: &str) -> i32 {
 #[derive(Debug, Clone)]
 struct Contraption {
     layout: Vec<Vec<char>>,
-    paths: Vec<Path>,
     visited: Vec<Vec<[bool; 4]>>, // Up, Down, Left, Right
 }
 
@@ -78,9 +64,12 @@ impl Contraption {
         let visited = vec![vec![[false; 4]; layout[0].len()]; layout.len()];
         Self {
             layout,
-            paths: Vec::new(),
             visited,
         }
+    }
+
+    pub(crate) fn reset(&mut self) {
+        self.visited = vec![vec![[false; 4]; self.layout[0].len()]; self.layout.len()]; // TODO store x,y dimensions
     }
 
     fn go_direction(&self, direction: &Direction, x: usize, y: usize) -> Option<Node> {
@@ -94,7 +83,6 @@ impl Contraption {
     }
 
     fn mark_visited(&mut self, direction: &Direction, x: usize, y: usize) {
-        // self.visited[y][x].push(*direction);
         self.visited[y][x][*direction as usize] = true
     }
 
@@ -105,7 +93,7 @@ impl Contraption {
     pub(crate) fn calc_energized(&mut self, start: Node) {
         let mut node_queue: Vec<Node> = vec![start];
 
-        while let Some(mut node) = node_queue.pop() {
+        while let Some(node) = node_queue.pop() {
             let last = node;
             let x = last.coord.x;
             let y = last.coord.y;
@@ -116,7 +104,6 @@ impl Contraption {
                 self.mark_visited(&last.direction, x, y);
             }
 
-            // println!("x: {}, y: {}, char: {}, direction: {:?}, paths: {}", x, y, self.layout[y][x], last.direction, partial_paths.len());
             let next: Option<Node> = match self.layout[y][x] {
                 '.' => self.go_direction(&last.direction, x, y),
 
@@ -124,8 +111,8 @@ impl Contraption {
                     Up | Down => self.go_direction(&last.direction, x, y),
                     Left | Right => {
                         let up = self.go_direction(&Up, x, y);
-                        if up.is_some() {
-                            node_queue.push(up.unwrap());
+                        if let Some(up) = up {
+                            node_queue.push(up);
                         }
                         self.go_direction(&Down, x, y)
                     }
@@ -174,6 +161,7 @@ impl Contraption {
         count
     }
 
+    #[allow(dead_code)]
     pub(crate) fn print_energized(&self) {
         for y in 0..self.visited.len() - 1 {
             for x in 0..self.visited[0].len() - 1 {
@@ -187,11 +175,6 @@ impl Contraption {
         }
         println!();
     }
-}
-
-#[derive(Debug, Clone)]
-struct Path {
-    route: Vec<Node>,
 }
 
 #[derive(Debug, Clone)]
@@ -272,7 +255,6 @@ mod tests {
     fn test_solve_part2() {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input);
-
         let solution = 7488;
         assert_eq!(actual, solution);
     }
