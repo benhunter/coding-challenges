@@ -94,34 +94,11 @@ impl Contraption {
 
     fn go_direction(&self, direction: &Direction, x: usize, y: usize) -> Option<Node> {
         match direction {
-            Up => {
-                if y > 0 {
-                    Some(Node::new(x, y - 1, Up))
-                } else {
-                    None
-                }
-            }
-            Down => {
-                if y < self.layout.len() - 1 {
-                    Some(Node::new(x, y + 1, Down))
-                } else {
-                    None
-                }
-            }
-            Left => {
-                if x > 0 {
-                    Some(Node::new(x - 1, y, Left))
-                } else {
-                    None
-                }
-            }
-            Right => {
-                if x < self.layout[0].len() - 1 {
-                    Some(Node::new(x + 1, y, Right))
-                } else {
-                    None
-                }
-            }
+            Up if y > 0 => Some(Node::new(x, y - 1, Up)),
+            Down if y < self.layout.len() - 1 => Some(Node::new(x, y + 1, Down)),
+            Left if x > 0 => Some(Node::new(x - 1, y, Left)),
+            Right if x < self.layout[0].len() - 1 => Some(Node::new(x + 1, y, Right)),
+            _ => None,
         }
     }
 
