@@ -23,9 +23,10 @@ fn solve_part2(input: &str) -> i32 {
     let mut contraption = original.clone();
     let mut max = 0;
     let mut max_contraption = original.clone();
-    let y = 0;
+
     for x in 0..contraption.layout[0].len() {
         let mut contraption = original.clone();
+        let y = 0;
         let start = Node { coord: Coord { x, y }, direction: Down };
         contraption.calc_energized(start);
         let count = contraption.count_engergized();
@@ -33,11 +34,9 @@ fn solve_part2(input: &str) -> i32 {
             max = count;
             max_contraption = contraption;
         }
-    }
 
-    let y = contraption.layout.len() - 1;
-    for x in 0..contraption.layout[0].len() {
         let mut contraption = original.clone();
+        let y = contraption.layout.len() - 1;
         let start = Node { coord: Coord { x, y }, direction: Up };
         contraption.calc_energized(start);
         let count = contraption.count_engergized();
@@ -47,9 +46,9 @@ fn solve_part2(input: &str) -> i32 {
         }
     }
 
-    let x = 0;
     for y in 0..contraption.layout.len() - 1 {
         let mut contraption = original.clone();
+        let x = 0;
         let start = Node { coord: Coord { x, y }, direction: Right };
         contraption.calc_energized(start);
         let count = contraption.count_engergized();
@@ -57,11 +56,9 @@ fn solve_part2(input: &str) -> i32 {
             max = count;
             max_contraption = contraption;
         }
-    }
 
-    let x = contraption.layout[0].len() - 1;
-    for y in 0..contraption.layout.len() - 1 {
         let mut contraption = original.clone();
+        let x = contraption.layout[0].len() - 1;
         let start = Node { coord: Coord { x, y }, direction: Right };
         contraption.calc_energized(start);
         let count = contraption.count_engergized();
@@ -111,13 +108,10 @@ impl Contraption {
     }
 
     fn calc_energized(&mut self, start: Node) {
-        let mut partial_paths: Vec<Path> = Vec::new();
-        partial_paths.push(Path {
-            route: vec![start]
-        });
+        let mut node_queue: Vec<Node> = vec![start];
 
-        while let Some(mut path) = partial_paths.pop() {
-            let last = path.route.iter().last().unwrap();
+        while let Some(mut node) = node_queue.pop() {
+            let last = node;
             let x = last.coord.x;
             let y = last.coord.y;
 
@@ -136,9 +130,7 @@ impl Contraption {
                     Left | Right => {
                         let up = self.go_direction(&Up, x, y);
                         if up.is_some() {
-                            let mut up_path = path.clone();
-                            up_path.route.push(up.unwrap());
-                            partial_paths.push(up_path);
+                            node_queue.push(up.unwrap());
                         }
                         self.go_direction(&Down, x, y)
                     }
@@ -149,8 +141,7 @@ impl Contraption {
                     Up | Down => {
                         let left = self.go_direction(&Left, x, y);
                         if let Some(left) = left {
-                            path.route.push(left);
-                            partial_paths.push(path.clone());
+                            node_queue.push(left);
                         }
                         self.go_direction(&Right, x, y)
                     }
@@ -174,8 +165,7 @@ impl Contraption {
             };
 
             if let Some(next) = next {
-                path.route.push(next);
-                partial_paths.push(path);
+                node_queue.push(next);
             }
         }
     }
