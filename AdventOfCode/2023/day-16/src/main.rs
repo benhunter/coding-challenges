@@ -107,7 +107,7 @@ impl Contraption {
     }
 
     pub(crate) fn is_visited(&self, direction: &Direction, x: usize, y: usize) -> bool {
-        return self.visited[y][x].contains(direction);
+        self.visited[y][x].contains(direction)
     }
 
     fn calc_energized(&mut self, start: Node) {
@@ -129,10 +129,10 @@ impl Contraption {
 
             // println!("x: {}, y: {}, char: {}, direction: {:?}, paths: {}", x, y, self.layout[y][x], last.direction, partial_paths.len());
             let next: Option<Node> = match self.layout[y][x] {
-                '.' => { self.go_direction(&last.direction, x, y) }
+                '.' => self.go_direction(&last.direction, x, y),
 
                 '|' => match last.direction {
-                    Up | Down => { self.go_direction(&last.direction, x, y) }
+                    Up | Down => self.go_direction(&last.direction, x, y),
                     Left | Right => {
                         let up = self.go_direction(&Up, x, y);
                         if up.is_some() {
@@ -145,11 +145,11 @@ impl Contraption {
                 }
 
                 '-' => match last.direction {
-                    Left | Right => { self.go_direction(&last.direction, x, y) }
+                    Left | Right => self.go_direction(&last.direction, x, y),
                     Up | Down => {
                         let left = self.go_direction(&Left, x, y);
-                        if left.is_some() {
-                            path.route.push(left.unwrap());
+                        if let Some(left) = left {
+                            path.route.push(left);
                             partial_paths.push(path.clone());
                         }
                         self.go_direction(&Right, x, y)
@@ -170,11 +170,11 @@ impl Contraption {
                     Left => self.go_direction(&Up, x, y),
                 }
 
-                _ => { todo!() }
+                _ => { panic!("should not happen") }
             };
 
-            if next.is_some() {
-                path.route.push(next.unwrap());
+            if let Some(next) = next {
+                path.route.push(next);
                 partial_paths.push(path);
             }
         }
