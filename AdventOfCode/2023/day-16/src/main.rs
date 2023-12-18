@@ -19,7 +19,7 @@ fn solve_part1(input: &str) -> usize {
 
 
 fn solve_part2(input: &str) -> i32 {
-    let mut contraption= parse(input);
+    let mut contraption = parse(input);
     let mut max = 0;
 
     for x in 0..contraption.layout[0].len() {
@@ -45,7 +45,7 @@ fn solve_part2(input: &str) -> i32 {
 
         contraption.reset();
         let x = contraption.layout[0].len() - 1;
-        let start = Node { coord: Coord { x, y }, direction: Right };
+        let start = Node { coord: Coord { x, y }, direction: Left };
         contraption.calc_energized(start);
         max = max.max(contraption.count_engergized());
     }
