@@ -138,6 +138,7 @@ impl Contraption {
         partial_paths.push(Path {
             route: vec![start]
         });
+
         while !partial_paths.is_empty() {
             let mut path = partial_paths.pop().unwrap();
             let last = path.route.iter().last().unwrap();
@@ -151,24 +152,14 @@ impl Contraption {
             }
 
             // println!("x: {}, y: {}, char: {}, direction: {:?}, paths: {}", x, y, self.layout[y][x], last.direction, partial_paths.len());
-            match self.layout[y][x] {
-                '.' => {
-                    let next = self.go_direction(&last.direction, x, y);
-                    if next.is_some() {
-                        path.route.push(next.unwrap());
-                        partial_paths.push(path);
-                    }
-                }
+            let next: Option<Node> = match self.layout[y][x] {
+                '.' => { self.go_direction(&last.direction, x, y) }
 
                 '|' => {
                     match last.direction {
                         Up | Down => {
                             // continue like '.'
-                            let next = self.go_direction(&last.direction, x, y);
-                            if next.is_some() {
-                                path.route.push(next.unwrap());
-                                partial_paths.push(path);
-                            }
+                            self.go_direction(&last.direction, x, y)
                         }
                         Left | Right => {
                             let up = self.go_direction(&Up, x, y);
@@ -177,59 +168,43 @@ impl Contraption {
                                 up_path.route.push(up.unwrap());
                                 partial_paths.push(up_path);
                             }
-                            let down = self.go_direction(&Down, x, y);
-                            if down.is_some() {
-                                path.route.push(down.unwrap());
-                                partial_paths.push(path);
-                            }
+                            self.go_direction(&Down, x, y)
                         }
                     }
                 }
 
                 '-' => {
-                    let nexts: [Option<Node>; 2] = match last.direction {
+                    match last.direction {
                         Left | Right => {
                             // continue like '.'
-                            [self.go_direction(&last.direction, x, y),
-                                None]
+                            self.go_direction(&last.direction, x, y)
                         }
                         Up | Down => {
-                            [self.go_direction(&Left, x, y),
-                                self.go_direction(&Right, x, y)]
-                        }
-                    };
-
-                    for next in nexts {
-                        if next.is_some() {
-                            path.route.push(next.unwrap());
-                            partial_paths.push(path.clone());
+                            let left = self.go_direction(&Left, x, y);
+                            if left.is_some() {
+                                path.route.push(left.unwrap());
+                                partial_paths.push(path.clone());
+                            }
+                            self.go_direction(&Right, x, y)
                         }
                     }
                 }
 
                 '/' => {
-                    let next = match last.direction {
+                    match last.direction {
                         Right => self.go_direction(&Up, x, y),
                         Up => self.go_direction(&Right, x, y),
                         Left => self.go_direction(&Down, x, y),
                         Down => self.go_direction(&Left, x, y),
-                    };
-                    if next.is_some() {
-                        path.route.push(next.unwrap());
-                        partial_paths.push(path);
                     }
                 }
 
                 '\\' => {
-                    let next = match last.direction {
+                    match last.direction {
                         Right => self.go_direction(&Down, x, y),
                         Down => self.go_direction(&Right, x, y),
                         Up => self.go_direction(&Left, x, y),
                         Left => self.go_direction(&Up, x, y),
-                    };
-                    if next.is_some() {
-                        path.route.push(next.unwrap());
-                        partial_paths.push(path);
                     }
                 }
 
@@ -237,6 +212,11 @@ impl Contraption {
                     // dbg!(y, x, self.layout[y][x]);
                     todo!()
                 }
+            };
+
+            if next.is_some() {
+                path.route.push(next.unwrap());
+                partial_paths.push(path);
             }
         }
     }
