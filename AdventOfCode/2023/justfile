@@ -9,6 +9,9 @@ work day:
 test day:
     cargo nextest run -p {{day}}
 
+run day:
+    cargo watch --clear -x 'run --bin {{day}}'
+
 lint day:
     cargo clippy -p {{day}}
 
