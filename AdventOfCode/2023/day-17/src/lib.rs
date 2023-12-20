@@ -7,9 +7,6 @@ pub fn solve_part1(input: &str) -> usize {
     let bound = Coord { x: city.layout[0].len(), y: city.layout.len() };
     let destination = Coord { x: bound.x - 1, y: bound.y - 1 };
 
-    // let mut paths_queue = vec![vec![start]];
-    // let mut paths_queue = vec![Path(vec![start])];
-
     let mut distances = vec![vec![Infinity; bound.x]; bound.y];
     distances[start.y][start.x] = Value(0);
     let mut visited = vec![vec![false; bound.x]; bound.y];
@@ -25,54 +22,52 @@ pub fn solve_part1(input: &str) -> usize {
         println!("current: {:?}", current);
 
         for direction in Direction::iter() {
-            if let Some(next) = current.go(&direction, &bound) {
-                println!("current: {:?}, next: {:?}, direction: {:?}", current, next, direction);
+            let next = match current.go(&direction, &bound) {
+                None => { continue; }
+                Some(coord) => coord,
+            };
+            // println!("current: {:?}, next: {:?}, direction: {:?}", current, next, direction);
+            // if current == Coord::new(4, 0) {
+            //     visualize_previous(&previous, &city);
+            //     visualize_distances(&distances);
+            //     let debug_path = build_path(&start, bound, &current, &previous);
+            //     visualize_path(&debug_path, &city);
+            //     println!("🚫🐞");
+            // }
+            // if current == Coord::new(4, 1) && direction == Up {
+            //     println!("debug");
+            // }
 
-                if current == Coord::new(4, 0) {
-                    visualize_previous(&previous, &city);
-                    visualize_distances(&distances);
-                    let debug_path = build_path(&start, bound, &current, &previous);
-                    visualize_path(&debug_path, &city);
-                    println!("🚫🐞");
-                }
-                // if current == Coord::new(4, 1) && direction == Up {
-                //     println!("debug");
-                // }
+            if is_more_than_3_in_row(&mut previous, &current, &direction) { continue; }
 
-                // TODO only consider next if the line is 3 or less
-                // track path, check last 3 for same line
-                // whatever direction we are going, look opposite
-                if is_more_than_3_in_row(&mut previous, &current, &direction) { continue; }
+            // consider unvisited neighbors
+            // if !visited[next.y][next.x] { // TODO bug here - current: Coord { x: 4, y: 1 }, next: Coord { x: 4, y: 0 }, direction: Up
+            match distances[current.y][current.x] {
+                Value(current_value) => {
+                    let new_dist = current_value + city.layout[next.y][next.x] as usize;
 
-                // consider unvisited neighbors
-                // if !visited[next.y][next.x] { // TODO bug here - current: Coord { x: 4, y: 1 }, next: Coord { x: 4, y: 0 }, direction: Up
-                match distances[current.y][current.x] {
-                    Value(current_value) => {
-                        let new_dist = current_value + city.layout[next.y][next.x] as usize;
+                    match distances[next.y][next.x] {
+                        Infinity => {
+                            distances[next.y][next.x] = Value(new_dist);
+                            println!("set x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
+                            previous[next.y][next.x] = (Some(current), Some(direction));
+                        }
 
-                        match distances[next.y][next.x] {
-                            Infinity => {
+                        Value(dist) => {
+                            if new_dist < dist {
                                 distances[next.y][next.x] = Value(new_dist);
-                                println!("set x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
+                                println!("updated x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
                                 previous[next.y][next.x] = (Some(current), Some(direction));
-                            }
-
-                            Value(dist) => {
-                                if new_dist < dist {
-                                    distances[next.y][next.x] = Value(new_dist);
-                                    println!("updated x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
-                                    previous[next.y][next.x] = (Some(current), Some(direction));
-                                }
                             }
                         }
                     }
-
-                    Infinity => {
-                        panic!("must have current_value")
-                    }
                 }
-                // }
+
+                Infinity => {
+                    panic!("must have current_value")
+                }
             }
+            // } // end if !visited[next.y][next.x] {
         }
 
         visited[current.y][current.x] = true;
