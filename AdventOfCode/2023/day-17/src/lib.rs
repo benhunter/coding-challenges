@@ -67,7 +67,7 @@ pub fn solve_part1(input: &str) -> usize {
                                 if prev3.0.is_some() {
                                     if prev2.1.as_ref().unwrap() == prev3.1.as_ref().unwrap() {
                                         println!("can't go more than 3 in the same direction");
-                                        // continue;
+                                        continue;
                                     }
                                 }
                             }
