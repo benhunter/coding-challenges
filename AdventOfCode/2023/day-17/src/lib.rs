@@ -42,32 +42,22 @@ pub fn solve_part1(input: &str) -> usize {
 
             // consider unvisited neighbors
             // if !visited[next.y][next.x] { // TODO bug here - current: Coord { x: 4, y: 1 }, next: Coord { x: 4, y: 0 }, direction: Up
-            match distances[current.y][current.x] {
-                Value(current_value) => {
-                    let new_dist = current_value + city.layout[next.y][next.x] as usize;
-
-                    match distances[next.y][next.x] {
-                        Infinity => {
-                            distances[next.y][next.x] = Value(new_dist);
-                            println!("set x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
-                            previous[next.y][next.x] = (Some(current), Some(direction));
-                        }
-
-                        Value(dist) => {
-                            if new_dist < dist {
-                                distances[next.y][next.x] = Value(new_dist);
-                                println!("updated x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
-                                previous[next.y][next.x] = (Some(current), Some(direction));
-                            }
-                        }
-                    }
-                }
-
-                Infinity => {
-                    panic!("must have current_value")
-                }
-            }
+            handle_next(&city, &mut distances, &mut previous, current, direction, next);
             // } // end if !visited[next.y][next.x] {
+
+            let next2 = match next.go(&direction, &bound) {
+                None => { continue; }
+                Some(coord) => coord,
+            };
+            if is_more_than_3_in_row(&mut previous, &next, &direction) { continue; }
+            handle_next(&city, &mut distances, &mut previous, next, direction, next2);
+
+            let next3 = match next.go(&direction, &bound) {
+                None => { continue; }
+                Some(coord) => coord,
+            };
+            if is_more_than_3_in_row(&mut previous, &next2, &direction) { continue; }
+            handle_next(&city, &mut distances, &mut previous, next2, direction, next3);
         }
 
         visited[current.y][current.x] = true;
@@ -82,6 +72,35 @@ pub fn solve_part1(input: &str) -> usize {
     visualize_previous(&previous, &city);
     let Value(d) = distances[bound.y - 1][bound.x - 1] else { panic!("impossible 🧐") };
     d
+}
+
+fn handle_next(city: &City, distances: &mut Vec<Vec<Distance>>, previous: &mut Vec<Vec<(Option<Coord>, Option<Direction>)>>, current: Coord, direction: Direction, next: Coord) {
+    match distances[current.y][current.x] {
+        Value(current_value) => {
+            let new_dist = current_value + city.layout[next.y][next.x] as usize;
+
+            match distances[next.y][next.x] {
+                Infinity => {
+                    distances[next.y][next.x] = Value(new_dist);
+                    println!("set x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
+                    previous[next.y][next.x] = (Some(current), Some(direction));
+                }
+
+                Value(dist) => {
+                    // TODO 🐞
+                    if new_dist < dist {
+                        distances[next.y][next.x] = Value(new_dist);
+                        println!("updated x: {}, y: {}, distance: {}", next.x, next.y, new_dist);
+                        previous[next.y][next.x] = (Some(current), Some(direction));
+                    }
+                }
+            }
+        }
+
+        Infinity => {
+            panic!("must have current_value")
+        }
+    }
 }
 
 fn next_unvisited(bound: Coord, distances: &Vec<Vec<Distance>>, visited: &Vec<Vec<bool>>) -> Option<Option<Coord>> {
@@ -254,7 +273,7 @@ impl Coord {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Direction {
     Up = 0,
     Down = 1,
