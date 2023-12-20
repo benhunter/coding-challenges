@@ -59,15 +59,17 @@ pub fn solve_part1(input: &str) -> usize {
                 // whatever direction we are going, look opposite
                 let prev1 = &previous[current.y][current.x];
                 if prev1.0.is_some() {
-                    let prev2 = &previous[prev1.0.unwrap().y][prev1.0.unwrap().x];
-                    if prev2.0.is_some() {
-                        let prev3 = &previous[prev2.0.unwrap().y][prev1.0.unwrap().x];
-                        if prev3.0.is_some() {
-                            if direction == *prev1.1.as_ref().unwrap() &&
-                                prev1.1.as_ref().unwrap() == prev2.1.as_ref().unwrap() &&
-                                prev2.1.as_ref().unwrap() == prev3.1.as_ref().unwrap() {
-                                println!("can't go more than 3 in the same direction");
-                                continue;
+                    if direction == *prev1.1.as_ref().unwrap() {
+                        let prev2 = &previous[prev1.0.unwrap().y][prev1.0.unwrap().x];
+                        if prev2.0.is_some() {
+                            if prev1.1.as_ref().unwrap() == prev2.1.as_ref().unwrap() {
+                                let prev3 = &previous[prev2.0.unwrap().y][prev1.0.unwrap().x];
+                                if prev3.0.is_some() {
+                                    if prev2.1.as_ref().unwrap() == prev3.1.as_ref().unwrap() {
+                                        println!("can't go more than 3 in the same direction");
+                                        // continue;
+                                    }
+                                }
                             }
                         }
                     }
@@ -118,7 +120,7 @@ pub fn solve_part1(input: &str) -> usize {
     d
 }
 
-fn build_path<'a>(to: &Coord, bound: Coord, from: &Coord, previous: &'a Vec<Vec<(Option<Coord>, Option<Direction>)>>) -> Vec<Vec<&'a(Option<Coord>, Option<Direction>)>> {
+fn build_path<'a>(to: &Coord, bound: Coord, from: &Coord, previous: &'a Vec<Vec<(Option<Coord>, Option<Direction>)>>) -> Vec<Vec<&'a (Option<Coord>, Option<Direction>)>> {
     let mut path: Vec<Vec<&(Option<Coord>, Option<Direction>)>> = vec![vec![&(None, None); bound.x]; bound.y];
     let mut current = *from;
     while current != *to {
