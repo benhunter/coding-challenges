@@ -16,25 +16,10 @@ pub fn solve_part1(input: &str) -> usize {
     let mut previous: Vec<Vec<(Option<Coord>, Option<Direction>)>> = vec![vec![(None, None); bound.x]; bound.y];
 
     loop {
-        // if visited.iter().all(|blocks| !blocks.contains(&false)) {
-        //     break;
-        // }
-
-        let mut current = None;
-        for y in 0..bound.y {
-            for x in 0..bound.x {
-                if !visited[y][x] && distances[y][x] != Infinity {
-                    current = Some(Coord::new(x, y));
-                    break;
-                }
-            }
-            if current.is_some() {
-                break;
-            }
-        }
-        if current.is_none() {
-            break;
-        }
+        let current = match next_unvisited(bound, &distances, &visited) {
+            Some(value) => value,
+            None => break,
+        };
 
         let current = current.unwrap();
         println!("current: {:?}", current);
@@ -57,23 +42,7 @@ pub fn solve_part1(input: &str) -> usize {
                 // TODO only consider next if the line is 3 or less
                 // track path, check last 3 for same line
                 // whatever direction we are going, look opposite
-                let prev1 = &previous[current.y][current.x];
-                if prev1.0.is_some() {
-                    if direction == *prev1.1.as_ref().unwrap() {
-                        let prev2 = &previous[prev1.0.unwrap().y][prev1.0.unwrap().x];
-                        if prev2.0.is_some() {
-                            if prev1.1.as_ref().unwrap() == prev2.1.as_ref().unwrap() {
-                                let prev3 = &previous[prev2.0.unwrap().y][prev1.0.unwrap().x];
-                                if prev3.0.is_some() {
-                                    if prev2.1.as_ref().unwrap() == prev3.1.as_ref().unwrap() {
-                                        println!("can't go more than 3 in the same direction");
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                if is_more_than_3_in_row(&mut previous, &current, &direction) { continue; }
 
                 // consider unvisited neighbors
                 // if !visited[next.y][next.x] { // TODO bug here - current: Coord { x: 4, y: 1 }, next: Coord { x: 4, y: 0 }, direction: Up
@@ -118,6 +87,46 @@ pub fn solve_part1(input: &str) -> usize {
     visualize_previous(&previous, &city);
     let Value(d) = distances[bound.y - 1][bound.x - 1] else { panic!("impossible 🧐") };
     d
+}
+
+fn next_unvisited(bound: Coord, distances: &Vec<Vec<Distance>>, visited: &Vec<Vec<bool>>) -> Option<Option<Coord>> {
+    let mut current = None;
+    for y in 0..bound.y {
+        for x in 0..bound.x {
+            if !visited[y][x] && distances[y][x] != Infinity {
+                current = Some(Coord::new(x, y));
+                break;
+            }
+        }
+        if current.is_some() {
+            break;
+        }
+    }
+    if current.is_none() {
+        return None;
+    }
+    Some(current)
+}
+
+fn is_more_than_3_in_row(previous: &Vec<Vec<(Option<Coord>, Option<Direction>)>>, current: &Coord, direction: &Direction) -> bool {
+    let prev1 = &previous[current.y][current.x];
+    if prev1.0.is_some() {
+        if direction == prev1.1.as_ref().unwrap() {
+            let prev2 = &previous[prev1.0.unwrap().y][prev1.0.unwrap().x];
+            if prev2.0.is_some() {
+                if prev1.1.as_ref().unwrap() == prev2.1.as_ref().unwrap() {
+                    let prev3 = &previous[prev2.0.unwrap().y][prev1.0.unwrap().x];
+                    if prev3.0.is_some() {
+                        if prev2.1.as_ref().unwrap() == prev3.1.as_ref().unwrap() {
+                            println!("can't go more than 3 in the same direction");
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 fn build_path<'a>(to: &Coord, bound: Coord, from: &Coord, previous: &'a Vec<Vec<(Option<Coord>, Option<Direction>)>>) -> Vec<Vec<&'a (Option<Coord>, Option<Direction>)>> {
