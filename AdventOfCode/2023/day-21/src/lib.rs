@@ -1,5 +1,4 @@
-use util::{Coord, Direction, Distance};
-use util::Distance::{Infinity, Value};
+use util::{Coord, Direction};
 
 pub fn solve_part1(input: (&str, usize)) -> usize {
     let steps = input.1;
@@ -7,7 +6,6 @@ pub fn solve_part1(input: (&str, usize)) -> usize {
     let garden = parse(input);
 
     let mut touching = vec![vec![false; garden.bound.x]; garden.bound.y];
-    let mut next_touching = vec![vec![false; garden.bound.x]; garden.bound.y];
     touching[garden.start.y][garden.start.x] = true;
 
 
@@ -26,7 +24,7 @@ pub fn solve_part1(input: (&str, usize)) -> usize {
                 // visualize_touching(&garden, &next_touching);
 
                 for direction in Direction::iter() {
-                    let next = match current.go(&direction, &garden.bound) {
+                    match current.go(&direction, &garden.bound) {
                         None => { continue; }
                         Some(next) => {
                             match garden.plots[next.y][next.x] {
@@ -62,7 +60,7 @@ pub fn solve_part2(input: &str) -> i32 {
     0
 }
 
-fn visualize_touching(garden: &Garden, distances: &Vec<Vec<bool>>) {
+fn visualize_touching(garden: &Garden, distances: &[Vec<bool>]) {
     for y in 0..garden.bound.y {
         for x in 0..garden.bound.x {
             let c = match garden.plots[y][x] {
@@ -82,7 +80,7 @@ fn visualize_touching(garden: &Garden, distances: &Vec<Vec<bool>>) {
     println!();
 }
 
-fn count_touching(touching: &Vec<Vec<bool>>) -> usize {
+fn count_touching(touching: &[Vec<bool>]) -> usize {
     touching.iter().map(|y| {
         y.iter().filter(|c| **c).count()
     }).sum()
@@ -122,6 +120,7 @@ fn parse(input: &str) -> Garden {
 #[cfg(test)]
 mod tests {
     use util::Coord;
+
     use super::*;
 
     #[test]
