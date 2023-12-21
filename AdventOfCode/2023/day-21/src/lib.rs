@@ -1,17 +1,91 @@
-use util::Coord;
-use util::Distance::Infinity;
+use util::{Coord, Direction, Distance};
+use util::Distance::{Infinity, Value};
 
-pub fn solve_part1(input: &str, steps: usize) -> i32 {
+pub fn solve_part1(input: (&str, usize)) -> usize {
+    let steps = input.1;
+    let input = input.0;
     let garden = parse(input);
 
-    let mut distances = vec![vec![Infinity; garden.bound.x]; garden.bound.y];
-    let current = &garden.start;
-    let nexts = current.neighbors(&garden.bound);
-    todo!()
+    let mut touching = vec![vec![false; garden.bound.x]; garden.bound.y];
+    let mut next_touching = vec![vec![false; garden.bound.x]; garden.bound.y];
+    touching[garden.start.y][garden.start.x] = true;
+
+
+    for i in 0..steps {
+        // println!("line 15, step: {}, touching", i);
+        // visualize_touching(&garden, &touching);
+        let mut next_touching = touching.clone();
+
+        for y in 0..garden.bound.y {
+            for x in 0..garden.bound.x {
+                if !touching[y][x] { continue; }
+                let current = Coord::new(x, y);
+                next_touching[y][x] = false;
+
+                // println!("line 25, step: {}, next_touching", i);
+                // visualize_touching(&garden, &next_touching);
+
+                for direction in Direction::iter() {
+                    let next = match current.go(&direction, &garden.bound) {
+                        None => { continue; }
+                        Some(next) => {
+                            match garden.plots[next.y][next.x] {
+                                Plot::Rock => continue,
+                                // Plot::Start => panic!("🧐"),
+                                _ => {
+                                    next_touching[next.y][next.x] = true;
+
+                                    // println!("line 38, step: {}, next_touching", i);
+                                    // visualize_touching(&garden, &next_touching);
+                                }
+                            }
+                        }
+                    };
+                }
+            }
+        }
+
+        // println!("line 47, step: {}, next_touching", i);
+        // visualize_touching(&garden, &next_touching);
+        touching = next_touching.clone();
+        let count = count_touching(&touching);
+        println!("step: {}, touching: {}", i, count);
+        // visualize_touching(&garden, &touching);
+    }
+
+    // visualize_touching(&garden, &touching);
+
+    count_touching(&touching)
 }
 
 pub fn solve_part2(input: &str) -> i32 {
     0
+}
+
+fn visualize_touching(garden: &Garden, distances: &Vec<Vec<bool>>) {
+    for y in 0..garden.bound.y {
+        for x in 0..garden.bound.x {
+            let c = match garden.plots[y][x] {
+                Plot::Start => "S",
+                Plot::Garden => {
+                    match distances[y][x] {
+                        false => ".",
+                        true => "O",
+                    }
+                }
+                Plot::Rock => "#",
+            };
+            print!("{}", c);
+        }
+        println!();
+    }
+    println!();
+}
+
+fn count_touching(touching: &Vec<Vec<bool>>) -> usize {
+    touching.iter().map(|y| {
+        y.iter().filter(|c| **c).count()
+    }).sum()
 }
 
 #[derive(Debug)]
@@ -65,16 +139,16 @@ mod tests {
     fn test_part1() {
         let input = include_str!("../test.txt");
         let steps = 6;
-        let actual = solve_part1(input, steps);
+        let actual = solve_part1((input, steps));
         let solution = 16;
         assert_eq!(actual, solution);
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part1() {
         let input = include_str!("../input.txt");
-        let actual = solve_part1(input, 64);
-        let solution = 0;
+        let actual = solve_part1((input, 64));
+        let solution = 3820;
         assert_eq!(actual, solution);
     }
 
