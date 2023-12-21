@@ -1,14 +1,14 @@
-#[derive(Debug, PartialEq, Clone)]
-struct Item {
-    attribute: i32,
-}
-
 pub fn solve_part1(input: &str) -> i32 {
     0
 }
 
 pub fn solve_part2(input: &str) -> i32 {
     0
+}
+
+#[derive(Debug, PartialEq, Clone)]
+struct Item {
+    attribute: i32,
 }
 
 fn parse(input: &str) -> Item {
