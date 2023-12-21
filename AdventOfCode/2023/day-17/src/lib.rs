@@ -1,5 +1,8 @@
-use crate::Direction::*;
-use crate::Distance::{Infinity, Value};
+use util::Distance;
+use util::Distance::{Infinity, Value};
+use util::Coord;
+use util::Direction;
+use util::Direction::*;
 
 pub fn solve_part1(input: &str) -> usize {
     let mut city = parse(input);
@@ -216,12 +219,6 @@ fn visualize_previous(previous: &Vec<Vec<(Option<Coord>, Option<Direction>)>>, c
     println!();
 }
 
-#[derive(Debug, Clone, PartialEq)]
-enum Distance {
-    Infinity,
-    Value(usize),
-}
-
 pub fn solve_part2(input: &str) -> i32 {
     0
 }
@@ -250,56 +247,6 @@ impl City {
 
 #[derive(Debug, Clone)]
 struct Path(Vec<Coord>);
-
-#[derive(Debug, Clone, PartialEq, Copy)]
-struct Coord {
-    x: usize,
-    y: usize,
-}
-
-impl Coord {
-    pub(crate) fn new(x: usize, y: usize) -> Coord {
-        Coord { x, y }
-    }
-
-    pub(crate) fn go(&self, direction: &Direction, bound: &Coord) -> Option<Coord> {
-        match direction {
-            Up if self.y > 0 => Some(Coord { x: self.x, y: self.y - 1 }),
-            Down if self.y < bound.y - 1 => Some(Coord { x: self.x, y: self.y + 1 }),
-            Left if self.x > 0 => Some(Coord { x: self.x - 1, y: self.y }),
-            Right if self.x < bound.x - 1 => Some(Coord { x: self.x + 1, y: self.y }),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Direction {
-    Up = 0,
-    Down = 1,
-    Left = 2,
-    Right = 3,
-}
-
-impl Direction {
-    pub fn iter() -> core::array::IntoIter<Direction, 4> {
-        [
-            Direction::Down,
-            Direction::Right,
-            Direction::Left,
-            Direction::Up,
-        ].into_iter()
-    }
-
-    pub(crate) fn opposite(&self) -> Direction {
-        match self {
-            Up => Down,
-            Down => Up,
-            Left => Right,
-            Right => Left,
-        }
-    }
-}
 
 fn parse(input: &str) -> City {
     let layout = input

@@ -27,7 +27,7 @@ impl Coord {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Direction {
+pub enum Direction {
     Up = 0,
     Down = 1,
     Left = 2,
@@ -52,4 +52,10 @@ impl Direction {
             Right => Left,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Distance {
+    Infinity,
+    Value(usize),
 }

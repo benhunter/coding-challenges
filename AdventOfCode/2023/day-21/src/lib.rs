@@ -1,8 +1,10 @@
 use util::Coord;
+use util::Distance::Infinity;
 
 pub fn solve_part1(input: &str, steps: usize) -> i32 {
     let garden = parse(input);
 
+    let mut distances = vec![vec![Infinity; garden.bound.x]; garden.bound.y];
     let current = &garden.start;
     let nexts = current.neighbors(&garden.bound);
     todo!()
