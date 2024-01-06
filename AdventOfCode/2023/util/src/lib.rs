@@ -24,6 +24,13 @@ impl Coord {
     pub fn neighbors(&self, bound: &Coord) -> Vec<Coord> {
         Direction::iter().filter_map(|direction| self.go(&direction, bound)).collect()
     }
+
+    pub fn add(&self, other: Coord) -> Coord {
+        Coord {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -58,4 +65,36 @@ impl Direction {
 pub enum Distance {
     Infinity,
     Value(usize),
+}
+
+pub fn parse_grid_chars(input: &str) -> Vec<Vec<char>> {
+    input
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect()
+}
+
+#[derive(Debug)]
+pub enum ParseError {
+    InvalidCharacter(char),
+}
+
+impl From<ParseError> for String {
+    fn from(error: ParseError) -> Self {
+        match error {
+            ParseError::InvalidCharacter(c) => format!("Invalid character: {}", c),
+        }
+    }
+}
+
+pub fn parse_grid<T>(input: &str, parser: impl Fn(char) -> Result<T, ParseError>) -> Result<Vec<Vec<T>>, ParseError> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(&parser)
+                .collect
+                    ::<Result<Vec<T>, ParseError>>()
+        })
+        .collect()
 }
