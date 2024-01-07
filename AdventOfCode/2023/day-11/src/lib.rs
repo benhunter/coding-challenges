@@ -1,20 +1,15 @@
 use itertools::Itertools;
-
 use util::{Coord, parse_grid, ParseError};
 
 pub fn solve_part1(input: &str) -> Result<i32, String> {
     let mut research = parse(input)?;
-
     research.expand();
 
-    let galaxies = research.galaxies();
     let galaxies = research.expanded_galaxies();
     let pairs: Vec<Vec<&Galaxy>> = galaxies.iter().combinations(2).collect();
     let distances = pairs.iter().map(distance).collect::<Result<Vec<i32>, String>>()?;
 
     let sum = distances.iter().sum();
-    // dbg!(sum);
-
     Ok(sum)
 }
 
@@ -24,11 +19,7 @@ pub fn solve_part2(input: &str) -> Result<i64, String> {
 
 pub fn solve_part2_expand_to(input: &str, expand_to: i32) -> Result<i64, String> {
     let mut research = parse(input)?;
-
     research.expand_to(expand_to);
-
-    // dbg!(research.expanded.clone());
-    // println!("galaxies: {:?}", research.expanded_galaxies());
     // print_expanded(&mut research);
 
     let galaxies = research.expanded_galaxies();
@@ -38,8 +29,6 @@ pub fn solve_part2_expand_to(input: &str, expand_to: i32) -> Result<i64, String>
         .collect::<Result<Vec<i64>, String>>()?;
 
     let sum = distances.iter().sum();
-    // dbg!(sum);
-
     Ok(sum)
 }
 
@@ -60,11 +49,8 @@ fn print_expanded(research: &mut Research) {
 fn distance(pair: &Vec<&Galaxy>) -> Result<i32, String> {
     let galaxy1 = pair[0];
     let galaxy2 = pair[1];
-    // dbg!(galaxy1);
-    // dbg!(galaxy2);
-    let distance = ((galaxy1.coord.x as i32 - galaxy2.coord.x as i32) as i32).abs()
-        + ((galaxy1.coord.y as i32 - galaxy2.coord.y as i32) as i32).abs();
-    // println!("galaxy1: {:?}, galaxy2: {:?}, distance: {:?}", galaxy1, galaxy2, distance);
+    let distance = (galaxy1.coord.x as i32 - galaxy2.coord.x as i32).abs()
+        + (galaxy1.coord.y as i32 - galaxy2.coord.y as i32).abs();
     Ok(distance)
 }
 
@@ -94,7 +80,6 @@ impl Research {
                 }
             }
         }
-
         galaxies
     }
 
@@ -144,7 +129,6 @@ impl Research {
             }
         }
 
-        // dbg!(expanded_rows.clone());
         self.expanded = expanded
     }
 
@@ -176,11 +160,8 @@ impl Research {
     }
 
     fn distance_expanded(&self, pair: &Vec<&Galaxy>) -> Result<i64, String> {
-        // println!("distance_expanded pair: {:?}", pair);
         let galaxy1 = pair[0];
         let galaxy2 = pair[1];
-        // dbg!(galaxy1);
-        // dbg!(galaxy2);
 
         let iter_row = galaxy1.coord.y..galaxy2.coord.y;
 
@@ -189,7 +170,6 @@ impl Research {
         let iter_col = min_x..max_x;
 
         let row_distances: Vec<i32> = iter_row.map(|y| {
-            // println!("\trow_distances x: {:?}, y: {:?}", galaxy1.coord.x, y);
             if y == galaxy1.coord.y {
                 return 1;
             }
@@ -201,7 +181,6 @@ impl Research {
         }).collect();
 
         let col_distances: Vec<i32> = iter_col.map(|x| {
-            // println!("\tcol_distances x: {:?}, y: {:?}", x, galaxy2.coord.y);
             if x == galaxy1.coord.x {
                 return 1;
             }
@@ -212,11 +191,7 @@ impl Research {
             }
         }).collect();
 
-        // println!("\trow_distances: {:?}", row_distances);
-        // println!("\tcol_distances: {:?}", col_distances);
-
         let distance = row_distances.iter().sum::<i32>() + col_distances.iter().sum::<i32>();
-        // println!("\tgalaxy1: {:?}, galaxy2: {:?}, distance: {:?}\n", galaxy1, galaxy2, distance);
         Ok(distance as i64)
     }
 }
@@ -286,7 +261,6 @@ mod tests {
 
         let expected_galaxies = 9;
         assert_eq!(galaxies.len(), expected_galaxies);
-
         Ok(())
     }
 
@@ -300,9 +274,7 @@ mod tests {
         assert_eq!(research.expanded.len(), expected_expanded_rows);
 
         let expected_expanded_cols = 4;
-        // dbg!(research.expanded.clone());
         assert_eq!(research.expanded[0].len(), expected_expanded_cols);
-
         Ok(())
     }
 
@@ -317,7 +289,6 @@ mod tests {
 
         let expected_expanded_cols = 13;
         assert_eq!(research.expanded[0].len(), expected_expanded_cols);
-
         Ok(())
     }
 
@@ -368,54 +339,45 @@ mod tests {
 
         let expected_row_index_3 = vec![Pixel::Expanded(expand_to); expected_expanded_cols];
         assert_eq!(research.expanded[3], expected_row_index_3);
-
         Ok(())
     }
 
     #[test]
     fn test_simple_expand_to_10() -> Result<(), String> {
-        let expand_to = 10;
-
         let input = "#..\n...\n..#";
+        let expand_to = 10;
         let actual = solve_part2_expand_to(input, expand_to)?;
 
         let expected_distance = 22;
         assert_eq!(actual, expected_distance);
-
         Ok(())
     }
 
     #[test]
     fn test_column_dist() -> Result<(), String> {
-        let expand_to = 10;
-
         let input = include_str!("../test.txt");
-
         let mut research = parse(input)?;
+        let expand_to = 10;
         research.expand_to(expand_to);
 
         let one = Galaxy { id: 6, coord: Coord { x: 7, y: 8 } };
         let two = Galaxy { id: 8, coord: Coord { x: 4, y: 9 } };
-        let actual = research.distance_expanded(&vec![
-            &one,
-            &two,
-        ])?;
+        let pair = vec![&one, &two];
+
+        let actual = research.distance_expanded(&pair)?;
         let expected_distance = 13;
         assert_eq!(actual, expected_distance);
-
         Ok(())
     }
 
     #[test]
     fn test_simple_expand_to_100() -> Result<(), String> {
-        let expand_to = 100;
-
         let input = "#..\n...\n..#";
+        let expand_to = 100;
         let actual = solve_part2_expand_to(input, expand_to)?;
 
         let expected_distance = 202;
         assert_eq!(actual, expected_distance);
-
         Ok(())
     }
 
@@ -427,7 +389,6 @@ mod tests {
 
         let expected_distance = 1030;
         assert_eq!(actual, expected_distance);
-
         Ok(())
     }
 
@@ -439,7 +400,6 @@ mod tests {
         let input = include_str!("../test.txt");
         let actual = solve_part2_expand_to(input, expand_to)?;
         assert_eq!(actual, expected_distance);
-
         Ok(())
     }
 
