@@ -1,7 +1,7 @@
-use std::string::ParseError;
+use util::{parse_grid_chars, ParseError};
 
 pub fn solve_part1(input: &str) -> Result<i32, String> {
-    let item = parse(input);
+    let item = parse(input)?;
     todo!()
 }
 
@@ -9,13 +9,15 @@ pub fn solve_part2(input: &str) -> Result<i32, String> {
     todo!()
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 struct Item {
+    lines: Vec<Vec<char>>,
     attribute: i32,
 }
 
 fn parse(input: &str) -> Result<Item, ParseError> {
-    Item { attribute: 0 }
+    let lines = parse_grid_chars(input)?;
+    Ok(Item { lines, attribute: 0 })
 }
 
 #[cfg(test)]
@@ -26,7 +28,7 @@ mod tests {
     fn test_parse() -> Result<(), String> {
         let input = include_str!("../test.txt");
         let actual = parse(input)?;
-        let expected = Item { attribute: 0 };
+        let expected = Item { ..Default::default() };
         assert_eq!(actual, expected);
         Ok(())
     }

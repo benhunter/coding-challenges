@@ -70,18 +70,20 @@ pub enum Distance {
 #[derive(Debug)]
 pub enum ParseError {
     InvalidCharacter(char),
+    BadInput,
 }
 
 impl From<ParseError> for String {
     fn from(error: ParseError) -> Self {
         match error {
             ParseError::InvalidCharacter(c) => format!("Invalid character: {}", c),
+            ParseError::BadInput => "Bad input".to_string(),
         }
     }
 }
 
-pub fn parse_grid_chars(input: &str) -> Vec<Vec<char>> {
-    parse_grid(input, |c| Ok(c))?
+pub fn parse_grid_chars(input: &str) -> Result<Vec<Vec<char>>, ParseError> {
+    parse_grid(input, |c| Ok(c))
 }
 
 pub fn parse_grid<T>(input: &str, parser: impl Fn(char) -> Result<T, ParseError>) -> Result<Vec<Vec<T>>, ParseError> {
