@@ -1,4 +1,4 @@
-fn main() {
+fn main() -> Result<(), String> {
     let input = include_str!("../input.txt");
     // let input = include_str!("../test.txt");
 
@@ -7,4 +7,6 @@ fn main() {
 
     // let result = {{project-name | snake_case}}::solve_part2(input);
     // println!("✅ part2: {}", result);
+
+    Ok(())
 }

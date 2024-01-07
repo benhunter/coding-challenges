@@ -1,9 +1,12 @@
-pub fn solve_part1(input: &str) -> i32 {
-    0
+use std::string::ParseError;
+
+pub fn solve_part1(input: &str) -> Result<i32, String> {
+    let item = parse(input);
+    todo!()
 }
 
-pub fn solve_part2(input: &str) -> i32 {
-    0
+pub fn solve_part2(input: &str) -> Result<i32, String> {
+    todo!()
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -11,8 +14,8 @@ struct Item {
     attribute: i32,
 }
 
-fn parse(input: &str) -> Item {
-    Item {attribute: 0}
+fn parse(input: &str) -> Result<Item, ParseError> {
+    Item { attribute: 0 }
 }
 
 #[cfg(test)]
@@ -20,42 +23,47 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse() {
+    fn test_parse() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let actual = parse(input);
-        let expected = Item {attribute: 0};
+        let actual = parse(input)?;
+        let expected = Item { attribute: 0 };
         assert_eq!(actual, expected);
+        Ok(())
     }
 
     #[test]
-    fn test_part1() {
+    fn test_part1() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let actual = solve_part1(input);
+        let actual = solve_part1(input)?;
         let solution = 0;
         assert_eq!(actual, solution);
+        Ok(())
     }
 
     // #[test]
-    fn test_solve_part1() {
+    fn test_solve_part1() -> Result<(), String> {
         let input = include_str!("../input.txt");
-        let actual = solve_part1(input);
+        let actual = solve_part1(input)?;
         let solution = 0;
         assert_eq!(actual, solution);
+        Ok(())
     }
 
     // #[test]
-    fn test_part2() {
+    fn test_part2() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let actual = solve_part2(input);
+        let actual = solve_part2(input)?;
         let solution = 0;
         assert_eq!(actual, solution);
+        Ok(())
     }
 
     // #[test]
-    fn test_solve_part2() {
+    fn test_solve_part2() -> Result<(), String> {
         let input = include_str!("../input.txt");
-        let actual = solve_part2(input);
+        let actual = solve_part2(input)?;
         let solution = 0;
         assert_eq!(actual, solution);
+        Ok(())
     }
 }
