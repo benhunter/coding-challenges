@@ -29,7 +29,12 @@ pub fn solve_part1(input: &str) -> Result<i32, String> {
     stack.render_xz();
     stack.render_yz();
 
+    println!("Falling");
     stack.fall();
+    println!("Done falling");
+    stack.render_xz();
+    stack.render_yz();
+
     stack.count_safe_to_disintegrate()
 }
 
@@ -47,6 +52,7 @@ impl Stack {}
 
 impl Stack {
     pub(crate) fn fall(&mut self) {
+        let debug = false;
         let z_max = self.bricks.iter()
             .map(|brick| {
                 brick.position_end.2
@@ -55,7 +61,9 @@ impl Stack {
 
         let mut loop_count = 0;
         loop {
-            println!("Loop count: {}", loop_count);
+            if debug {
+                println!("Loop count: {}", loop_count);
+            }
             let mut did_any_bricks_move = false;
             let mut moved_bricks = vec![];
 
@@ -126,16 +134,20 @@ impl Stack {
                             });
                     });
 
-                self.render_xz();
+                // self.render_xz();
 
                 if !updated_bricks.is_empty() {
-                    println!("Bricks moved");
+                    if debug {
+                        println!("Bricks moved");
+                    }
                     did_any_bricks_move = true;
                 }
             });
 
             if !did_any_bricks_move {
-                println!("No bricks moved");
+                if debug {
+                    println!("No bricks moved");
+                }
                 break;
             }
 
@@ -151,6 +163,7 @@ impl Stack {
             .max().unwrap();
 
         Ok((1..=z_max).map(|z| {
+            println!("Counting bricks to disentegrate {}", z);
             let safe_to_disintegrate = self.bricks.iter()
                 .filter(|brick| brick.position_end.2 == z)
                 .filter(|brick| {
@@ -230,21 +243,22 @@ impl Stack {
                         })
                         .collect::<Vec<&Brick>>();
                     // dbg!(supported_bricks_over.clone());
-                    if brick.id == 'A' {
-                        dbg!(bricks_over);
-                        dbg!(supported_bricks_over.clone());
-                    }
+                    // if brick.id == 'A' {
+                    //     dbg!(bricks_over);
+                    //     dbg!(supported_bricks_over.clone());
+                    // }
                     bricks_over == 0 || (bricks_over == supported_bricks_over.len())
                 }).collect::<Vec<&Brick>>();
 
             // dbg!(safe_to_disintegrate.clone());
             safe_to_disintegrate
         }).flatten()
-            .inspect(|safe| { dbg!(safe); })
+            // .inspect(|safe| { dbg!(safe); })
             .count() as i32)
     }
 
     fn render_xz(&self) -> String {
+        let debug = true;
         let mut output = String::new();
 
         let z_max = self.bricks.iter()
@@ -265,18 +279,27 @@ impl Stack {
             })
             .max().unwrap();
 
-        println!("\n{:=>x_max$}", "=", x_max = (x_max + 3) as usize);
+        if debug {
+            println!("\n{:=>x_max$}", "=", x_max = (x_max + 3) as usize);
+        }
         // output.push_str(&format!("{:=>x_max$}", "=", x_max = (x_max + 3) as usize));
 
         let x_label_position = x_max / 2 + 1;
-        println!("{}", format!("{: >width_x$}", "x", width_x = x_label_position as usize));
+        if debug {
+            println!("{}", format!("{: >width_x$}", "x", width_x = x_label_position as usize));
+        }
         output.push_str(&format!("{}", format!("{: >width_x$}\n", "x", width_x = x_label_position as usize)));
 
         (0..=x_max).for_each(|x| {
-            print!("{}", x);
+            if debug {
+                print!("{}", x);
+            }
             output.push_str(&format!("{}", x));
         });
-        println!();
+
+        if debug {
+            println!();
+        }
         output.push('\n');
 
         // render rows from z_max to 0
@@ -290,34 +313,52 @@ impl Stack {
                     .collect::<Vec<&Brick>>();
                 let closest_y = bricks_y.iter()
                     .map(|brick| brick.id)
-                    .max().unwrap_or('.');
-                print!("{}", closest_y);
+                    .max();
+
+                let next = match closest_y {
+                    None => '.',
+                    Some(x) => {
+                        char::from_u32(x.rem_euclid(26) as u32 + 'A' as u32).unwrap()
+                    }
+                };
+                if debug {
+                    print!("{}", next);
+                }
 
                 if bricks_y.len() > 1 {
                     output.push('?');
                 } else {
-                    output.push(closest_y);
+                    output.push(next);
                 }
             });
 
-            print!(" {}", z);
+            if debug {
+                print!(" {}", z);
+            }
             output.push_str(&format!(" {}", z));
             if z == (z_max + 1) / 2 {
-                print!(" z");
+                if debug {
+                    print!(" z");
+                }
                 output.push_str(" z");
             }
-            println!();
+            if debug {
+                println!();
+            }
             output.push('\n');
         });
 
-        println!("{:->x_max$} 0", "-", x_max = (x_max + 1) as usize);
+        if debug {
+            println!("{:->x_max$} 0", "-", x_max = (x_max + 1) as usize);
+            println!("{:=>x_max$}", "=", x_max = (x_max + 3) as usize);
+        }
         output.push_str(&format!("{:->x_max$} 0", "-", x_max = (x_max + 1) as usize));
-        println!("{:=>x_max$}", "=", x_max = (x_max + 3) as usize);
         // output.push_str(&format!("{:=>x_max$}", "=", x_max = (x_max + 3) as usize));
         output
     }
 
     fn render_yz(&self) -> String {
+        let debug = true;
         let mut output = String::new();
 
         let z_max = self.bricks.iter()
@@ -338,17 +379,25 @@ impl Stack {
             })
             .max().unwrap();
 
-        println!("\n{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
+        if debug {
+            println!("\n{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
+        }
 
         let y_label_position = y_max / 2 + 1;
-        println!("{}", format!("{: >width_y$}", "y", width_y = y_label_position as usize));
+        if debug {
+            println!("{}", format!("{: >width_y$}", "y", width_y = y_label_position as usize));
+        }
         output.push_str(&format!("{}", format!("{: >width_y$}\n", "y", width_y = y_label_position as usize)));
 
         (0..=y_max).for_each(|y| {
-            print!("{}", y);
+            if debug {
+                print!("{}", y);
+            }
             output.push_str(&format!("{}", y));
         });
-        println!();
+        if debug {
+            println!();
+        }
         output.push('\n');
 
         // render rows from z_max to 0
@@ -360,24 +409,40 @@ impl Stack {
                             && brick.position_start.2 <= z && brick.position_end.2 >= z
                     })
                     .map(|brick| brick.id)
-                    .max().unwrap_or('.');
-                print!("{}", closest_x);
-                output.push(closest_x);
+                    .max();
+                let next = match closest_x {
+                    None => '.',
+                    Some(x) => {
+                        char::from_u32(x.rem_euclid(26) as u32 + 'A' as u32).unwrap()
+                    }
+                };
+                if debug {
+                    print!("{}", next);
+                }
+                output.push(next);
             });
 
-            print!(" {}", z);
+            if debug {
+                print!(" {}", z);
+            }
             output.push_str(&format!(" {}", z));
             if z == z_max / 2 + 1 {
-                print!(" z");
+                if debug {
+                    print!(" z");
+                }
                 output.push_str(" z");
             }
-            println!();
+            if debug {
+                println!();
+            }
             output.push('\n');
         });
 
-        println!("{:->y_max$} 0", "-", y_max = (y_max + 1) as usize);
+        if debug {
+            println!("{:->y_max$} 0", "-", y_max = (y_max + 1) as usize);
+            println!("{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
+        }
         output.push_str(&format!("{:->y_max$} 0", "-", y_max = (y_max + 1) as usize));
-        println!("{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
         output
     }
 
@@ -405,7 +470,7 @@ impl Stack {
 struct Brick {
     position_start: (i32, i32, i32),
     position_end: (i32, i32, i32),
-    id: char,
+    id: u32,
 }
 
 fn parse(input: &str) -> Result<Stack, ParseError> {
@@ -424,12 +489,12 @@ fn parse(input: &str) -> Result<Stack, ParseError> {
                 }).collect();
 
             // println!("char from i: {:?}", char::from_u32(i as u32 + 'A' as u32));
-            let id = char::from_u32(i.rem_euclid(26) as u32 + 'A' as u32).unwrap();
+            // let id = char::from_u32(i.rem_euclid(26) as u32 + 'A' as u32).unwrap();
 
             Brick {
                 position_start: parts[0],
                 position_end: parts[1],
-                id,
+                id: i as u32,
             }
         }).collect::<Vec<Brick>>();
     // println!("{:?}", bricks);
@@ -448,10 +513,11 @@ mod tests {
         assert_eq!(actual.bricks.len(), expected_bricks);
 
         // last brick 1,1,8~1,1,9
+        let g = 'G'.to_digit(10).unwrap();
         let last_brick = Brick {
             position_start: (1, 1, 8),
             position_end: (1, 1, 9),
-            id: 'G',
+            id: g,
         };
         assert_eq!(actual.bricks[6], last_brick);
         Ok(())
@@ -518,20 +584,20 @@ D.E 3 z
         Ok(())
     }
 
-    // #[test]
+    #[test]
     fn test_part1() -> Result<(), String> {
         let input = include_str!("../test.txt");
         let actual = solve_part1(input)?;
-        let solution = 0;
+        let solution = 5;
         assert_eq!(actual, solution);
         Ok(())
     }
 
-    // #[test]
+    #[test]
     fn test_solve_part1() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part1(input)?;
-        let solution = 0;
+        let solution = 488;
         assert_eq!(actual, solution);
         Ok(())
     }
