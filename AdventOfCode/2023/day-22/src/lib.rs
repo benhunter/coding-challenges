@@ -30,8 +30,7 @@ pub fn solve_part1(input: &str) -> Result<i32, String> {
     stack.render_yz();
 
     stack.fall();
-
-    todo!()
+    stack.count_safe_to_disintegrate()
 }
 
 pub fn solve_part2(input: &str) -> Result<i32, String> {
@@ -43,6 +42,8 @@ struct Stack {
     bricks: Vec<Brick>,
     attribute: i32,
 }
+
+impl Stack {}
 
 impl Stack {
     pub(crate) fn fall(&mut self) {
@@ -141,9 +142,108 @@ impl Stack {
             loop_count += 1;
         }
     }
-}
 
-impl Stack {
+    pub(crate) fn count_safe_to_disintegrate(&self) -> Result<i32, String> {
+        let z_max = self.bricks.iter()
+            .map(|brick| {
+                brick.position_end.2
+            })
+            .max().unwrap();
+
+        Ok((1..=z_max).map(|z| {
+            let safe_to_disintegrate = self.bricks.iter()
+                .filter(|brick| brick.position_end.2 == z)
+                .filter(|brick| {
+                    let bricks_over = self.bricks.iter()
+                        .filter(|&other| brick.id != other.id)
+                        // bricks above
+                        .filter(|&other| {
+                            if !(other.position_start.2 <= (z + 1) && other.position_end.2 >= (z + 1)) {
+                                return false;
+                            }
+
+                            if (brick.position_end.0 < other.position_start.0 || brick.position_start.0 > other.position_end.0) {
+                                return false;
+                            }
+
+                            if (brick.position_end.1 < other.position_start.1 || brick.position_start.1 > other.position_end.1) {
+                                return false;
+                            }
+                            true
+                        }).count();
+
+                    let supported_bricks_over = self.bricks.iter()
+                        .filter(|&other| brick.id != other.id)
+                        // bricks above
+                        .filter(|&other| {
+                            if !(other.position_start.2 <= (z + 1) && other.position_end.2 >= (z + 1)) {
+                                return false;
+                            }
+
+                            if (brick.position_end.0 < other.position_start.0 || brick.position_start.0 > other.position_end.0) {
+                                return false;
+                            }
+
+                            if (brick.position_end.1 < other.position_start.1 || brick.position_start.1 > other.position_end.1) {
+                                return false;
+                            }
+                            true
+                        })
+                        // .inspect(|other| {
+                        //     if brick.id == 'A' {
+                        //         dbg!(brick);
+                        //         dbg!(other);
+                        //     }
+                        // })
+                        // find bricks that would be supported by another brick
+                        .filter(|other| {
+                            let supporting = self.bricks.iter()
+                                .filter(|possible_supporting| {
+                                    possible_supporting.id != other.id
+                                        && possible_supporting.id != brick.id
+                                })
+                                .filter(|posssible_supporting| {
+                                    // is possible_supporting under other?
+                                    posssible_supporting.position_end.2 == z
+                                })
+                                .filter(|possible_supporting| {
+
+                                    // does it intersect with other?
+                                    if (possible_supporting.position_end.0 < other.position_start.0 || possible_supporting.position_start.0 > other.position_end.0) {
+                                        return false;
+                                    }
+
+                                    if (possible_supporting.position_end.1 < other.position_start.1 || possible_supporting.position_start.1 > other.position_end.1) {
+                                        return false;
+                                    }
+                                    true
+                                })
+                                .collect::<Vec<&Brick>>();
+                            // dbg!(supporting.clone());
+                            !supporting.is_empty()
+                        })
+                        .inspect(|other| {
+                            // if brick.id == 'A' {
+                            //     dbg!(brick);
+                            //     dbg!(other);
+                            // }
+                        })
+                        .collect::<Vec<&Brick>>();
+                    // dbg!(supported_bricks_over.clone());
+                    if brick.id == 'A' {
+                        dbg!(bricks_over);
+                        dbg!(supported_bricks_over.clone());
+                    }
+                    bricks_over == 0 || (bricks_over == supported_bricks_over.len())
+                }).collect::<Vec<&Brick>>();
+
+            // dbg!(safe_to_disintegrate.clone());
+            safe_to_disintegrate
+        }).flatten()
+            .inspect(|safe| { dbg!(safe); })
+            .count() as i32)
+    }
+
     fn render_xz(&self) -> String {
         let mut output = String::new();
 
