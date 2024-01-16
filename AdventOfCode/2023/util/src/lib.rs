@@ -83,7 +83,7 @@ impl From<ParseError> for String {
 }
 
 pub fn parse_grid_chars(input: &str) -> Result<Vec<Vec<char>>, ParseError> {
-    parse_grid(input, |c| Ok(c))
+    parse_grid(input, Ok)
 }
 
 pub fn parse_grid<T>(input: &str, parser: impl Fn(char) -> Result<T, ParseError>) -> Result<Vec<Vec<T>>, ParseError> {

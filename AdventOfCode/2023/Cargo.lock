@@ -238,6 +238,7 @@ name = "day-22"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "itertools 0.12.0",
  "util",
 ]
 
