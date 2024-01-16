@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use util::ParseError;
+use util::{Coord, ParseError};
 
 /*
 input.txt
@@ -29,6 +29,7 @@ pub fn solve_part1(input: &str) -> Result<i32, String> {
     stack.render_xz();
     stack.render_yz();
 
+    stack.fall();
 
     todo!()
 }
@@ -41,6 +42,76 @@ pub fn solve_part2(input: &str) -> Result<i32, String> {
 struct Stack {
     bricks: Vec<Brick>,
     attribute: i32,
+}
+
+impl Stack {
+    pub(crate) fn fall(&self) {
+        let z_max = self.bricks.iter()
+            .map(|brick| {
+                brick.position_end.2
+            })
+            .max().unwrap();
+
+        (2..=z_max).for_each(|z| {
+            if z > 3 {
+                panic!("debug")
+            }
+            let updated_bricks = self.bricks.iter()
+                // find bricks at z
+                .filter(|brick| {
+                    brick.position_start.2 <= z && brick.position_end.2 >= z
+                })
+                .inspect(|&brick| { dbg!(brick); })
+                .filter(|brick| {
+                    // check if there is a brick under it
+                    let bricks_under = self.bricks.iter()
+                        // skip self
+                        .filter(|&other| brick.id != other.id)
+                        .filter(|&lower_brick| {
+                            if !(lower_brick.position_start.2 <= (z - 1)
+                                && lower_brick.position_end.2 >= (z - 1)) {
+                                return false;
+                            }
+
+                            // brick corners
+                            // nw - ne
+                            // sw - se
+                            // let nw = (brick.position_start.0, brick.position_end.1);
+                            let brick_ne = (brick.position_end.0, brick.position_end.1);
+                            let brick_sw = (brick.position_start.0, brick.position_start.1);
+                            // let se = (brick.position_end.0, brick.position_start.1);
+
+                            if (brick.position_end.0 < lower_brick.position_start.0 || brick.position_start.0 > lower_brick.position_end.0) {
+                                return false;
+                            }
+
+                            if (brick.position_end.1 < lower_brick.position_start.1 || brick.position_start.1 > lower_brick.position_end.1) {
+                                return false;
+                            }
+
+                            true
+                        }).collect::<Vec<&Brick>>();
+                    dbg!(bricks_under.clone());
+                    bricks_under.is_empty()
+                })
+                .map(|brick| {
+
+                    // move brick down
+                    Brick {
+                        position_start: (brick.position_start.0, brick.position_start.1, brick.position_start.2 - 1),
+                        position_end: (brick.position_end.0, brick.position_end.1, brick.position_end.2 - 1),
+                        id: brick.id,
+                    }
+                })
+                .collect::<Vec<Brick>>();
+            // if not, move it down
+            dbg!(updated_bricks);
+
+            // TODO update self.bricks
+        });
+
+        todo!()
+    }
 }
 
 impl Stack {
@@ -289,6 +360,25 @@ AAA 1
         let stack = parse(input)?;
         let actual = stack.render_yz();
         assert_eq!(actual.to_string(), expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_fall() -> Result<(), String> {
+        let input = include_str!("../test.txt");
+        let stack = parse(input)?;
+        stack.fall();
+        let actual = stack.render_xz();
+        let expected = " x
+012
+.G. 6
+.G. 5
+FFF 4
+D.E 3 z
+??? 2
+.A. 1
+--- 0";
+        assert_eq!(actual, expected);
         Ok(())
     }
 
