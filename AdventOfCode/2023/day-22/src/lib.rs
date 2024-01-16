@@ -27,6 +27,7 @@ pub fn solve_part1(input: &str) -> Result<i32, String> {
         // println!("{:?}", brick);
     });
     stack.render_xz();
+    stack.render_yz();
 
 
     todo!()
@@ -51,21 +52,18 @@ impl Stack {
                 brick.position_end.2
             })
             .max().unwrap();
-        dbg!(z_max);
 
         let x_max = self.bricks.iter()
             .map(|brick| {
                 brick.position_end.0
             })
             .max().unwrap();
-        dbg!(x_max);
 
         let y_max = self.bricks.iter()
             .map(|brick| {
                 brick.position_end.1
             })
             .max().unwrap();
-        dbg!(y_max);
 
         println!("\n{:=>x_max$}", "=", x_max = (x_max + 3) as usize);
         // output.push_str(&format!("{:=>x_max$}", "=", x_max = (x_max + 3) as usize));
@@ -112,18 +110,85 @@ impl Stack {
         output
     }
 
+    fn render_yz(&self) -> String {
+        let mut output = String::new();
+
+        let z_max = self.bricks.iter()
+            .map(|brick| {
+                brick.position_end.2
+            })
+            .max().unwrap();
+
+        // let x_max = self.bricks.iter()
+        //     .map(|brick| {
+        //         brick.position_end.0
+        //     })
+        //     .max().unwrap();
+
+        let y_max = self.bricks.iter()
+            .map(|brick| {
+                brick.position_end.1
+            })
+            .max().unwrap();
+
+        println!("\n{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
+
+        let y_label_position = y_max / 2 + 1;
+        println!("{}", format!("{: >width_y$}", "y", width_y = y_label_position as usize));
+        output.push_str(&format!("{}", format!("{: >width_y$}\n", "y", width_y = y_label_position as usize)));
+
+        (0..=y_max).for_each(|y| {
+            print!("{}", y);
+            output.push_str(&format!("{}", y));
+        });
+        println!();
+        output.push('\n');
+
+        // render rows from z_max to 0
+        (1..=z_max).rev().for_each(|z| {
+            (0..=y_max).for_each(|y| {
+                let closest_x = self.bricks.iter()
+                    .filter(|brick| {
+                        brick.position_start.1 <= y && brick.position_end.1 >= y
+                            && brick.position_start.2 <= z && brick.position_end.2 >= z
+                    })
+                    .map(|brick| brick.id)
+                    .max().unwrap_or('.');
+                print!("{}", closest_x);
+                output.push(closest_x);
+            });
+
+            print!(" {}", z);
+            output.push_str(&format!(" {}", z));
+            if z == z_max / 2 + 1 {
+                print!(" z");
+                output.push_str(" z");
+            }
+            println!();
+            output.push('\n');
+        });
+
+        println!("{:->y_max$} 0", "-", y_max = (y_max + 1) as usize);
+        output.push_str(&format!("{:->y_max$} 0", "-", y_max = (y_max + 1) as usize));
+        println!("{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
+        output
+    }
+
     fn check_invalid(&self) {
         // find bricks with any start coord greater than any end coord
         let invalid = self.bricks.iter().filter(|brick| {
             brick.position_start.0 > brick.position_end.0
                 || brick.position_start.1 > brick.position_end.1
                 || brick.position_start.2 > brick.position_end.2
+                || brick.position_start.0 < 0
+                || brick.position_start.1 < 0
+                || brick.position_start.2 < 0
         }).map(|brick| {
             println!("Found {:?}", brick);
             brick
         }).collect::<Vec<&Brick>>();
 
-        if invalid.len() > 0 {
+        if !invalid.is_empty() {
             panic!("Found invalid bricks: {:?}", invalid);
         }
     }
@@ -202,6 +267,27 @@ BBB 2
         let input = include_str!("../test.txt");
         let stack = parse(input)?;
         let actual = stack.render_xz();
+        assert_eq!(actual.to_string(), expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_view_snapshot_yz() -> Result<(), String> {
+        let expected = " y
+012
+.G. 9
+.G. 8
+... 7
+.F. 6
+EEE 5 z
+DDD 4
+..C 3
+B.. 2
+AAA 1
+--- 0";
+        let input = include_str!("../test.txt");
+        let stack = parse(input)?;
+        let actual = stack.render_yz();
         assert_eq!(actual.to_string(), expected);
         Ok(())
     }
