@@ -1,0 +1,24 @@
+apply plugin: "java"
+apply plugin: "eclipse"
+apply plugin: "idea"
+
+// set default encoding to UTF-8
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  testImplementation "org.junit.vintage:junit-vintage-engine:5.7.2"
+  testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.2"
+}
+
+test {
+  testLogging {
+    exceptionFormat = 'short'
+    showStandardStreams = true
+    events = ["passed", "failed", "skipped"]
+  }
+}
