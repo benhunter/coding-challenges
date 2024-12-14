@@ -12,48 +12,30 @@ const PRECISION: f64 = 0.01;
 
 pub fn solve_part1(input: &str) -> Result<u64, String> {
     let machines = parse(input, 0)?;
-    //let solution: u64 = machines.iter().map(|m| m.solve()).sum();
-    //Ok(solution)
-
-    //println!("[DEBUG solve_part1()] machines len={}", machines.len());
-    let solutions = machines
-        .iter()
-        .enumerate()
-        .map(|(i, m)| {
-            //println!("[DEBUG solve_part1()] solving machine: i={}, m={}", i, m);
-            //let s = m.solve(PART1_MAX_PRESSES);
-            let s = m.solve();
-            //if s == 0 {
-            //    println!("no prize: {}, {}", i, m);
-            //} else {
-            //    println!("prize: {}, {}", i, m);
-            //}
-            s
-        })
-        .sum();
-    Ok(solutions)
+    let solution: u64 = machines.iter().map(|m| m.solve()).sum();
+    Ok(solution)
 }
 
 pub fn solve_part2(input: &str) -> Result<u64, String> {
     let machines = parse(input, PART2_MAX_PRESSES)?;
-    //let solution: u64 = machines.iter().map(|m| m.solve()).sum();
-    //Ok(solution)
+    let solution: u64 = machines.iter().map(|m| m.solve()).sum();
 
-    let solutions = machines
-        .iter()
-        .enumerate()
-        .map(|(i, m)| {
-            //println!("[DEBUG solve_part1()] solving machine: i={}, m={}", i, m);
-            let s = m.solve();
-            //if s == 0 {
-            //    println!("no prize: {}, {}", i, m);
-            //} else {
-            //    println!("prize: {}, {}", i, m);
-            //}
-            s
-        })
-        .sum();
-    Ok(solutions)
+    //let solution = machines
+    //    .iter()
+    //    .enumerate()
+    //    .map(|(i, m)| {
+    //        //println!("[DEBUG solve_part1()] solving machine: i={}, m={}", i, m);
+    //        let s = m.solve();
+    //        //if s == 0 {
+    //        //    println!("no prize: {}, {}", i, m);
+    //        //} else {
+    //        //    println!("prize: {}, {}", i, m);
+    //        //}
+    //        s
+    //    })
+    //    .sum();
+
+    Ok(solution)
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
@@ -167,22 +149,20 @@ impl Machine {
         let mut solutions: Vec<(u64, u64)> = vec![];
 
         while b <= max_presses && position.x <= self.prize.x && position.y <= self.prize.y {
-            //if position.x < self.prize.x && position.y < self.prize.y {
-                a = 0;
-                let mut inner_loops = 0;
-                while a <= max_presses && position.x <= self.prize.x && position.y <= self.prize.y {
-                    if position == self.prize {
-                        println!("prize at a={}, b={}", a, b);
-                        solutions.push((a, b));
-                    }
-                    a += 1;
-                    position = self.update_position(a, b);
-                    inner_loops += 1;
-                    if inner_loops % 100000000 == 0 {
-                        println!("inner_loops={}", inner_loops);
-                    }
+            a = 0;
+            let mut inner_loops = 0;
+            while a <= max_presses && position.x <= self.prize.x && position.y <= self.prize.y {
+                if position == self.prize {
+                    println!("prize at a={}, b={}", a, b);
+                    solutions.push((a, b));
                 }
-            //}
+                a += 1;
+                position = self.update_position(a, b);
+                inner_loops += 1;
+                if inner_loops % 100000000 == 0 {
+                    println!("inner_loops={}", inner_loops);
+                }
+            }
 
             a = 0;
             b += 1;
@@ -192,11 +172,13 @@ impl Machine {
                 println!("loops={}", loops);
             }
         }
+
         println!("solutions={:?}", solutions);
         if solutions.len() > 1 {
             println!("Found multiple solutions");
             todo!()
         }
+
         let solution = match solutions.len() {
             0 => &(0, 0),
             _ => {
@@ -214,8 +196,8 @@ impl Machine {
     }
 
     fn solve(self) -> u64 {
-        let a = ((self.prize.x as f64/self.btn_a.x as f64) - (((self.prize.y as f64 - self.prize.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64) / (self.btn_b.y as f64 - self.btn_b.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64)) * self.btn_b.x as f64 / self.btn_a.x as f64));
-        let b = ((self.prize.y as f64 - self.prize.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64) / (self.btn_b.y as f64 - self.btn_b.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64));
+        let a = (self.prize.x as f64/self.btn_a.x as f64) - (((self.prize.y as f64 - self.prize.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64) / (self.btn_b.y as f64 - self.btn_b.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64)) * self.btn_b.x as f64 / self.btn_a.x as f64);
+        let b = (self.prize.y as f64 - self.prize.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64) / (self.btn_b.y as f64 - self.btn_b.x as f64 * self.btn_a.y as f64 / self.btn_a.x as f64);
         //println!("solution a={:?}, b={:?}", a, b);
 
         if (a.round()-a).abs() > PRECISION || (b.round() - b).abs() > PRECISION {
@@ -405,7 +387,7 @@ Prize: X=18641, Y=10279";
 
     #[test]
     fn test_solve_part1() -> Result<(), String> {
-        let input = include_str!("../input1.txt");
+        let input = include_str!("../input.txt");
         let actual = solve_part1(input)?;
         let expected = 30973;
         assert_eq!(actual, expected);
@@ -436,7 +418,7 @@ Prize: X=8400, Y=5400";
 
      #[test]
     fn test_solve_part2() -> Result<(), String> {
-        let input = include_str!("../input1.txt");
+        let input = include_str!("../input.txt");
         let actual = solve_part2(input)?;
         let solution = 95688837203288; // 161516197152513 too high
                           // 48295572837373
