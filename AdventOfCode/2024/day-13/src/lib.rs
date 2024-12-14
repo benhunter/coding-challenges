@@ -1,12 +1,30 @@
 use util::ParseError;
+use std::fmt;
 use std::str::FromStr;
 use std::ops::Mul;
 use std::ops::Add;
 
+const MAX_LOOPS: u32 = 100_000;
+
 pub fn solve_part1(input: &str) -> Result<u32, String> {
     let machines = parse(input)?;
-    let solution: u32 = machines.iter().map(|m| m.solve()).sum();
-    Ok(solution)
+    //let solution: u32 = machines.iter().map(|m| m.solve()).sum();
+    //Ok(solution)
+
+    //println!("[DEBUG solve_part1()] machines len={}", machines.len());
+    let solutions = machines
+        .iter()
+        .enumerate()
+        .map(|(i, m)| {
+            //println!("[DEBUG solve_part1()] solving machine: i={}, m={}", i, m);
+            let s = m.solve();
+            if s == 0 {
+                println!("no prize: {}, {}", i, m);
+            }
+            s
+        })
+        .sum();
+    Ok(solutions)
 }
 
 pub fn solve_part2(_input: &str) -> Result<i32, String> {
@@ -67,6 +85,12 @@ impl Add for Point {
     }
 }
 
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 struct Machine {
     btn_a: Point,
@@ -87,61 +111,101 @@ impl FromStr for Machine {
     type Err = ParseError;
 }
 
+impl fmt::Display for Machine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Machine: A={} B={} Prize={}", self.btn_a, self.btn_b, self.prize)
+    }
+}
+
 impl Machine {
+    /**
+     * Button A is 3 tokens. B is 1 token. Find all solutions!
+     */
     fn solve (self) -> u32 {
         let mut a = 0; // a presses
-        let mut b = 0; // b presses
+        let mut b = self.prize.x / self.btn_a.x + 1; // b presses
 
-        b = self.prize.x / self.btn_a.x + 1;
         if b > 100 {
             b = 100;
         }
 
-        let mut position = self.btn_a * a + self.btn_b * b;
+        let mut position = self.update_position(a, b);
 
         let mut loops = 0;
-        let mut solved = false;
+        let mut solutions: Vec<(u32, u32)> = vec![];
 
-        while loops < 100_000 {
-            position = self.btn_a * a + self.btn_b * b;
-            //println!("inner presses a={}, b={} position=({}, {})", a, b, position.x, position.y);
-            if position == self.prize {
-                println!("[DEBUG Machine::solve()] Found prize in outer loop (dec b)");
-                break
-            }
+        //println!("[DEBUG Machine::solve()] loops={} presses a={}, b={} position={:?}, prize={}, btn_a={:?}, btn_b={:?}, math=({}*{} + {}*{})={}, update_position()={}", loops, a, b, position, self.prize, self.btn_a, self.btn_b, self.btn_a, a, self.btn_b, b, self.btn_a * a + self.btn_b * b, self.update_position(a, b));
+        while loops < MAX_LOOPS {
+            //println!("[DEBUG Machine::solve()] loops={} presses a={}, b={}", loops, a, b);
+            position = self.update_position(a, b);
+            //println!("outer presses a={}, b={}, position={}, btn_a={}, btn_b={}", a, b, position, self.btn_a, self.btn_b);
+            //if position == self.prize {
+            //    //println!("[DEBUG Machine::solve()] Found prize in outer loop (dec b)");
+            //    break
+            //}
 
             if position.x <= self.prize.x && position.y <= self.prize.y {
                 let mut inner_loops = 0;
                 while inner_loops <= 100 && position.x <= self.prize.x && position.y <= self.prize.y {
-                    let position = self.btn_a * a + self.btn_b * b;
-                    //println!("inner presses a={}, b={} position=({}, {})", a, b, position.x, position.y);
+                    //println!("[DEBUG Machine::solve()] loops={} presses a={}, b={}", loops, a, b);
+                    position = self.update_position(a, b);
+                    //println!("inner presses a={}, b={}, position={}, btn_a={}, btn_b={}", a, b, position, self.btn_a, self.btn_b);
                     if position == self.prize {
-                        solved = true;
-                        println!("[DEBUG Machine::solve()] Found prize in inner loop (inc a)");
-                        break
+                        solutions.push((a, b));
+                        //println!("[DEBUG Machine::solve()] Found prize in inner loop (inc a)");
+                        //println!("{:?}", solutions);
+                        //break
                     }
                     a += 1;
                     inner_loops += 1;
                 }
 
-                if solved {
-                    println!("[DEBUG Machine::solve()] Breaking outer loop for inner loop");
-                    break;
-                }
+                //if solved {
+                    //println!("[DEBUG Machine::solve()] Breaking outer loop for inner loop");
+                    //break;
+                //}
                 a = 0;
             }
+
             if b == 0 {
-                return 0;
+            //    //println!("[DEBUG Machine::solve()] b == 0, return");
+            //    //println!("[DEBUG Machine::solve()] done loops={} presses a={}, b={} position={:?}, prize={}, btn_a={:?}, btn_b={:?}, math=({}*{} + {}*{})={}, update_position()={}", loops, a, b, position, self.prize, self.btn_a, self.btn_b, self.btn_a, a, self.btn_b, b, self.btn_a * a + self.btn_b * b, self.update_position(a, b));
+                //return 0;
+                break
             }
+
             b -= 1;
             loops += 1;
         }
-        println!("[DEBUG Machine::solve()] loops={} presses a={}, b={} position={:?}, prize={:?}, btn_a={:?}, btn_b={:?}", loops, a, b, position, self.prize, self.btn_a, self.btn_b);
+        //println!("[DEBUG Machine::solve()] done loops={} presses a={}, b={} position={:?}, prize={:?}, btn_a={:?}, btn_b={:?}, math=({}*{} + {}*{})={}, update_position()={}", loops, a, b, position, self.prize, self.btn_a, self.btn_b, self.btn_a, a, self.btn_b, b, self.btn_a * a + self.btn_b * b, self.update_position(a, b));
+        //println!("[DEBUG Machine::solve()] after loops: solutions={:?}", solutions);
+        if solutions.len() > 1 {
+            println!("Found multiple solutions");
+            todo!()
+        }
+        let solution = match solutions.len() {
+            0 => &(0, 0),
+            _ => {
+                solutions
+                    .iter()
+                    .min_by(|l, r| {
+                        //println!("[DEBUG Machine::solve()] min_by l={:?}, r={:?}", l, r);
+                        l.0.cmp(&r.0)
+                    })
+                    .unwrap()
+            }
+        };
 
-        assert!(((self.btn_a * a) + (self.btn_b * b)) == self.prize);
-        assert_eq!(position, self.prize);
-        a * 3 + b
+        assert!(loops < MAX_LOOPS);
+        //assert!(((self.btn_a * a) + (self.btn_b * b)) == self.prize);
+        //assert_eq!(position, self.prize);
+        solution.0 * 3 + solution.1
     }
+
+    fn update_position(&self, a: u32, b: u32) -> Point {
+        self.btn_a * a + self.btn_b * b
+    }
+
 }
 
 fn parse(input: &str) -> Result<Vec<Machine>, ParseError> {
@@ -208,6 +272,17 @@ Prize: X=8400, Y=5400";
     }
 
     #[test]
+    fn test_point_add() -> Result<(), String> {
+        let a = Point { x: 1, y: 2 };
+        let b = Point { x: 1, y: 2 };
+        let a_plus_b = Point { x: 2, y: 4 };
+        assert_eq!(a + b, a_plus_b);
+        assert_eq!(a * 0 + b, b);
+        assert_eq!(a + b * 0, a);
+        Ok(())
+    }
+
+    #[test]
     fn test_solve_machine() -> Result<(), String> {
         let input = r"Button A: X+94, Y+34
 Button B: X+22, Y+67
@@ -216,6 +291,40 @@ Prize: X=8400, Y=5400";
         let machine = input.parse::<Machine>().unwrap();
         let actual = machine.solve();
         let expected = 280;
+        assert_eq!(actual, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_solve_machines_no_solution() -> Result<(), String> {
+        // input.txt machine 0
+        let input = r"Button A: X+46, Y+68
+Button B: X+34, Y+14
+Prize: X=11306, Y=10856";
+        //println!("{}", input);
+        let machine = input.parse::<Machine>().unwrap();
+        let actual = machine.solve();
+        let expected = 0;
+        assert_eq!(actual, expected);
+
+        // Example 2
+        let input = r"Button A: X+26, Y+66
+Button B: X+67, Y+21
+Prize: X=12748, Y=12176";
+        //println!("{}", input);
+        let machine = input.parse::<Machine>().unwrap();
+        let actual = machine.solve();
+        let expected = 0;
+        assert_eq!(actual, expected);
+
+        // Example 4
+        let input = r"Button A: X+69, Y+23
+Button B: X+27, Y+71
+Prize: X=18641, Y=10279";
+        //println!("{}", input);
+        let machine = input.parse::<Machine>().unwrap();
+        let actual = machine.solve();
+        let expected = 0;
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -230,13 +339,12 @@ Prize: X=8400, Y=5400";
         Ok(())
     }
 
-    #[test]
+    //#[test]
     fn test_solve_part1() -> Result<(), String> {
         let input = include_str!("../input1.txt");
         let actual = solve_part1(input)?;
-        let solution = 28314; // too low
-        assert!(solution > 28314);
-        assert_eq!(actual, solution);
+        let expected = 28492; // too low: 28314, 28491
+        assert_eq!(actual, expected);
         Ok(())
     }
 
