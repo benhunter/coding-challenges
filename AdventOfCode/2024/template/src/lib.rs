@@ -1,18 +1,18 @@
 use util::{parse_grid_chars, ParseError};
 
-pub fn solve_part1(input: &str) -> Result<i32, String> {
+pub fn solve_part1(input: &str) -> Result<i64, String> {
     let item = parse(input)?;
     todo!()
 }
 
-pub fn solve_part2(input: &str) -> Result<i32, String> {
+pub fn solve_part2(input: &str) -> Result<i64, String> {
     todo!()
 }
 
 #[derive(Debug, PartialEq, Clone, Default)]
 struct Item {
     lines: Vec<Vec<char>>,
-    attribute: i32,
+    attribute: i64,
 }
 
 fn parse(input: &str) -> Result<Item, ParseError> {
