@@ -1,6 +1,8 @@
+use std::str::FromStr;
+
 use crate::Direction::*;
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Coord {
     pub x: usize,
     pub y: usize,
@@ -9,6 +11,11 @@ pub struct Coord {
 impl Coord {
     pub fn new(x: usize, y: usize) -> Coord {
         Coord { x, y }
+    }
+
+    pub fn from_str(s: String) -> Coord {
+        //Coord { x:0 , y:0 }
+        todo!()
     }
 
     pub fn go(&self, direction: &Direction, bound: &Coord) -> Option<Coord> {
@@ -31,6 +38,21 @@ impl Coord {
             y: self.y + other.y,
         }
     }
+}
+
+impl FromStr for Coord {
+    fn from_str(s: &str) -> Result<Coord, ParseError> {
+        let mut tokens = s
+            .split(',')
+            .map(|a| a.parse::<usize>().unwrap());
+        let c = Coord {
+            x: tokens.next().expect("usize expected"),
+            y: tokens.next().expect("usize expected")
+        };
+        Ok(c)
+    }
+
+    type Err = ParseError;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -65,6 +87,33 @@ impl Direction {
 pub enum Distance {
     Infinity,
     Value(usize),
+}
+
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
+pub struct Vector {
+    pub x: i64,
+    pub y: i64,
+}
+
+impl FromStr for Vector {
+    fn from_str(s: &str) -> Result<Vector, ParseError> {
+        let mut tokens = s
+            .split(',')
+            .map(|a| a.parse().unwrap());
+        let v = Vector {
+            x: tokens.next().expect("i64 expected"),
+            y: tokens.next().expect("i64 expected")
+        };
+        Ok(v)
+    }
+
+    type Err = ParseError;
+}
+
+impl Vector {
+    pub fn new(x: i64, y: i64) -> Vector {
+        Vector { x, y }
+    }
 }
 
 #[derive(Debug)]
