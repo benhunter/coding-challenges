@@ -1,18 +1,45 @@
-use std::{error::Error, fmt};
+use std::fmt;
 use std::fmt::Display;
 use std::str::FromStr;
 
 use util::{Coord, ParseError, Vector};
 
 pub fn solve_part1(input: &str) -> Result<i64, String> {
-    let ebhq = Ebhq::new(input);
-    println!("{}", ebhq);
-    todo!()
+    let max = Coord::new(101, 103);
+    let mut ebhq = Ebhq::new(input, max);
+    println!("{}", ebhq.visualize());
+    ebhq.step(100)?;
+    let solution = ebhq.solve();
+    println!("{}", ebhq.visualize());
+    println!("{}", solution);
+    Ok(solution)
 }
 
-//pub fn solve_part2(input: &str) -> Result<i64, String> {
-//    todo!()
-//}
+pub fn solve_part2(input: &str) -> Result<i64, String> {
+    let max = Coord::new(101, 103);
+    let mut ebhq = Ebhq::new(input, max);
+    println!("{}", ebhq.visualize());
+    let mut steps = 0;
+
+    loop {
+        ebhq.step(1)?;
+        steps += 1;
+        match ebhq.scan() {
+            Some(c) => {
+                println!("{}", ebhq.visualize());
+                println!("{}", steps);
+                break
+            }
+            None => ()
+        }
+        if steps > 10000 {
+            return Err("no christmas tree".to_string())
+        }
+        //let mut buf = String::new();
+        //io::stdin().read_line(&mut buf);
+    }
+    Ok(steps)
+}
 
 #[derive(Debug, PartialEq, Clone, Default)]
 struct Robot {
@@ -68,18 +95,19 @@ struct Ebhq {
 }
 
 impl Ebhq {
-    fn new(input: &str) -> Self {
-        Ebhq::parse(input).unwrap()
+    fn new(input: &str, max: Coord) -> Self {
+        let robots = Ebhq::parse(input).unwrap();
+        Ebhq { robots, max }
     }
 
-    fn parse(input: &str) -> Result<Ebhq, ParseError> {
+    fn parse(input: &str) -> Result<Vec<Robot>, ParseError> {
         let robots = input
             .lines()
             .map(|line| {
                 line.parse::<Robot>().unwrap()
             })
             .collect();
-        Ok(Ebhq { robots, max: Coord::new(11, 7) })
+        Ok(robots)
     }
 
     fn visualize(&self) -> String {
@@ -117,11 +145,13 @@ impl Ebhq {
     }
 
     fn quadrants(&self) -> Vec<i64> {
+        let split = Coord::new(self.max.x/2, self.max.y/2);
+        println!("split={:?}", split);
         let bounds = [
-            (Coord::new(0, 0), Coord::new(4, 2)),  // nw
-            (Coord::new(6, 0), Coord::new(11, 2)), // ne
-            (Coord::new(0, 4), Coord::new(4, 6)),  // sw
-            (Coord::new(6, 4), Coord::new(11, 6)), // se
+            (Coord::new(0, 0), Coord::new(split.x - 1, split.y - 1)),  // nw
+            (Coord::new(split.x + 1, 0), Coord::new(self.max.x - 1, split.y - 1)), // ne
+            (Coord::new(0, split.y + 1), Coord::new(split.x - 1, self.max.y - 1)),  // sw
+            (Coord::new(split.x + 1, split.y + 1), Coord::new(self.max.x - 1, self.max.y - 1)), // se
         ];
 
         fn robot_in_bound(r: &Robot, northwest: Coord, southeast: Coord) -> bool {
@@ -140,13 +170,50 @@ impl Ebhq {
                         true => 1,
                         false => 0,
                     };
-                    if v == 1 {
-                        println!("found r={:?}", r);
-                    }
+                    //if v == 1 {
+                    //    println!("found r={:?}", r);
+                    //}
                     v
                 })
                 .sum()
         }).collect()
+    }
+
+    fn solve(&self) -> i64 {
+        let quadrants: Vec<i64> = self.quadrants();
+        println!("{:?}", quadrants);
+        quadrants.into_iter().reduce(|acc, element| acc * element).unwrap()
+    }
+
+    fn scan(&self) -> Option<Coord> {
+        let mut grid: Vec<Vec<i64>> = vec![vec![0; self.max.x as usize]; self.max.y as usize];
+        self.robots.iter().for_each(|r| {
+            grid[r.position.y as usize][r.position.x as usize] += 1;
+        });
+        let pattern = [[0,1,0],[1,1,1],[1,1,1],[1,1,1]];
+
+        for x in 0..self.max.x - pattern[0].len() as i64 {
+            for y in 0..self.max.y - pattern.len() as i64 {
+                let mut next_grid_loc = false;
+                for px in 0..pattern[0].len() {
+                    for py in 0..pattern.len() {
+                        if grid[py + y as usize][px + x as usize] != pattern[py][px] {
+                            next_grid_loc = true;
+                            break
+                        }
+                    }
+                    if next_grid_loc {
+                        break
+                    }
+                }
+
+                if !next_grid_loc {
+                    return Some(Coord::new(x, y))
+                }
+            }
+        }
+
+        None
     }
 }
 
@@ -207,7 +274,7 @@ mod tests {
     #[test]
     fn test_ebhq_parse() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let actual = Ebhq::parse(input)?;
+        let actual = Ebhq::new(input, Coord::new(0, 0));
         //let expected = Ebhq { ..Default::default() };
         //assert_eq!(actual, expected);
         assert!(actual.robots.len() == 12);
@@ -220,7 +287,7 @@ mod tests {
     #[test]
     fn test_ebhq_visualize() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let ebhq = Ebhq::parse(input)?;
+        let ebhq = Ebhq::new(input, Coord::new(11, 7));
 
         let actual_tiles = ebhq.visualize();
         let expected_tiles = r"1.12.......
@@ -237,7 +304,7 @@ mod tests {
     #[test]
     fn test_ebhq_step() -> Result<(), String> {
         let input = r"p=2,4 v=2,-3";
-        let mut ebhq = Ebhq::parse(input)?;
+        let mut ebhq = Ebhq::new(input, Coord::new(11, 7));
 
         let actual_tiles = ebhq.visualize();
         let expected_tiles = r"...........
@@ -279,7 +346,7 @@ mod tests {
     #[test]
     fn test_part1() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let mut ebhq = Ebhq::new(input);
+        let mut ebhq = Ebhq::new(input, Coord::new(11, 7));
 
         ebhq.step(100)?;
         let actual_tiles = ebhq.visualize();
@@ -292,21 +359,25 @@ mod tests {
 .1....1....".to_string();
         assert_eq!(actual_tiles, expected_tiles);
 
-        let quadrants: Vec<i64> = ebhq.quadrants();
-        let expected = vec![1, 3, 4, 1];
-        assert_eq!(quadrants, expected);
-
-        let actual = quadrants.into_iter().reduce(|acc, element| acc * element).unwrap();
+        //let quadrants: Vec<i64> = ebhq.quadrants();
+        //let expected = vec![1, 3, 4, 1];
+        //assert_eq!(quadrants, expected);
+        //
+        //let actual = quadrants.into_iter().reduce(|acc, element| acc * element).unwrap();
+        let actual = ebhq.solve();
         let solution = 12;
         assert_eq!(actual, solution);
         Ok(())
     }
 
-     #[test]
+    #[test]
     fn test_solve_part1() -> Result<(), String> {
         let input = include_str!("../input.txt");
-        let actual = solve_part1(input)?;
-        let solution = 0;
+        let max = Coord::new(101, 103);
+        let mut ebhq = Ebhq::new(input, max);
+        ebhq.step(100)?;
+        let actual = ebhq.solve();
+        let solution = 211773366;
         assert_eq!(actual, solution);
         Ok(())
     }
@@ -320,12 +391,12 @@ mod tests {
     //    Ok(())
     //}
 
-    // #[test]
-    //fn test_solve_part2() -> Result<(), String> {
-    //    let input = include_str!("../input.txt");
-    //    let actual = solve_part2(input)?;
-    //    let solution = 0;
-    //    assert_eq!(actual, solution);
-    //    Ok(())
-    //}
+     #[test]
+    fn test_solve_part2() -> Result<(), String> {
+        let input = include_str!("../input.txt");
+        let actual = solve_part2(input)?;
+        let solution = 7344;
+        assert_eq!(actual, solution);
+        Ok(())
+    }
 }

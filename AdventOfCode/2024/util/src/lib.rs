@@ -61,7 +61,8 @@ impl PartialOrd for Coord {
         let x_cmp = self.x.partial_cmp(&other.x).unwrap();
         let y_cmp = self.y.partial_cmp(&other.y).unwrap();
         //println!("comparing {:?} to {:?}. result {:?} and {:?}", self, other, x_cmp, y_cmp);
-        return if x_cmp == y_cmp {
+
+        if x_cmp == y_cmp {
             Some(x_cmp)
         } else if (x_cmp == Ordering::Less || x_cmp == Ordering::Equal) && (y_cmp == Ordering::Less || y_cmp == Ordering::Equal) {
             Some(Ordering::Less)
