@@ -7,18 +7,18 @@ use util::{Coord, ParseError, Vector};
 pub fn solve_part1(input: &str) -> Result<i64, String> {
     let max = Coord::new(101, 103);
     let mut ebhq = Ebhq::new(input, max);
-    println!("{}", ebhq.visualize());
+    //println!("{}", ebhq.visualize());
     ebhq.step(100)?;
     let solution = ebhq.solve();
-    println!("{}", ebhq.visualize());
-    println!("{}", solution);
+    //println!("{}", ebhq.visualize());
+    //println!("{}", solution);
     Ok(solution)
 }
 
 pub fn solve_part2(input: &str) -> Result<i64, String> {
     let max = Coord::new(101, 103);
     let mut ebhq = Ebhq::new(input, max);
-    println!("{}", ebhq.visualize());
+    //println!("{}", ebhq.visualize());
     let mut steps = 0;
 
     loop {
@@ -27,7 +27,7 @@ pub fn solve_part2(input: &str) -> Result<i64, String> {
         match ebhq.scan() {
             Some(c) => {
                 println!("{}", ebhq.visualize());
-                println!("{}", steps);
+                //println!("{}", steps);
                 break
             }
             None => ()
@@ -146,7 +146,7 @@ impl Ebhq {
 
     fn quadrants(&self) -> Vec<i64> {
         let split = Coord::new(self.max.x/2, self.max.y/2);
-        println!("split={:?}", split);
+        //println!("split={:?}", split);
         let bounds = [
             (Coord::new(0, 0), Coord::new(split.x - 1, split.y - 1)),  // nw
             (Coord::new(split.x + 1, 0), Coord::new(self.max.x - 1, split.y - 1)), // ne
@@ -181,7 +181,7 @@ impl Ebhq {
 
     fn solve(&self) -> i64 {
         let quadrants: Vec<i64> = self.quadrants();
-        println!("{:?}", quadrants);
+        //println!("{:?}", quadrants);
         quadrants.into_iter().reduce(|acc, element| acc * element).unwrap()
     }
 
