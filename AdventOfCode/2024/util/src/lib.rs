@@ -1,21 +1,16 @@
-use std::str::FromStr;
+use std::{cmp::Ordering, str::FromStr};
 
 use crate::Direction::*;
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Coord {
-    pub x: usize,
-    pub y: usize,
+    pub x: i64,
+    pub y: i64,
 }
 
 impl Coord {
-    pub fn new(x: usize, y: usize) -> Coord {
+    pub fn new(x: i64, y: i64) -> Coord {
         Coord { x, y }
-    }
-
-    pub fn from_str(s: String) -> Coord {
-        //Coord { x:0 , y:0 }
-        todo!()
     }
 
     pub fn go(&self, direction: &Direction, bound: &Coord) -> Option<Coord> {
@@ -44,15 +39,36 @@ impl FromStr for Coord {
     fn from_str(s: &str) -> Result<Coord, ParseError> {
         let mut tokens = s
             .split(',')
-            .map(|a| a.parse::<usize>().unwrap());
+            .map(|a| a.parse::<i64>().unwrap());
         let c = Coord {
-            x: tokens.next().expect("usize expected"),
-            y: tokens.next().expect("usize expected")
+            x: tokens.next().expect("i64 expected"),
+            y: tokens.next().expect("i64 expected")
         };
         Ok(c)
     }
 
     type Err = ParseError;
+}
+
+//impl PartialEq for Coord {
+//    fn eq(&self, other: &Self) -> bool {
+//        todo!()
+//    }
+//}
+
+impl PartialOrd for Coord {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        let x_cmp = self.x.partial_cmp(&other.x).unwrap();
+        let y_cmp = self.y.partial_cmp(&other.y).unwrap();
+        //println!("comparing {:?} to {:?}. result {:?} and {:?}", self, other, x_cmp, y_cmp);
+        return if x_cmp == y_cmp {
+            Some(x_cmp)
+        } else if (x_cmp == Ordering::Less || x_cmp == Ordering::Equal) && (y_cmp == Ordering::Less || y_cmp == Ordering::Equal) {
+            Some(Ordering::Less)
+        } else {
+            Some(Ordering::Greater)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
