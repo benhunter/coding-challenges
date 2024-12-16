@@ -1,4 +1,6 @@
 fn main() -> Result<(), String> {
+    // day_15::simulate_large_example()?;
+
     let input = include_str!("../input.txt");
     // let input = include_str!("../test.txt");
 
