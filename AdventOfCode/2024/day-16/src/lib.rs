@@ -1,5 +1,5 @@
 use core::panic;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr, usize};
 
 use util::{parse_grid_chars, Coord, Direction, Distance, ParseError};
 
@@ -64,17 +64,19 @@ impl Maze {
         open_set.push(start_position.clone());
         let mut frontier_scores: Vec<Vec<Distance>> = vec![vec![Distance::Infinity; width]; height];
         frontier_scores[start.y as usize][start.x as usize] = Distance::Value(self.heuristic(&start_position));
-            self.heuristic(&start_position);
+        let mut came_from: HashMap<Coord, Position> = Default::default();
 
         let mut count = 0;
-        while count < 1 && open_set.len() > 0 {
-            println!("Iteration={} Distances:", count);
-            self.visualize_distances(&distances);
+        while open_set.len() > 0 {
+            //println!("Iteration={} Distances:", count);
+            //println!();
+            //self.visualize_distances(&distances);
 
             &open_set.sort_by(|a, b| {
-                frontier_scores[a.coord.y as usize][a.coord.x as usize].cmp(&frontier_scores[b.coord.y as usize][b.coord.x as usize])
+                //frontier_scores[a.coord.y as usize][a.coord.x as usize].cmp(&frontier_scores[b.coord.y as usize][b.coord.x as usize])
+                frontier_scores[b.coord.y as usize][b.coord.x as usize].cmp(&frontier_scores[a.coord.y as usize][a.coord.x as usize])
             });
-            println!("frontier_scores={:?}", frontier_scores);
+            //println!("frontier_scores={:?}", frontier_scores);
             let current = open_set.pop().unwrap(); // TODO min frontier_scores
 
             if current.clone().coord == end {
@@ -83,28 +85,50 @@ impl Maze {
             }
 
             for neighbor_dir in Direction::iter() {
-                //println!("current.direction={:?} neighbor_dir=Direction::{:?} curr==neigh_dir={}", current.direction, neighbor_dir, current.direction == neighbor_dir);
+                println!("current.direction={:?} neighbor_dir=Direction::{:?} curr==neigh_dir={}", current.direction, neighbor_dir, current.direction == neighbor_dir);
 
-                //if self.grid[]
+                // Is direction valid, not a #?
+                let neighbor = current.coord.go(neighbor_dir);
+                if self.grid[neighbor.y as usize][neighbor.x as usize] == '#' {
+                    continue
+                }
 
                 let current_dir_val: i8 = current.direction.into();
                 //let turns_cost: i8 = (current_dir_val - <Direction as Into<i8>>::into(neighbor_dir)).abs();
-                let turns_cost: i8 = if current.direction == neighbor_dir {
+                let turns_cost: i16 = if current.direction == neighbor_dir {
                     //println!("inner current.direction={:?} Direction::{:?} curr==neigh_dir={}", current.direction, neighbor_dir, current.direction == neighbor_dir);
                     0
                 } else {
                     let cost = (current_dir_val - <Direction as Into<i8>>::into(neighbor_dir)).abs() % 2;
                     //println!("inner cost={}", cost);
                     match cost {
-                        1 => 1,
-                        0 => 2,
+                        1 => 1000,
+                        0 => 2000,
                         _ => panic!("impossibru")
                     }
                 };
                 //println!("turns_cost={:?}", turns_cost);
 
                 let dist_curr_to_neighbor = 1 + turns_cost as i64;
-                let tentative_global_score = if let Distance::Value(v) = &distances[current.coord.y as usize][current.coord.x as usize] { v } else { panic!("fake news") } + dist_curr_to_neighbor;
+                //let tentative_global_score = if let Distance::Value(v) = &distances[current.coord.y as usize][current.coord.x as usize] { v } else { panic!("fake news") } + dist_curr_to_neighbor;
+                let tentative_global_score = distances.clone()[current.coord.y as usize][current.coord.x as usize].add_i64(dist_curr_to_neighbor);
+                //let neighbor_global_score = if let Distance::Value(v) = distances[neighbor.y as usize][neighbor.x as usize] { v } else { panic!("wut")};
+                let neighbor_global_score = distances[neighbor.y as usize][neighbor.x as usize];
+
+                println!("Checking tentative_global_score={:?} < neighbor_global_score={:?} ={}", tentative_global_score, neighbor_global_score, tentative_global_score < neighbor_global_score);
+                if tentative_global_score < neighbor_global_score {
+                    println!("...true");
+                    came_from.insert(neighbor, current);
+                    //distances[neighbor.y as usize][neighbor.x as usize] = Distance::Value(tentative_global_score);
+                    distances[neighbor.y as usize][neighbor.x as usize] = tentative_global_score;
+                    let neighbor_posn = Position { coord: neighbor, direction: neighbor_dir };
+                    frontier_scores[neighbor.y as usize][neighbor.x as usize] = tentative_global_score.add_i64(self.heuristic(&neighbor_posn));
+                    if !open_set.contains(&neighbor_posn) {
+                        println!("Adding neighbor={:?}", neighbor);
+                        open_set.push(neighbor_posn);
+                    }
+
+                }
             }
 
             // Find the next neighbor to the lowest cost tile.
@@ -145,12 +169,12 @@ impl Maze {
             for x in 0..distances[0].len() {
                 match self.grid[y][x] {
                     '.' => match distances[y][x] {
-                        Distance::Infinity => print!(" ♾️"),
+                        Distance::Infinity => print!("{:^6}", "?"),
                         Distance::Value(v) => {
-                            print!("{:>3} ", v);
+                            print!("{:^5} ", v);
                         }
                     },
-                    _ => print!("{:>3}", self.grid[y][x]),
+                    _ => print!("{:^6}", self.grid[y][x]),
                 }
             }
             println!();
@@ -165,7 +189,7 @@ impl Maze {
 //    Value(i64),
 //}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 struct Position {
     coord: Coord,
     direction: Direction,
@@ -199,11 +223,13 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
+     #[test]
     fn test_solve_part1() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part1(input)?;
-        let solution = 0;
+        let wrong = 137512; // 137512 too high
+        assert!(actual < wrong);
+        let solution = 1;
         assert_eq!(actual, solution);
         Ok(())
     }

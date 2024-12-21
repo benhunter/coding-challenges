@@ -1,8 +1,8 @@
-use std::{cmp::Ordering, str::FromStr};
+use std::{cmp::Ordering, ops::Add, str::FromStr};
 
 use crate::Direction::*;
 
-#[derive(Debug, PartialEq, Eq, Ord, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Hash)]
 pub struct Coord {
     pub x: i64,
     pub y: i64,
@@ -88,15 +88,15 @@ impl PartialOrd for Coord {
 //    }
 //}
 
-//impl Ord for Coord {
-//    fn cmp(&self, other: &Self) -> Ordering {
-//        if self.x == other.x && self.y == other.y {
-//            return Ordering::Equal
-//        } else {
-//            return self.partial_cmp(other).unwrap()
-//        }
-//    }
-//}
+impl Ord for Coord {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.x == other.x && self.y == other.y {
+            return Ordering::Equal
+        } else {
+            return self.partial_cmp(other).unwrap()
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
@@ -109,19 +109,19 @@ pub enum Direction {
 impl Direction {
     pub fn iter() -> core::array::IntoIter<Direction, 4> {
         [
-            Down,
-            Right,
-            Left,
             Up,
+            Right,
+            Down,
+            Left,
         ].into_iter()
     }
 
     pub fn opposite(&self) -> Direction {
         match self {
             Up => Down,
+            Right => Left,
             Down => Up,
             Left => Right,
-            Right => Left,
         }
     }
 }
@@ -142,12 +142,20 @@ impl Into<i8> for Direction {
 //    }
 //}
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Distance {
-    Infinity,
     Value(i64),
+    Infinity,
 }
 
+impl Distance {
+    pub fn add_i64(self, rhs: i64) -> Self {
+        match self {
+            Distance::Value(v) => Distance::Value(v + rhs),
+            Distance::Infinity => Distance::Infinity,
+        }
+    }
+}
 //impl PartialEq for Distance {
 //    fn eq(&self, other: &Self) -> bool {
 //        let eq = (*self == Distance::Infinity && *other == Distance::Infinity);
