@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, ops::Add, str::FromStr};
+use std::{cmp::Ordering, str::FromStr};
 
 use crate::Direction::*;
 
@@ -133,6 +133,17 @@ impl Into<i8> for Direction {
             Right => 1,
             Down => 2,
             Left => 3,
+        }
+    }
+}
+
+impl Into<char> for Direction {
+    fn into(self) -> char {
+        match self {
+            Up => '^',
+            Right => '>',
+            Down => 'v',
+            Left => '<',
         }
     }
 }

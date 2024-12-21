@@ -82,10 +82,10 @@ impl Maze {
             if current.clone().coord == end {
                 let d = &frontier_scores[current.coord.y as usize][current.coord.x as usize];
 
-                println!("Iteration={} Distances:", count);
-                println!();
-                self.visualize_distances(&distances);
-                println!("Score={:?}", d);
+                //println!("Iteration={} Distances:", count);
+                //println!();
+                //self.visualize_distances(&distances);
+                //println!("Score={:?}", d);
                 println!();
                 self.visualize_came_from(&came_from);
 
@@ -93,7 +93,7 @@ impl Maze {
             }
 
             for neighbor_dir in Direction::iter() {
-                println!("current.direction={:?} neighbor_dir=Direction::{:?} curr==neigh_dir={}", current.direction, neighbor_dir, current.direction == neighbor_dir);
+                //println!("current.direction={:?} neighbor_dir=Direction::{:?} curr==neigh_dir={}", current.direction, neighbor_dir, current.direction == neighbor_dir);
 
                 // Is direction valid, not a #?
                 let neighbor = current.coord.go(neighbor_dir);
@@ -123,16 +123,24 @@ impl Maze {
                 //let neighbor_global_score = if let Distance::Value(v) = distances[neighbor.y as usize][neighbor.x as usize] { v } else { panic!("wut")};
                 let neighbor_global_score = distances[neighbor.y as usize][neighbor.x as usize];
 
-                println!("Checking tentative_global_score={:?} < neighbor_global_score={:?} ={}", tentative_global_score, neighbor_global_score, tentative_global_score < neighbor_global_score);
+                //println!("Checking tentative_global_score={:?} < neighbor_global_score={:?} ={}", tentative_global_score, neighbor_global_score, tentative_global_score < neighbor_global_score);
                 if tentative_global_score < neighbor_global_score {
-                    println!("...true");
+                    //println!("...true");
                     came_from.insert(neighbor, current);
+
+                    //if count > 97 {
+                        //println!("came_from: {:?}", came_from);
+                        //println!();
+                        //self.visualize_came_from(&came_from);
+                        //panic!("DEBUG");
+                    //}
+
                     //distances[neighbor.y as usize][neighbor.x as usize] = Distance::Value(tentative_global_score);
                     distances[neighbor.y as usize][neighbor.x as usize] = tentative_global_score;
                     let neighbor_posn = Position { coord: neighbor, direction: neighbor_dir };
                     frontier_scores[neighbor.y as usize][neighbor.x as usize] = tentative_global_score.add_i64(self.heuristic(&neighbor_posn));
                     if !open_set.contains(&neighbor_posn) {
-                        println!("Adding neighbor={:?}", neighbor);
+                        //println!("Adding neighbor={:?}", neighbor);
                         open_set.push(neighbor_posn);
                     }
 
@@ -191,12 +199,51 @@ impl Maze {
     }
 
     fn visualize_came_from(&self, came_from: &HashMap<Coord, Position>) -> () {
-        let prev = came_from.get(&self.end.expect("end"));
-        println!("To end: {:?} came from: {:?}", self.end.expect("end"), prev);
-        while prev.is_some() {
-            let prev = came_from.get(&prev.expect("Some(prev)").coord);
-            println!("Came from: {:?}", prev
+        let curr = self.end.expect("end");
+        let mut render: Vec<Vec<Option<char>>> = vec![vec![None; self.grid[0].len()]; self.grid.len()];
+        let mut prev = came_from.get(&curr);
+        println!("End: Came from: {:?}. To get to: {:?}", prev, curr);
+
+        if prev.is_some() {
+            let prev_posn = prev.expect("prev");
+            render[prev_posn.coord.y as usize][prev_posn.coord.x as usize] = Some(prev_posn.direction.into());
         }
+
+        while prev.is_some() {
+            let curr = prev;
+            prev = came_from.get(&curr.expect("Some(curr)").coord);
+            println!("Came from: {:?}. To get to: {:?}", prev, curr);
+
+            if prev.is_some() {
+                let prev_posn = prev.expect("prev");
+                //render[prev_posn.coord.y as usize][prev_posn.coord.x as usize] = Some(prev_posn.direction.into());
+                render[prev_posn.coord.y as usize][prev_posn.coord.x as usize] = Some(curr.expect("curr").direction.into());
+            }
+
+            if curr == prev {
+                println!("curr == prev");
+                panic!("can't come from self");
+            }
+            //panic!("DEBUG");
+        }
+
+        println!();
+        for y in 0..self.grid.len() {
+            for x in 0..self.grid[0].len() {
+                let c = match self.grid[y][x] {
+                    '.' => {
+                        match render[y][x] {
+                            Some(c) => c,
+                            None => '.',
+                        }
+                    },
+                    _ => self.grid[y][x],
+                };
+                print!("{}", c);
+            }
+            println!();
+        }
+        println!();
     }
 }
 
