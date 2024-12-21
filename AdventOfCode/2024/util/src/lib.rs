@@ -2,7 +2,7 @@ use std::{cmp::Ordering, str::FromStr};
 
 use crate::Direction::*;
 
-#[derive(Debug, PartialEq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Ord, Clone, Copy, Default)]
 pub struct Coord {
     pub x: i64,
     pub y: i64,
@@ -13,7 +13,7 @@ impl Coord {
         Coord { x, y }
     }
 
-    pub fn go(&self, direction: &Direction, bound: &Coord) -> Option<Coord> {
+    pub fn go_bound(&self, direction: &Direction, bound: &Coord) -> Option<Coord> {
         match direction {
             Up if self.y > 0 => Some(Coord { x: self.x, y: self.y - 1 }),
             Down if self.y < bound.y - 1 => Some(Coord { x: self.x, y: self.y + 1 }),
@@ -23,8 +23,18 @@ impl Coord {
         }
     }
 
+    pub fn go(&self, direction: Direction) -> Coord {
+        let (dx, dy) = match direction {
+            Up => (0, -1),
+            Right => (1, 0),
+            Down => (0, 1),
+            Left => (-1, 0),
+        };
+        Coord::new(self.x + dx, self.y + dy)
+    }
+
     pub fn neighbors(&self, bound: &Coord) -> Vec<Coord> {
-        Direction::iter().filter_map(|direction| self.go(&direction, bound)).collect()
+        Direction::iter().filter_map(|direction| self.go_bound(&direction, bound)).collect()
     }
 
     pub fn add(&self, other: Coord) -> Coord {
@@ -72,12 +82,28 @@ impl PartialOrd for Coord {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+//impl PartialEq for Coord {
+//    fn eq(&self, other: &Self) -> bool {
+//        self.x == other.x && self.y == other.y
+//    }
+//}
+
+//impl Ord for Coord {
+//    fn cmp(&self, other: &Self) -> Ordering {
+//        if self.x == other.x && self.y == other.y {
+//            return Ordering::Equal
+//        } else {
+//            return self.partial_cmp(other).unwrap()
+//        }
+//    }
+//}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
     Up = 0,
-    Down = 1,
-    Left = 2,
-    Right = 3,
+    Right = 1,
+    Down = 2,
+    Left = 3,
 }
 
 impl Direction {
@@ -100,11 +126,58 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl Into<i8> for Direction {
+    fn into(self) -> i8 {
+        match self {
+            Up => 0,
+            Right => 1,
+            Down => 2,
+            Left => 3,
+        }
+    }
+}
+//impl Display for Direction {
+//    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//        write!(f, )
+//    }
+//}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Distance {
     Infinity,
-    Value(usize),
+    Value(i64),
 }
+
+//impl PartialEq for Distance {
+//    fn eq(&self, other: &Self) -> bool {
+//        let eq = (*self == Distance::Infinity && *other == Distance::Infinity);
+//        let s = if let Distance::Value(s) = self {
+//            s
+//        } else {
+//            panic!("not a Distance::Value")
+//        };
+//    }
+//}
+
+//impl Ord for Distance {
+//    fn cmp(&self, other: &Self) -> Ordering {
+//        if *self == Distance::Infinity && *other == Distance::Infinity {
+//            Ordering::Equal
+//        } else {
+//            match self {
+//                Distance::Value(s) => {
+//                    match other {
+//                        Distance::Value(o) => {
+//                            s.cmp(o)
+//                        },
+//                        Distance::Infinity => Ordering::Less
+//                    }
+//                },
+//                Distance::Infinity => Ordering::Greater
+//            }
+//        }
+//    }
+//} 
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Vector {
@@ -163,3 +236,19 @@ pub fn parse_grid<T>(input: &str, parser: impl Fn(char) -> Result<T, ParseError>
         })
         .collect()
 }
+
+// How to get the (x, y) Coord of a specific tile/cell in a grid:
+//fn find_in_grid(matcher: fn(i64)-> bool ) -> Option<Coord> {
+//    self.grid
+//        .iter()
+//        .enumerate()
+//        .map(|(yi, y)| {
+//            y
+//           .iter()
+//           .enumerate()
+//           .map(move |(xi, x)| (xi, yi, x))
+//        })
+//        .flatten()
+//        .filter(matcher)
+//}
+
