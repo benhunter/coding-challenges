@@ -60,12 +60,13 @@ impl Maze {
 
         //let mut open_set = vec![self.start.unwrap().clone(); 1]; // Use VecDequeue if we need to .remove(0) every loop
         let mut open_set: Vec<Position> = vec![];
-        let start_position = Position { coord: start.clone(), direction: Direction::Up };
+        let start_position = Position { coord: start.clone(), direction: Direction::Right };
         open_set.push(start_position.clone());
         let mut frontier_scores: Vec<Vec<Distance>> = vec![vec![Distance::Infinity; width]; height];
         frontier_scores[start.y as usize][start.x as usize] = Distance::Value(self.heuristic(&start_position));
         let mut came_from: HashMap<Coord, Position> = Default::default();
 
+        let mut solutions: Vec<(i64, HashMap<Coord, Position>)> = Default::default(); // (Score, came_from)
         let mut count = 0;
         while open_set.len() > 0 {
             //println!("Iteration={} Distances:", count);
@@ -73,24 +74,29 @@ impl Maze {
             //self.visualize_distances(&distances);
 
             &open_set.sort_by(|a, b| {
-                //frontier_scores[a.coord.y as usize][a.coord.x as usize].cmp(&frontier_scores[b.coord.y as usize][b.coord.x as usize])
                 frontier_scores[b.coord.y as usize][b.coord.x as usize].cmp(&frontier_scores[a.coord.y as usize][a.coord.x as usize])
             });
-            //println!("frontier_scores={:?}", frontier_scores);
-            let current = open_set.pop().unwrap(); // TODO min frontier_scores
+            let current = open_set.pop().unwrap();
 
             if current.clone().coord == end {
-                let d = &frontier_scores[current.coord.y as usize][current.coord.x as usize];
+                //let dist = &frontier_scores[current.coord.y as usize][current.coord.x as usize];
 
                 //println!("Iteration={} Distances:", count);
                 //println!();
                 //self.visualize_distances(&distances);
                 //println!("Score={:?}", d);
+
                 println!();
                 self.visualize_came_from(&came_from);
 
-                return if let Distance::Value(v) = d { Ok(*v) } else { panic!("fake news") }
+                //return if let Distance::Value(v) = dist { Ok(*v) } else { panic!("fake news") }
+                let score = self.score_path(&came_from);
+                println!("found solution: {}", score);
+
+                solutions.push((score, came_from.clone()));
+                continue;
             }
+                println!("open_set.len()={}", open_set.len());
 
             for neighbor_dir in Direction::iter() {
                 //println!("current.direction={:?} neighbor_dir=Direction::{:?} curr==neigh_dir={}", current.direction, neighbor_dir, current.direction == neighbor_dir);
@@ -145,30 +151,19 @@ impl Maze {
                     }
 
                 }
-            }
 
-            // Find the next neighbor to the lowest cost tile.
-            //let lowest_cost = self.grid
-            //    .iter()
-            //    .enumerate()
-            //    .map(|(yi, y)| {
-            //        y
-            //        .iter()
-            //        .enumerate()
-            //        .map(move |(xi, x)| (xi, yi, x))
-            //    })
-            //    .flatten()
-            //    .min_by_key(|(xi, yi, x)| {
-            //        match distances[*yi][*xi] {
-            //            Distance::Infinity => MAX,
-            //            Distance::Value(v) => v,
-            //        }
-            //    });
-            //println!("{:?}", lowest_cost);
+                //if neighbor == Coord::new(1, 12) {
+                //if neighbor == Coord::new(2, 13) {
+                //    self.visualize_distances(&distances);
+                //    panic!("DEBUG");
+                //}
+            }
 
             count += 1;
         }
-        Ok(0)
+
+        println!("solution={:?}", solutions.len());
+        return Ok(solutions.iter().min_by_key(|s| s.0 ).unwrap().0)
     }
 
     /**
@@ -177,7 +172,9 @@ impl Maze {
      */
     fn heuristic(&self, n: &Position) -> i64 {
         let end = self.end.expect("need end");
-        (n.coord.x - end.x).abs() + 1000 + (n.coord.y - end.y).abs()
+        let h = (n.coord.x - end.x).abs() + 1000 + (n.coord.y - end.y).abs();
+        h
+        //0
     }
 
     fn visualize_distances(&self, distances: &Vec<Vec<Distance>>) {
@@ -196,6 +193,45 @@ impl Maze {
             println!();
         }
         println!();
+    }
+
+    fn score_path(&self, came_from: &HashMap<Coord, Position>) -> i64 {
+        let curr = self.end.expect("end");
+        let mut prev = came_from.get(&curr);
+        let mut score = 1;
+        //println!("End: Came from: {:?}. To get to: {:?}. score={}", prev, curr, score);
+
+        if prev.is_some() {
+            let prev_posn = prev.expect("prev");
+        }
+
+        while prev.is_some() {
+            let curr = prev;
+            prev = came_from.get(&curr.expect("Some(curr)").coord);
+
+
+            if prev.is_some() {
+                //let prev_posn = prev.expect("prev");
+                if curr.unwrap().direction != prev.unwrap().direction {
+                    score += 1001;
+                } else {
+                    score += 1;
+                }
+            } else {
+                if curr.unwrap().direction != Direction::Right {
+                    score += 1000;
+                }
+            }
+
+            //println!("Came from: {:?}. To get to: {:?}. score={}", prev, curr, score);
+
+            if curr == prev {
+                println!("curr == prev");
+                panic!("can't come from self");
+            }
+        }
+
+        score
     }
 
     fn visualize_came_from(&self, came_from: &HashMap<Coord, Position>) -> () {
@@ -296,13 +332,11 @@ mod tests {
         Ok(())
     }
 
-     #[test]
+    #[test]
     fn test_solve_part1() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part1(input)?;
-        let wrong = 137512; // 137512 too high
-        assert!(actual < wrong);
-        let solution = 1;
+        let solution = 135512;
         assert_eq!(actual, solution);
         Ok(())
     }

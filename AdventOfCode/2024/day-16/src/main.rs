@@ -1,6 +1,6 @@
 fn main() -> Result<(), String> {
-    let input = include_str!("../input.txt");
-    //let input = include_str!("../test.txt");
+    //let input = include_str!("../input.txt");
+    let input = include_str!("../test.txt");
     //let input = include_str!("../test2.txt");
 
     let result = day_16::solve_part1(input)?;
