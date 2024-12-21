@@ -81,6 +81,14 @@ impl Maze {
 
             if current.clone().coord == end {
                 let d = &frontier_scores[current.coord.y as usize][current.coord.x as usize];
+
+                println!("Iteration={} Distances:", count);
+                println!();
+                self.visualize_distances(&distances);
+                println!("Score={:?}", d);
+                println!();
+                self.visualize_came_from(&came_from);
+
                 return if let Distance::Value(v) = d { Ok(*v) } else { panic!("fake news") }
             }
 
@@ -169,9 +177,9 @@ impl Maze {
             for x in 0..distances[0].len() {
                 match self.grid[y][x] {
                     '.' => match distances[y][x] {
-                        Distance::Infinity => print!("{:^6}", "?"),
+                        Distance::Infinity => print!("{:^8}", "?"),
                         Distance::Value(v) => {
-                            print!("{:^5} ", v);
+                            print!("{:^8} ", v);
                         }
                     },
                     _ => print!("{:^6}", self.grid[y][x]),
@@ -180,6 +188,15 @@ impl Maze {
             println!();
         }
         println!();
+    }
+
+    fn visualize_came_from(&self, came_from: &HashMap<Coord, Position>) -> () {
+        let prev = came_from.get(&self.end.expect("end"));
+        println!("To end: {:?} came from: {:?}", self.end.expect("end"), prev);
+        while prev.is_some() {
+            let prev = came_from.get(&prev.expect("Some(prev)").coord);
+            println!("Came from: {:?}", prev
+        }
     }
 }
 
@@ -219,6 +236,15 @@ mod tests {
         let input = include_str!("../test.txt");
         let actual = solve_part1(input)?;
         let solution = 7036;
+        assert_eq!(actual, solution);
+        Ok(())
+    }
+
+    #[test]
+    fn test2_part1() -> Result<(), String> {
+        let input = include_str!("../test2.txt");
+        let actual = solve_part1(input)?;
+        let solution = 11048;
         assert_eq!(actual, solution);
         Ok(())
     }
