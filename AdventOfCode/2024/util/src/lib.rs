@@ -124,6 +124,24 @@ impl Direction {
             Left => Right,
         }
     }
+
+    pub fn left(&self) -> Direction {
+        match self {
+            Up => Left,
+            Right => Up,
+            Down => Right,
+            Left => Down,
+        }
+    }
+
+    pub fn right(&self) -> Direction {
+        match self {
+            Up => Right,
+            Right => Down,
+            Down => Left,
+            Left => Up,
+        }
+    }
 }
 
 impl Into<i8> for Direction {

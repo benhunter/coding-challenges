@@ -9,8 +9,8 @@ pub fn solve_part1(input: &str) -> Result<usize, String> {
     Ok(input.parse::<Racetrack>()?.solve_cheats(100, Racetrack::find_cheats_part1))
 }
 
-pub fn solve_part2(_input: &str) -> Result<i64, String> {
-    todo!()
+pub fn solve_part2(input: &str) -> Result<usize, String> {
+    Ok(input.parse::<Racetrack>()?.solve_cheats_part2(100, Racetrack::find_cheats_part2))
 }
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -122,6 +122,7 @@ impl Racetrack {
         let count = cheats.into_iter().filter(|c| c.1 >= picos_saved).map(|c| c.1).collect::<Vec<i64>>().len();
         count
     }
+
     fn solve_cheats_part2(&self, picos_saved: i64, find_cheats: impl Fn(&Racetrack, &Vec<Vec<Option<i64>>>) -> HashMap<(Coord, Coord), i64>) -> usize {
         // Solve track and assign numbers to each tile.
         let mut track: Vec<Vec<Option<i64>>> = vec![vec![None; self.grid[0].len()]; self.grid.len()];
@@ -145,6 +146,37 @@ impl Racetrack {
         }
 
         //println!("{:?}", track);
+        //println!();
+        //for (yi, y) in track.iter().enumerate() {
+        //    for (xi, x) in y.iter().enumerate() {
+        //        let c = match x {
+        //            Some(n) => n.to_string(),
+        //            //None => "#".to_string(),
+        //            None => self.grid[yi][xi].to_string(),
+        //        };
+        //        print!("{:<4}", c);
+        //    }
+        //    println!();
+        //}
+        //println!();
+
+        // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
+        let cheats: HashMap<(Coord, Coord), i64> = find_cheats(&self, &track);
+
+        // TODO Render cheats
+        //for c in &cheats {
+        //    println!("{:?}", c);
+        //}
+
+        // Calc savings.
+        let cheats_solution: HashMap<(Coord, Coord), i64> = cheats.into_iter().filter(|c| c.1 >= picos_saved).collect();
+        println!("\ncheats_solution:");
+        //println!("{:?}", cheats_solution);
+        for c in &cheats_solution {
+            println!("{:?}", c);
+        }
+
+        // Visualize track
         println!();
         for (yi, y) in track.iter().enumerate() {
             for (xi, x) in y.iter().enumerate() {
@@ -159,93 +191,8 @@ impl Racetrack {
         }
         println!();
 
-        // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
-        let cheats: HashMap<(Coord, Coord), i64> = find_cheats(&self, &track);
-
-        // TODO Render cheats
-        for c in &cheats {
-            println!("{:?}", c);
-        }
-
-        // Calc savings.
-        let cheats_solution: HashMap<(Coord, Coord), i64> = cheats.into_iter().filter(|c| c.1 >= picos_saved).collect();
-        println!("\ncheats_solution:");
-        println!("{:?}", cheats_solution);
         let count = cheats_solution.len();
         count
-    }
-
-    /// Find all possible cheats for Part 2.
-    ///
-    /// A cheat is defined by start and end position.
-    ///
-    /// Currently checks for cheats in all 4 directions up to 20 steps in that direction.
-    /// TODO: go in a direction and turn left or right one time, up to 20 steps total.
-    ///
-    /// * `track`: Holds the position count of every legal move on the track.
-    fn find_cheats_part2(_racetrack: &Racetrack, track: &Vec<Vec<Option<i64>>>) -> HashMap<(Coord, Coord), i64> {
-        let mut cheats: HashMap<(Coord, Coord), i64> = Default::default();
-        let max_cheat_steps = 20;
-
-        for y in 1..track.len() - 1 {
-            for x in 1..track[0].len() - 1 {
-                let cheat_start_coord = Coord::new(x.try_into().unwrap(), y.try_into().unwrap());
-                let cheat_start_posn = track[y as usize][x as usize];
-                if cheat_start_posn.is_none() {
-                    continue;
-                }
-                let cheat_start_posn = cheat_start_posn.unwrap();
-
-                println!();
-                for direction in Direction::iter() {
-                    let mut current_steps = 0;
-                    let mut curr_coord = cheat_start_coord.clone();
-
-                    while current_steps < max_cheat_steps {
-                        current_steps += 1;
-                        curr_coord = match curr_coord.go_bound(&direction, &Coord::new(track[0].len() as i64, track.len() as i64)) {
-                            Some(c) => c,
-                            None => continue,
-                        };
-                        println!("from={:?}, direction={} to={:?}", cheat_start_coord, direction, curr_coord);
-                        let curr_posn = track[curr_coord.y as usize][curr_coord.x as usize];
-
-                        // Straight ahead
-                        if curr_posn.is_some() {
-                            let curr_posn = curr_posn.unwrap();
-                            println!("checking {:?}", curr_posn);
-
-                            //if curr is at a greater track position than cheat_start_posn
-                            if curr_posn > cheat_start_posn {
-                                // store cheat
-                                println!("Cheater start={:?}", cheat_start_coord);
-                                let start_end = (cheat_start_coord, curr_coord);
-                                let score = curr_posn - cheat_start_posn - 2;
-                                cheats.insert(start_end, score);
-                            }
-                        }
-
-                        // Left then straight to max_cheat_steps
-
-                        // Right then straight to max_cheat_steps
-
-                    }
-                }
-                
-            }
-        }
-
-        //for (yi, y) in track.iter().enumerate() {
-        //    for (xi, x) in y.iter().enumerate() {
-        //        let c = match x {
-        //            Some(n) => n.to_string(),
-        //            //None => "#".to_string(),
-        //            None => self.grid[yi][xi].to_string(),
-        //        };
-        //    }
-        //}
-
-        cheats
     }
 
     fn find_cheats_part1(_racetrack: &Racetrack, track: &Vec<Vec<Option<i64>>>) -> HashMap<Coord, i64> {
@@ -266,9 +213,120 @@ impl Racetrack {
         }
         cheats
     }
+
+    /// Find all possible cheats for Part 2.
+    ///
+    /// A cheat is defined by start and end position.
+    ///
+    /// Currently checks for cheats in all 4 directions up to 20 steps in that direction.
+    /// TODO: go in a direction and turn left or right one time, up to 20 steps total.
+    ///
+    /// * `track`: Holds the position count of every legal move on the track.
+    fn find_cheats_part2(_racetrack: &Racetrack, track: &Vec<Vec<Option<i64>>>) -> HashMap<(Coord, Coord), i64> {
+        let mut cheats: HashMap<(Coord, Coord), i64> = Default::default();
+        let max_cheat_steps = 20;
+        let bound = Coord::new(track[0].len() as i64, track.len() as i64);
+
+        for y in 1..track.len() - 1 {
+            for x in 1..track[0].len() - 1 {
+
+                // TODO remove DEBUG
+                //if x != 1 || y != 3 {
+                //    continue
+                //}
+
+                let cheat_start_coord = Coord::new(x.try_into().unwrap(), y.try_into().unwrap());
+                let cheat_start_posn = track[y as usize][x as usize];
+                if cheat_start_posn.is_none() {
+                    continue;
+                }
+                let cheat_start_posn = cheat_start_posn.unwrap();
+
+                //println!();
+                for direction in Direction::iter() {
+                    let mut current_steps = 0;
+                    let mut curr_coord = cheat_start_coord.clone();
+
+                    while current_steps < max_cheat_steps {
+                        current_steps += 1;
+                        curr_coord = match curr_coord.go_bound(&direction, &bound) {
+                            Some(c) => c,
+                            None => continue,
+                        };
+                        let curr_posn = track[curr_coord.y as usize][curr_coord.x as usize];
+                        //println!("from={:?}, direction={} to={:?}, to_posn={:?}", cheat_start_coord, direction, curr_coord, curr_posn);
+
+                        // Straight ahead
+                        if curr_posn.is_some() {
+                            let curr_posn = curr_posn.unwrap();
+                            //println!("checking {:?}", curr_posn);
+
+                            //if curr is at a greater track position than cheat_start_posn
+                            if curr_posn > cheat_start_posn {
+                                // store cheat
+                                let start_end = (cheat_start_coord, curr_coord);
+                                let score = curr_posn - current_steps - cheat_start_posn - 1;
+                                println!("Cheater start_end={:?}, score={}", start_end, score);
+                                cheats.insert(start_end, score);
+                                //break // TODO try stopping as soon as we reach a track position
+                            }
+                        }
+
+                        // Left then straight to max_cheat_steps
+                        let turn_at = curr_coord.clone();
+                        for new_dir in [direction.left(), direction.right()] {
+                            //println!("Turning: {}", new_dir);
+
+                            //let left_dir = direction.left();
+                            let mut new_curr_steps = current_steps;
+                            let mut new_curr_coord: Coord = curr_coord.clone();
+
+                            while new_curr_steps < max_cheat_steps {
+                                new_curr_steps += 1;
+                                new_curr_coord = match new_curr_coord.go_bound(&new_dir, &bound) {
+                                    Some(c) => c,
+                                    None => continue,
+                                };
+                                //println!("turning: start={:?}, turn_at={:?}, direction={}, to={:?}, steps={}", cheat_start_coord, turn_at, new_dir, new_curr_coord, new_curr_steps);
+                                let new_curr_posn = track[new_curr_coord.y as usize][new_curr_coord.x as usize];
+                                if new_curr_posn.is_some() {
+                                    let new_curr_posn = new_curr_posn.unwrap();
+                                    if new_curr_posn > cheat_start_posn {
+                                        // store cheat
+                                        let start_end = (cheat_start_coord, new_curr_coord);
+                                        let score = new_curr_posn - new_curr_steps - cheat_start_posn;
+                                        println!("Cheater start_end={:?}, score={}. new_curr_posn={}, current_steps={}, cheat_start_posn={}", start_end, score, new_curr_posn, current_steps, cheat_start_posn);
+                                        cheats.insert(start_end, score);
+
+                                    }
+                                }
+
+                            }
+                        }
+
+                        // Right then straight to max_cheat_steps
+                        //let right_dir = direction.right();
+                        //let right_curr_coord = curr_coord.go_bound(right_dir, bound);
+
+                    }
+                }
+                
+            }
+        }
+
+        //for (yi, y) in track.iter().enumerate() {
+        //    for (xi, x) in y.iter().enumerate() {
+        //        let c = match x {
+        //            Some(n) => n.to_string(),
+        //            //None => "#".to_string(),
+        //            None => self.grid[yi][xi].to_string(),
+        //        };
+        //    }
+        //}
+
+        cheats
+    }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -324,9 +382,18 @@ mod tests {
     #[test]
     fn test_find_cheats_part2() -> Result<(), String> {
         let input = include_str!("../test.txt");
+
         let actual = input.parse::<Racetrack>()?.solve_cheats_part2(76, Racetrack::find_cheats_part2);
         let expected = 3;
         assert_eq!(actual, expected);
+
+        let actual = input.parse::<Racetrack>()?.solve_cheats_part2(74, Racetrack::find_cheats_part2);
+        let expected = 7;
+        assert_eq!(actual, expected);
+
+        //let actual = input.parse::<Racetrack>()?.solve_cheats_part2(72, Racetrack::find_cheats_part2);
+        //let expected = 22 + 4 + 3;
+        //assert_eq!(actual, expected);
         Ok(())
     }
 
@@ -343,6 +410,8 @@ mod tests {
     fn test_solve_part2() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input)?;
+        let too_high = 1001560;
+        assert!(actual < too_high);
         let solution = 0;
         assert_eq!(actual, solution);
         Ok(())
