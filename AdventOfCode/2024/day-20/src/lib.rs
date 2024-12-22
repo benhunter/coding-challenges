@@ -122,6 +122,55 @@ impl Racetrack {
         let count = cheats.into_iter().filter(|c| c.1 >= picos_saved).map(|c| c.1).collect::<Vec<i64>>().len();
         count
     }
+    fn solve_cheats_part2(&self, picos_saved: i64, find_cheats: impl Fn(&Racetrack, &Vec<Vec<Option<i64>>>) -> HashMap<(Coord, Coord), i64>) -> usize {
+        // Solve track and assign numbers to each tile.
+        let mut track: Vec<Vec<Option<i64>>> = vec![vec![None; self.grid[0].len()]; self.grid.len()];
+        let mut curr = self.start.unwrap();
+        let mut count = 0;
+        track[curr.y as usize][curr.x as usize] = Some(count);
+
+        //let mut loops = 0;
+        while curr != self.end.unwrap() {
+            for neighbor in Direction::iter() {
+                let neighbor_coord = curr.go(neighbor);
+                //println!("curr={:?}", curr);
+                if ['.', 'E'].contains(&self.grid[neighbor_coord.y as usize][neighbor_coord.x as usize]) && track[neighbor_coord.y as usize][neighbor_coord.x as usize] == None {
+                    count += 1;
+                    track[neighbor_coord.y as usize][neighbor_coord.x as usize] = Some(count);
+                    curr = neighbor_coord;
+                    break
+                }
+            }
+            //loops += 1;
+        }
+
+        //println!("{:?}", track);
+        println!();
+        for (yi, y) in track.iter().enumerate() {
+            for (xi, x) in y.iter().enumerate() {
+                let c = match x {
+                    Some(n) => n.to_string(),
+                    //None => "#".to_string(),
+                    None => self.grid[yi][xi].to_string(),
+                };
+                print!("{:<4}", c);
+            }
+            println!();
+        }
+        println!();
+
+        // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
+        let cheats: HashMap<(Coord, Coord), i64> = find_cheats(&self, &track);
+
+        // TODO Render cheats
+        for c in &cheats {
+            println!("{:?}", c);
+        }
+
+        // Calc savings.
+        let count = cheats.into_iter().filter(|c| c.1 >= picos_saved).map(|c| c.1).collect::<Vec<i64>>().len();
+        count
+    }
 
     /// Find all possible cheats for Part 2.
     ///
@@ -257,7 +306,7 @@ mod tests {
     #[test]
     fn test_find_cheats_part2() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let actual = input.parse::<Racetrack>()?.solve_cheats(76, Racetrack::find_cheats_part2);
+        let actual = input.parse::<Racetrack>()?.solve_cheats_part2(76, Racetrack::find_cheats_part2);
         let expected = 3;
         assert_eq!(actual, expected);
         Ok(())
