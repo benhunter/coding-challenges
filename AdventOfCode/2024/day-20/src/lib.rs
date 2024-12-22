@@ -85,21 +85,7 @@ impl Racetrack {
         println!();
 
         // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
-        let mut cheats: HashMap<Coord, i64> = Default::default();
-        for y in 1..track.len() - 1 {
-            for x in 1..track[0].len() - 1 {
-                if track[y][x].is_some() {
-                    continue;
-                }
-                if track[y][x-1].is_some() && track[y][x+1].is_some() {
-                    let score = (track[y][x-1].unwrap() - track[y][x+1].unwrap()).abs() - 2;
-                    cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
-                } else if track[y-1][x].is_some() && track[y+1][x].is_some() {
-                    let score = (track[y-1][x].unwrap() - track[y+1][x].unwrap()).abs() - 2;
-                    cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
-                }
-            }
-        }
+        let cheats: HashMap<Coord, i64> = find_cheats_part1(&track);
 
         //for c in &cheats {
         //    println!("{:?}", c);
@@ -135,6 +121,25 @@ impl Racetrack {
         let count = cheats.into_iter().filter(|c| c.1 >= picos_saved).map(|c| c.1).collect::<Vec<i64>>().len();
         count
     }
+}
+
+fn find_cheats_part1(track: &Vec<Vec<Option<i64>>>) -> HashMap<Coord, i64> {
+    let mut cheats: HashMap<Coord, i64> = Default::default();
+    for y in 1..track.len() - 1 {
+        for x in 1..track[0].len() - 1 {
+            if track[y][x].is_some() {
+                continue;
+            }
+            if track[y][x-1].is_some() && track[y][x+1].is_some() {
+                let score = (track[y][x-1].unwrap() - track[y][x+1].unwrap()).abs() - 2;
+                cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
+            } else if track[y-1][x].is_some() && track[y+1][x].is_some() {
+                let score = (track[y-1][x].unwrap() - track[y+1][x].unwrap()).abs() - 2;
+                cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
+            }
+        }
+    }
+    cheats
 }
 
 #[cfg(test)]
@@ -183,7 +188,7 @@ mod tests {
     fn test_solve_part1() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part1(input)?;
-        let solution = 0;
+        let solution = 1375;
         assert_eq!(actual, solution);
         Ok(())
     }
