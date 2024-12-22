@@ -168,7 +168,10 @@ impl Racetrack {
         }
 
         // Calc savings.
-        let count = cheats.into_iter().filter(|c| c.1 >= picos_saved).map(|c| c.1).collect::<Vec<i64>>().len();
+        let cheats_solution: HashMap<(Coord, Coord), i64> = cheats.into_iter().filter(|c| c.1 >= picos_saved).collect();
+        println!("\ncheats_solution:");
+        println!("{:?}", cheats_solution);
+        let count = cheats_solution.len();
         count
     }
 
@@ -186,7 +189,6 @@ impl Racetrack {
 
         for y in 1..track.len() - 1 {
             for x in 1..track[0].len() - 1 {
-                let mut current_steps = 0;
                 let cheat_start_coord = Coord::new(x.try_into().unwrap(), y.try_into().unwrap());
                 let cheat_start_posn = track[y as usize][x as usize];
                 if cheat_start_posn.is_none() {
@@ -194,23 +196,39 @@ impl Racetrack {
                 }
                 let cheat_start_posn = cheat_start_posn.unwrap();
 
+                println!();
                 for direction in Direction::iter() {
+                    let mut current_steps = 0;
+                    let mut curr_coord = cheat_start_coord.clone();
+
                     while current_steps < max_cheat_steps {
                         current_steps += 1;
-                        let curr_coord = cheat_start_coord.go(direction);
+                        curr_coord = match curr_coord.go_bound(&direction, &Coord::new(track[0].len() as i64, track.len() as i64)) {
+                            Some(c) => c,
+                            None => continue,
+                        };
+                        println!("from={:?}, direction={} to={:?}", cheat_start_coord, direction, curr_coord);
                         let curr_posn = track[curr_coord.y as usize][curr_coord.x as usize];
 
-                        if curr_posn.is_none() {
-                            continue
-                        }
-                        let curr_posn = curr_posn.unwrap();
+                        // Straight ahead
+                        if curr_posn.is_some() {
+                            let curr_posn = curr_posn.unwrap();
+                            println!("checking {:?}", curr_posn);
 
-                        //if curr is at a greater track position than cheat_start_posn
-                        if curr_posn > cheat_start_posn {
-                            // store cheat
-                            println!("Cheater");
-                            //cheats.insert(k, v)
+                            //if curr is at a greater track position than cheat_start_posn
+                            if curr_posn > cheat_start_posn {
+                                // store cheat
+                                println!("Cheater start={:?}", cheat_start_coord);
+                                let start_end = (cheat_start_coord, curr_coord);
+                                let score = curr_posn - cheat_start_posn - 2;
+                                cheats.insert(start_end, score);
+                            }
                         }
+
+                        // Left then straight to max_cheat_steps
+
+                        // Right then straight to max_cheat_steps
+
                     }
                 }
                 

@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, str::FromStr};
+use std::{cmp::Ordering, fmt::Display, str::FromStr};
 
 use crate::Direction::*;
 
@@ -147,11 +147,19 @@ impl Into<char> for Direction {
         }
     }
 }
-//impl Display for Direction {
-//    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//        write!(f, )
-//    }
-//}
+
+impl Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let d = match self {
+            Up => "Up",
+            Right => "Right",
+            Down => "Down",
+            Left => "Left",
+        };
+        write!(f, "{}", d);
+        Ok(())
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Distance {
