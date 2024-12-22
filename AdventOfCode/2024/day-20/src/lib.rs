@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::usize;
 
 use util::{parse_grid_chars, Direction, ParseError};
 use util::Coord;
 
 pub fn solve_part1(input: &str) -> Result<usize, String> {
-    Ok(input.parse::<Racetrack>()?.find_cheats(100))
+    Ok(input.parse::<Racetrack>()?.solve_cheats(100, Racetrack::find_cheats_part1))
 }
 
 pub fn solve_part2(_input: &str) -> Result<i64, String> {
@@ -47,14 +48,14 @@ impl Racetrack {
         None
     }
 
-    fn find_cheats(&self, picos_saved: i64) -> usize {
+    fn solve_cheats(&self, picos_saved: i64, find_cheats: impl Fn(&Racetrack, &Vec<Vec<Option<i64>>>) -> HashMap<Coord, i64>) -> usize {
         // Solve track and assign numbers to each tile.
         let mut track: Vec<Vec<Option<i64>>> = vec![vec![None; self.grid[0].len()]; self.grid.len()];
         let mut curr = self.start.unwrap();
         let mut count = 0;
         track[curr.y as usize][curr.x as usize] = Some(count);
 
-        let mut loops = 0;
+        //let mut loops = 0;
         while curr != self.end.unwrap() {
             for neighbor in Direction::iter() {
                 let neighbor_coord = curr.go(neighbor);
@@ -66,7 +67,7 @@ impl Racetrack {
                     break
                 }
             }
-            loops += 1;
+            //loops += 1;
         }
 
         //println!("{:?}", track);
@@ -85,7 +86,7 @@ impl Racetrack {
         println!();
 
         // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
-        let cheats: HashMap<Coord, i64> = find_cheats_part1(&track);
+        let cheats: HashMap<Coord, i64> = find_cheats(&self, &track);
 
         //for c in &cheats {
         //    println!("{:?}", c);
@@ -121,26 +122,86 @@ impl Racetrack {
         let count = cheats.into_iter().filter(|c| c.1 >= picos_saved).map(|c| c.1).collect::<Vec<i64>>().len();
         count
     }
-}
 
-fn find_cheats_part1(track: &Vec<Vec<Option<i64>>>) -> HashMap<Coord, i64> {
-    let mut cheats: HashMap<Coord, i64> = Default::default();
-    for y in 1..track.len() - 1 {
-        for x in 1..track[0].len() - 1 {
-            if track[y][x].is_some() {
-                continue;
-            }
-            if track[y][x-1].is_some() && track[y][x+1].is_some() {
-                let score = (track[y][x-1].unwrap() - track[y][x+1].unwrap()).abs() - 2;
-                cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
-            } else if track[y-1][x].is_some() && track[y+1][x].is_some() {
-                let score = (track[y-1][x].unwrap() - track[y+1][x].unwrap()).abs() - 2;
-                cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
+    /// Find all possible cheats for Part 2.
+    ///
+    /// A cheat is defined by start and end position.
+    ///
+    /// Currently checks for cheats in all 4 directions up to 20 steps in that direction.
+    /// TODO: go in a direction and turn left or right one time, up to 20 steps total.
+    ///
+    /// * `track`: Holds the position count of every legal move on the track.
+    fn find_cheats_part2(_racetrack: &Racetrack, track: &Vec<Vec<Option<i64>>>) -> HashMap<(Coord, Coord), i64> {
+        let mut cheats: HashMap<(Coord, Coord), i64> = Default::default();
+        let max_cheat_steps = 20;
+
+        for y in 1..track.len() - 1 {
+            for x in 1..track[0].len() - 1 {
+                let mut current_steps = 0;
+                let cheat_start_coord = Coord::new(x.try_into().unwrap(), y.try_into().unwrap());
+                let cheat_start_posn = track[y as usize][x as usize];
+                if cheat_start_posn.is_none() {
+                    continue;
+                }
+                let cheat_start_posn = cheat_start_posn.unwrap();
+
+                for direction in Direction::iter() {
+                    while current_steps < max_cheat_steps {
+                        current_steps += 1;
+                        let curr_coord = cheat_start_coord.go(direction);
+                        let curr_posn = track[curr_coord.y as usize][curr_coord.x as usize];
+
+                        if curr_posn.is_none() {
+                            continue
+                        }
+                        let curr_posn = curr_posn.unwrap();
+
+                        //if curr is at a greater track position than cheat_start_posn
+                        if curr_posn > cheat_start_posn {
+                            // store cheat
+                            println!("Cheater");
+                            //cheats.insert(k, v)
+                        }
+                    }
+                }
+                
             }
         }
+
+        //for (yi, y) in track.iter().enumerate() {
+        //    for (xi, x) in y.iter().enumerate() {
+        //        let c = match x {
+        //            Some(n) => n.to_string(),
+        //            //None => "#".to_string(),
+        //            None => self.grid[yi][xi].to_string(),
+        //        };
+        //    }
+        //}
+
+        cheats
     }
-    cheats
+
+    fn find_cheats_part1(_racetrack: &Racetrack, track: &Vec<Vec<Option<i64>>>) -> HashMap<Coord, i64> {
+        let mut cheats: HashMap<Coord, i64> = Default::default();
+        for y in 1..track.len() - 1 {
+            for x in 1..track[0].len() - 1 {
+                if track[y][x].is_some() {
+                    continue;
+                }
+                if track[y][x-1].is_some() && track[y][x+1].is_some() {
+                    let score = (track[y][x-1].unwrap() - track[y][x+1].unwrap()).abs() - 2;
+                    cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
+                } else if track[y-1][x].is_some() && track[y+1][x].is_some() {
+                    let score = (track[y-1][x].unwrap() - track[y+1][x].unwrap()).abs() - 2;
+                    cheats.insert(Coord::new(x.try_into().unwrap(), y.try_into().unwrap()), score);
+                }
+            }
+        }
+        cheats
+    }
 }
+
+
 
 #[cfg(test)]
 mod tests {
@@ -165,11 +226,11 @@ mod tests {
     #[test]
     fn test_find_cheat() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let actual = input.parse::<Racetrack>()?.find_cheats(64); // Find all cheats that save at least 64 picoseconds.
+        let actual = input.parse::<Racetrack>()?.solve_cheats(64, Racetrack::find_cheats_part1); // Find all cheats that save at least 64 picoseconds.
         let expected = 1;
         assert_eq!(actual, expected);
 
-        let actual = input.parse::<Racetrack>()?.find_cheats(40); // Find all cheats that save at least 64 picoseconds.
+        let actual = input.parse::<Racetrack>()?.solve_cheats(40, Racetrack::find_cheats_part1);
         let expected = 2;
         assert_eq!(actual, expected);
         Ok(())
@@ -190,6 +251,15 @@ mod tests {
         let actual = solve_part1(input)?;
         let solution = 1375;
         assert_eq!(actual, solution);
+        Ok(())
+    }
+
+    #[test]
+    fn test_find_cheats_part2() -> Result<(), String> {
+        let input = include_str!("../test.txt");
+        let actual = input.parse::<Racetrack>()?.solve_cheats(76, Racetrack::find_cheats_part2);
+        let expected = 3;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
