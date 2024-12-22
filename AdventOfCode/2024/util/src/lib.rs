@@ -155,9 +155,9 @@ impl Into<i8> for Direction {
     }
 }
 
-impl Into<char> for Direction {
-    fn into(self) -> char {
-        match self {
+impl From<Direction> for char {
+    fn from(value: Direction) -> Self {
+        match value {
             Up => '^',
             Right => '>',
             Down => 'v',
@@ -174,8 +174,7 @@ impl Display for Direction {
             Down => "Down",
             Left => "Left",
         };
-        write!(f, "{}", d);
-        Ok(())
+        write!(f, "{}", d)
     }
 }
 

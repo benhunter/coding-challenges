@@ -48,7 +48,7 @@ impl Racetrack {
         None
     }
 
-    fn solve_cheats(&self, picos_saved: i64, find_cheats: impl Fn(&Racetrack, &Vec<Vec<Option<i64>>>) -> HashMap<Coord, i64>) -> usize {
+    fn solve_cheats(&self, picos_saved: i64, find_cheats: impl Fn(&Racetrack, &[Vec<Option<i64>>]) -> HashMap<Coord, i64>) -> usize {
         // Solve track and assign numbers to each tile.
         let mut track: Vec<Vec<Option<i64>>> = vec![vec![None; self.grid[0].len()]; self.grid.len()];
         let mut curr = self.start.unwrap();
@@ -60,7 +60,7 @@ impl Racetrack {
             for neighbor in Direction::iter() {
                 let neighbor_coord = curr.go(neighbor);
                 //println!("curr={:?}", curr);
-                if ['.', 'E'].contains(&self.grid[neighbor_coord.y as usize][neighbor_coord.x as usize]) && track[neighbor_coord.y as usize][neighbor_coord.x as usize] == None {
+                if ['.', 'E'].contains(&self.grid[neighbor_coord.y as usize][neighbor_coord.x as usize]) && track[neighbor_coord.y as usize][neighbor_coord.x as usize].is_none() {
                     count += 1;
                     track[neighbor_coord.y as usize][neighbor_coord.x as usize] = Some(count);
                     curr = neighbor_coord;
@@ -70,13 +70,11 @@ impl Racetrack {
             //loops += 1;
         }
 
-        //println!("{:?}", track);
         println!();
         for (yi, y) in track.iter().enumerate() {
             for (xi, x) in y.iter().enumerate() {
                 let c = match x {
                     Some(n) => n.to_string(),
-                    //None => "#".to_string(),
                     None => self.grid[yi][xi].to_string(),
                 };
                 print!("{:<4}", c);
@@ -86,7 +84,7 @@ impl Racetrack {
         println!();
 
         // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
-        let cheats: HashMap<Coord, i64> = find_cheats(&self, &track);
+        let cheats: HashMap<Coord, i64> = find_cheats(self, &track);
 
         //for c in &cheats {
         //    println!("{:?}", c);
@@ -123,7 +121,7 @@ impl Racetrack {
         count
     }
 
-    fn solve_cheats_part2(&self, picos_saved: i64, find_cheats: impl Fn(&Racetrack, &Vec<Vec<Option<i64>>>) -> HashMap<(Coord, Coord), i64>) -> usize {
+    fn solve_cheats_part2(&self, picos_saved: i64, find_cheats: impl Fn(&Racetrack, &[Vec<Option<i64>>]) -> HashMap<(Coord, Coord), i64>) -> usize {
         // Solve track and assign numbers to each tile.
         let mut track: Vec<Vec<Option<i64>>> = vec![vec![None; self.grid[0].len()]; self.grid.len()];
         let mut curr = self.start.unwrap();
@@ -135,7 +133,7 @@ impl Racetrack {
             for neighbor in Direction::iter() {
                 let neighbor_coord = curr.go(neighbor);
                 //println!("curr={:?}", curr);
-                if ['.', 'E'].contains(&self.grid[neighbor_coord.y as usize][neighbor_coord.x as usize]) && track[neighbor_coord.y as usize][neighbor_coord.x as usize] == None {
+                if ['.', 'E'].contains(&self.grid[neighbor_coord.y as usize][neighbor_coord.x as usize]) && track[neighbor_coord.y as usize][neighbor_coord.x as usize].is_none() {
                     count += 1;
                     track[neighbor_coord.y as usize][neighbor_coord.x as usize] = Some(count);
                     curr = neighbor_coord;
@@ -161,7 +159,7 @@ impl Racetrack {
         //println!();
 
         // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
-        let cheats: HashMap<(Coord, Coord), i64> = find_cheats(&self, &track);
+        let cheats: HashMap<(Coord, Coord), i64> = find_cheats(self, &track);
 
         // TODO Render cheats
         //for c in &cheats {
@@ -195,7 +193,7 @@ impl Racetrack {
         count
     }
 
-    fn find_cheats_part1(_racetrack: &Racetrack, track: &Vec<Vec<Option<i64>>>) -> HashMap<Coord, i64> {
+    fn find_cheats_part1(_racetrack: &Racetrack, track: &[Vec<Option<i64>>]) -> HashMap<Coord, i64> {
         let mut cheats: HashMap<Coord, i64> = Default::default();
         for y in 1..track.len() - 1 {
             for x in 1..track[0].len() - 1 {
@@ -222,7 +220,7 @@ impl Racetrack {
     /// TODO: go in a direction and turn left or right one time, up to 20 steps total.
     ///
     /// * `track`: Holds the position count of every legal move on the track.
-    fn find_cheats_part2(_racetrack: &Racetrack, track: &Vec<Vec<Option<i64>>>) -> HashMap<(Coord, Coord), i64> {
+    fn find_cheats_part2(_racetrack: &Racetrack, track: &[Vec<Option<i64>>]) -> HashMap<(Coord, Coord), i64> {
         let mut cheats: HashMap<(Coord, Coord), i64> = Default::default();
         let max_cheat_steps = 20;
         let bound = Coord::new(track[0].len() as i64, track.len() as i64);
@@ -236,7 +234,7 @@ impl Racetrack {
                 //}
 
                 let cheat_start_coord = Coord::new(x.try_into().unwrap(), y.try_into().unwrap());
-                let cheat_start_posn = track[y as usize][x as usize];
+                let cheat_start_posn = track[y][x];
                 if cheat_start_posn.is_none() {
                     continue;
                 }
@@ -245,7 +243,7 @@ impl Racetrack {
                 //println!();
                 for direction in Direction::iter() {
                     let mut current_steps = 0;
-                    let mut curr_coord = cheat_start_coord.clone();
+                    let mut curr_coord = cheat_start_coord;
 
                     while current_steps < max_cheat_steps {
                         current_steps += 1;
@@ -273,13 +271,13 @@ impl Racetrack {
                         }
 
                         // Left then straight to max_cheat_steps
-                        let turn_at = curr_coord.clone();
+                        let turn_at = curr_coord;
                         for new_dir in [direction.left(), direction.right()] {
                             //println!("Turning: {}", new_dir);
 
                             //let left_dir = direction.left();
                             let mut new_curr_steps = current_steps;
-                            let mut new_curr_coord: Coord = curr_coord.clone();
+                            let mut new_curr_coord: Coord = curr_coord;
 
                             while new_curr_steps < max_cheat_steps {
                                 new_curr_steps += 1;
