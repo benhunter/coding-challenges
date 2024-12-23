@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::usize;
 
 use util::{parse_grid_chars, Direction, ParseError};
 use util::Coord;
@@ -161,7 +160,7 @@ impl Racetrack {
         // Find all cheats. Cheat allows bypass through wall to a higher numbered tile.
         let cheats: HashMap<(Coord, Coord), i64> = find_cheats(self, &track);
 
-        // TODO Render cheats
+        // Render cheats
         //for c in &cheats {
         //    println!("{:?}", c);
         //}
@@ -169,7 +168,6 @@ impl Racetrack {
         // Calc savings.
         let cheats_solution: HashMap<(Coord, Coord), i64> = cheats.into_iter().filter(|c| c.1 >= picos_saved).collect();
         println!("\ncheats_solution:");
-        //println!("{:?}", cheats_solution);
         for c in &cheats_solution {
             println!("{:?}", c);
         }
@@ -183,7 +181,7 @@ impl Racetrack {
                     //None => "#".to_string(),
                     None => self.grid[yi][xi].to_string(),
                 };
-                print!("{:<4}", c);
+                print!("{:<5}", c);
             }
             println!();
         }
@@ -217,7 +215,8 @@ impl Racetrack {
     /// A cheat is defined by start and end position.
     ///
     /// Currently checks for cheats in all 4 directions up to 20 steps in that direction.
-    /// TODO: go in a direction and turn left or right one time, up to 20 steps total.
+    /// Go in a direction and turn left or right one time, up to 20 steps total.
+    /// TODO: end the cheat at the first track we hit.
     ///
     /// * `track`: Holds the position count of every legal move on the track.
     fn find_cheats_part2(_racetrack: &Racetrack, track: &[Vec<Option<i64>>]) -> HashMap<(Coord, Coord), i64> {
@@ -264,10 +263,10 @@ impl Racetrack {
                                 // store cheat
                                 let start_end = (cheat_start_coord, curr_coord);
                                 let score = curr_posn - current_steps - cheat_start_posn - 1;
-                                println!("Cheater start_end={:?}, score={}", start_end, score);
+                                //println!("Cheater start_end={:?}, score={}", start_end, score);
                                 cheats.insert(start_end, score);
-                                //break // TODO try stopping as soon as we reach a track position
                             }
+                            //break // try stopping as soon as we reach a track position
                         }
 
                         // Left then straight to max_cheat_steps
@@ -293,10 +292,11 @@ impl Racetrack {
                                         // store cheat
                                         let start_end = (cheat_start_coord, new_curr_coord);
                                         let score = new_curr_posn - new_curr_steps - cheat_start_posn;
-                                        println!("Cheater start_end={:?}, score={}. new_curr_posn={}, current_steps={}, cheat_start_posn={}", start_end, score, new_curr_posn, current_steps, cheat_start_posn);
+                                        //println!("Cheater start_end={:?}, score={}. new_curr_posn={}, current_steps={}, cheat_start_posn={}", start_end, score, new_curr_posn, current_steps, cheat_start_posn);
                                         cheats.insert(start_end, score);
 
                                     }
+                                    //break // stop as soon as we reach a track position
                                 }
 
                             }
@@ -389,9 +389,9 @@ mod tests {
         let expected = 7;
         assert_eq!(actual, expected);
 
-        //let actual = input.parse::<Racetrack>()?.solve_cheats_part2(72, Racetrack::find_cheats_part2);
-        //let expected = 22 + 4 + 3;
-        //assert_eq!(actual, expected);
+        let actual = input.parse::<Racetrack>()?.solve_cheats_part2(72, Racetrack::find_cheats_part2);
+        let expected = 22 + 4 + 3;
+        assert_eq!(actual, expected);
         Ok(())
     }
 
@@ -404,12 +404,15 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
+     //#[test]
     fn test_solve_part2() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input)?;
+        println!("{}", actual);
         let too_high = 1001560;
         assert!(actual < too_high);
+        let too_low = 982074;
+        assert!(actual > too_low);
         let solution = 0;
         assert_eq!(actual, solution);
         Ok(())
