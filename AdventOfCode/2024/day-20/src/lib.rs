@@ -264,7 +264,14 @@ impl Racetrack {
                                 let start_end = (cheat_start_coord, curr_coord);
                                 let score = curr_posn - current_steps - cheat_start_posn - 1;
                                 //println!("Cheater start_end={:?}, score={}", start_end, score);
-                                cheats.insert(start_end, score);
+                                let start_end_exists = cheats.get(&start_end);
+                                if start_end_exists.is_some() {
+                                    if *start_end_exists.expect("just checked") < score {
+                                        cheats.insert(start_end, score);
+                                    }
+                                } else {
+                                    cheats.insert(start_end, score);
+                                }
                             }
                             //break // try stopping as soon as we reach a track position
                         }
@@ -293,6 +300,12 @@ impl Racetrack {
                                         let start_end = (cheat_start_coord, new_curr_coord);
                                         let score = new_curr_posn - new_curr_steps - cheat_start_posn;
                                         //println!("Cheater start_end={:?}, score={}. new_curr_posn={}, current_steps={}, cheat_start_posn={}", start_end, score, new_curr_posn, current_steps, cheat_start_posn);
+                                        let start_end_exists = cheats.get(&start_end);
+                                        if start_end_exists.is_some() {
+                                            if *start_end_exists.expect("just checked") < score {
+                                                cheats.insert(start_end, score);
+                                            }
+                                        }
                                         cheats.insert(start_end, score);
 
                                     }
