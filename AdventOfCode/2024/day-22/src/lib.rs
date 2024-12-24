@@ -19,17 +19,19 @@ pub fn solve_part1(input: &str) -> Result<i64, String> {
 
 pub fn solve_part2(input: &str) -> Result<i64, String> {
     let secrets = parse(input)?;
-    //Ok(solve_part2_up_to(secrets, 2000, false)?.1)
-    Ok(solve_part2_up_to(secrets, 20, false)?.1) // TODO for profiling
+    Ok(solve_part2_up_to(secrets, 2000, false)?.1)
+    //Ok(solve_part2_up_to(secrets, 20, false)?.1) // TODO for profiling
 }
 
-pub fn solve_part2_up_to(secrets: Vec<i64>, max_secrets: i64, debug: bool) -> Result<([i64; 4], i64), String> {
-    let mut sequences: Vec<Vec<(i64, i64)>> = vec![];
-    for secret in &secrets {
+pub fn solve_part2_up_to(start_secrets: Vec<i64>, max_secrets: i64, debug: bool) -> Result<([i64; 4], i64), String> {
+    let mut secrets_sequences: Vec<Vec<i64>> = vec![];
+    let mut diffs_sequences: Vec<Vec<i64>> = vec![];
+    for secret in &start_secrets {
         if debug {
             println!("{:>9}: {}", secret, secret % 10);
         }
-        let mut sequence = vec![];
+        let mut secret_sequence = vec![];
+        let mut diff_sequence = vec![];
         let mut next = *secret;
         for i in 0..max_secrets {
             let prev_mod = next % 10;
@@ -38,7 +40,8 @@ pub fn solve_part2_up_to(secrets: Vec<i64>, max_secrets: i64, debug: bool) -> Re
 
             //println!("{}", prev - next_mod);
             let diff = next_mod - prev_mod;
-            sequence.push((next, diff));
+            secret_sequence.push(next);
+            diff_sequence.push(diff);
 
             if debug {
                 print!("{}: {:>9}: {} ({})", i, next, next_mod, diff);
@@ -46,40 +49,39 @@ pub fn solve_part2_up_to(secrets: Vec<i64>, max_secrets: i64, debug: bool) -> Re
             }
         }
         //println!("{:?}", sequence);
-        sequences.push(sequence);
+        secrets_sequences.push(secret_sequence);
+        diffs_sequences.push(diff_sequence);
     }
-    assert_eq!(&secrets.len(), &sequences.len());
-
-    if debug {
-        //println!("sequences={:?}", sequences);
-    }
+    assert_eq!(&start_secrets.len(), &secrets_sequences.len());
+    assert_eq!(&start_secrets.len(), &diffs_sequences.len());
 
     let mut best_scores: Vec<i64> = vec![];
     let mut best_score = 0;
-    let mut best: [i64; 4] = sequences[0][0..4].iter().map(|(value, diff)| *diff).collect::<Vec<i64>>().try_into().map_err(|_| "Failed to extract 4 diffs.")?;
-    let mut candidate: [i64; 4] = sequences[0][0..4].iter().map(|(value, diff)| *diff).collect::<Vec<i64>>().try_into().map_err(|_| "Failed to extract 4 diffs.")?;
+    let mut best_sequence: &[i64] = &diffs_sequences[0][0..4];
+    let mut candidate_sequence: &[i64] = &diffs_sequences[0][0..4];
     let mut candidate_scores: Vec<i64>;
 
     let mut candidate_count = 0;
-    let total_candidates = sequences.len() * (sequences[0].len() - 3);
+    let total_candidates = diffs_sequences.len() * (diffs_sequences[0].len() - 3);
     let start_time = Instant::now();
-    for s in &sequences {
+    for s in &diffs_sequences {
         for i in 0..s.len() - 4 {
             candidate_count += 1;
             if debug {
                 //println!("{}", i);
             }
-            candidate = s[i..i + 4].iter().map(|(_value, diff)| *diff).collect::<Vec<i64>>().try_into().map_err(|_| "Failed to extract 4 diffs.")?;
-            candidate_scores = compute(&sequences, candidate, false);
+            candidate_sequence = &s[i..i + 4];
+            candidate_scores = compute(&diffs_sequences, &secrets_sequences, candidate_sequence, false);
+            //println!("candidate_scores={:?}", candidate_scores);
             let candidate_score = candidate_scores.iter().sum();
 
             if candidate_score > best_score {
-                best = candidate;
+                best_sequence = candidate_sequence;
                 best_score = candidate_score;
                 best_scores = candidate_scores.clone();
                 let elapsed = start_time.elapsed();
                 let estimated_total_time = (total_candidates as f64 / candidate_count as f64) * elapsed.as_secs_f64() as f64;
-                println!("{}/{}. {:.2?} elapsed of est {:.2?} seconds. best={:?}, best_score={}, best_scores={:?}", candidate_count, total_candidates, elapsed, estimated_total_time, best, best_score, best_scores);
+                println!("{}/{}. {:.2?} elapsed of est {:.2?} seconds. best={:?}, best_score={}, best_scores={:?}", candidate_count, total_candidates, elapsed, estimated_total_time, best_sequence, best_score, best_scores);
             }
 
             //if candidate_scores.len() == 4 {
@@ -91,10 +93,10 @@ pub fn solve_part2_up_to(secrets: Vec<i64>, max_secrets: i64, debug: bool) -> Re
     if debug {
         println!();
         println!("Solution:");
-        println!("best={:?}, best_score={:?}, best_scores={:?}", best, best_score, best_scores);
+        println!("best={:?}, best_score={:?}, best_scores={:?}", best_sequence, best_score, best_scores);
         println!("count of sequences tried={}", candidate_count);
 
-        compute(&sequences, best, true);
+        //compute(&secrets_sequences, best_sequence, true);
 
         //println!();
         //println!("Compute: [-2,1,-1,3]");
@@ -103,19 +105,21 @@ pub fn solve_part2_up_to(secrets: Vec<i64>, max_secrets: i64, debug: bool) -> Re
 
     println!("Elapsed {:?}", start_time.elapsed());
 
-    let solution_array: [i64; 4] = best.try_into().map_err(|_| "Failed to convert slice to array")?;
+    let solution_array: [i64; 4] = best_sequence.try_into().map_err(|_| "Failed to convert slice to array")?;
+    println!("{:?}", solution_array);
     Ok((solution_array, best_score))
 }
 
-fn compute(sequences: &Vec<Vec<(i64, i64)>>, best: [i64; 4], debug: bool) -> Vec<i64> {
+fn compute(diff_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, best: &[i64], debug: bool) -> Vec<i64> {
     let mut prices = vec![];
     let mut si = 0;
-    for s in sequences {
+    for (index, s) in diff_sequences.iter().enumerate() {
         si += 1;
         for i in 0..s.len() - 4 {
-            let curr: [i64; 4] = s[i..i + 4].iter().map(|(_value, diff)| *diff).collect::<Vec<i64>>().try_into().map_err(|_| "Failed to extract 4 diffs.").expect("Extract 4 diffs");
+            let curr: &[i64] = &s[i..i + 4];
+            //println!("best={:?}, curr={:?}", best, curr);
             if curr == best {
-                prices.push(s[i+3].0 % 10);
+                prices.push(secrets_sequences[index][i+3] % 10);
                 if debug {
                     println!("DEBUG: si={}, i={}, {:?}", si, i, &s[i..i+4]);
                 }
@@ -224,7 +228,7 @@ mod tests {
         Ok(())
     }
 
-     #[test]
+     //#[test]
     fn test_solve_part2() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input)?;
