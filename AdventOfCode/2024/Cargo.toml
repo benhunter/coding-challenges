@@ -14,3 +14,7 @@ replace-with = "vendored-sources"
 
 [source.vendored-sources]
 directory = "vendor"
+
+[profile.profiling]
+inherits = "dev"
+opt-level = 3

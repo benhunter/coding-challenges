@@ -26,4 +26,5 @@ cargo install just
 cargo install cargo-binstall
 cargo binstall cargo-nextest --secure
 cargo install cargo-watch
+cargo install --locked samply
 ```
