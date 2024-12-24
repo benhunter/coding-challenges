@@ -55,14 +55,14 @@ pub fn solve_part2_up_to(start_secrets: Vec<i64>, max_secrets: i64, debug: bool)
     assert_eq!(&start_secrets.len(), &secrets_sequences.len());
     assert_eq!(&start_secrets.len(), &diffs_sequences.len());
 
-    let mut best_scores: Vec<i64> = vec![];
-    let mut best_score = 0;
-    let mut best_sequence: &[i64] = &diffs_sequences[0][0..4];
-    let mut candidate_sequence: &[i64] = &diffs_sequences[0][0..4];
-    let mut candidate_scores: Vec<i64>;
+    //let mut best_scores: Vec<i64> = vec![];
+    //let mut best_score = 0;
+    //let mut best_sequence: &[i64] = &diffs_sequences[0][0..4];
+    //let mut candidate_sequence: &[i64] = &diffs_sequences[0][0..4];
+    //let mut candidate_scores: Vec<i64>;
 
-    let mut candidate_count = 0;
-    let total_candidates = diffs_sequences.len() * (diffs_sequences[0].len() - 3);
+    //let mut candidate_count = 0;
+    //let total_candidates = diffs_sequences.len() * (diffs_sequences[0].len() - 3);
     let start_time = Instant::now();
     //for s in &diffs_sequences {
     //    for i in 0..s.len() - 4 {
@@ -134,29 +134,24 @@ fn compute(diff_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, be
     prices
 }
 
-fn compute_best(diffs_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, debug: bool) -> (Vec<i64>, i64) {
-    let mut sequence_values: HashMap<&[i64], i64> = Default::default();
+fn compute_best(diffs_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, _debug: bool) -> (Vec<i64>, i64) {
+    let mut sequence_values: HashMap<&[i64], Vec<i64>> = Default::default();
+
     for (index, s) in diffs_sequences.iter().enumerate() {
         for i in 0..s.len() - 4 {
             let curr: &[i64] = &s[i..i + 4];
-            //prices.push(secrets_sequences[index][i+3] % 10);
-            let old_total = sequence_values.get(curr);
-            if old_total.is_some() {
-                let new_total = (secrets_sequences[index][i+3] % 10) + old_total.expect("just checked it");
-                sequence_values.insert(curr, new_total);
-            } else {
-                sequence_values.insert(curr, secrets_sequences[index][i+3] % 10);
+            let entry = sequence_values.entry(curr).or_insert(vec![0; s.len()]);
+            if entry[index] == 0 {
+                entry[index] = (secrets_sequences[index][i + 3] % 10);
             }
-            //if debug {
-            //    println!("DEBUG: si={}, i={}, {:?}", index, i, &s[i..i+4]);
-            //}
         }
     }
-    let max = sequence_values.into_iter().max_by_key(|(_k, v)| *v);
+    //println!("sequence_values={:?}", sequence_values);
+    let max = sequence_values.into_iter().max_by_key(|(_k, v)| v.iter().sum::<i64>());
     println!("max={:?}", max);
 
     let max = max.expect("better be a max");
-    (max.0.to_vec(), max.1)
+    (max.0.to_vec(), max.1.iter().sum())
 }
 
 fn parse(input: &str) -> Result<Vec<i64>, ParseError> {
@@ -242,7 +237,7 @@ mod tests {
 
         let input = [123].to_vec();
         let actual = solve_part2_up_to(input, 10, true).unwrap();
-        let solution = ([-1i64,-1i64,0i64,2i64],6);
+        let solution = ([-1i64, -1i64, 0i64, 2i64],6);
         assert_eq!(actual, solution);
         Ok(())
     }
@@ -257,11 +252,11 @@ mod tests {
         Ok(())
     }
 
-     //#[test]
+    #[test]
     fn test_solve_part2() -> Result<(), String> {
         let input = include_str!("../input.txt");
         let actual = solve_part2(input)?;
-        let solution = 0; // 
+        let solution = 1490;
         assert_eq!(actual, solution);
         Ok(())
     }
