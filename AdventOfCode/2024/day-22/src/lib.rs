@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 use util::ParseError;
 
@@ -64,37 +64,41 @@ pub fn solve_part2_up_to(start_secrets: Vec<i64>, max_secrets: i64, debug: bool)
     let mut candidate_count = 0;
     let total_candidates = diffs_sequences.len() * (diffs_sequences[0].len() - 3);
     let start_time = Instant::now();
-    for s in &diffs_sequences {
-        for i in 0..s.len() - 4 {
-            candidate_count += 1;
-            if debug {
-                //println!("{}", i);
-            }
-            candidate_sequence = &s[i..i + 4];
-            candidate_scores = compute(&diffs_sequences, &secrets_sequences, candidate_sequence, false);
-            //println!("candidate_scores={:?}", candidate_scores);
-            let candidate_score = candidate_scores.iter().sum();
+    //for s in &diffs_sequences {
+    //    for i in 0..s.len() - 4 {
+    //        candidate_count += 1;
+    //        if debug {
+    //            //println!("{}", i);
+    //        }
+    //        candidate_sequence = &s[i..i + 4];
+    //        candidate_scores = compute(&diffs_sequences, &secrets_sequences, candidate_sequence, false);
+    //        //println!("candidate_scores={:?}", candidate_scores);
+    //        let candidate_score = candidate_scores.iter().sum();
+    //
+    //        if candidate_score > best_score {
+    //            best_sequence = candidate_sequence;
+    //            best_score = candidate_score;
+    //            best_scores = candidate_scores.clone();
+    //            let elapsed = start_time.elapsed();
+    //            let estimated_total_time = (total_candidates as f64 / candidate_count as f64) * elapsed.as_secs_f64() as f64;
+    //            println!("{}/{}. {:.2?} elapsed of est {:.2?} seconds. best={:?}, best_score={}, best_scores={:?}", candidate_count, total_candidates, elapsed, estimated_total_time, best_sequence, best_score, best_scores);
+    //        }
+    //
+    //        //if candidate_scores.len() == 4 {
+    //        //    println!("4 candidate_scores={:?}", candidate_scores);
+    //        //}
+    //    }
+    //}
 
-            if candidate_score > best_score {
-                best_sequence = candidate_sequence;
-                best_score = candidate_score;
-                best_scores = candidate_scores.clone();
-                let elapsed = start_time.elapsed();
-                let estimated_total_time = (total_candidates as f64 / candidate_count as f64) * elapsed.as_secs_f64() as f64;
-                println!("{}/{}. {:.2?} elapsed of est {:.2?} seconds. best={:?}, best_score={}, best_scores={:?}", candidate_count, total_candidates, elapsed, estimated_total_time, best_sequence, best_score, best_scores);
-            }
-
-            //if candidate_scores.len() == 4 {
-            //    println!("4 candidate_scores={:?}", candidate_scores);
-            //}
-        }
-    }
+    let best_sequence = compute_best(&diffs_sequences, &secrets_sequences, debug);
 
     if debug {
         println!();
         println!("Solution:");
-        println!("best={:?}, best_score={:?}, best_scores={:?}", best_sequence, best_score, best_scores);
-        println!("count of sequences tried={}", candidate_count);
+        //println!("best={:?}, best_score={:?}, best_scores={:?}", best_sequence, best_score, best_scores);
+        //println!("count of sequences tried={}", candidate_count);
+
+        println!("{:?}", best_sequence);
 
         //compute(&secrets_sequences, best_sequence, true);
 
@@ -105,9 +109,9 @@ pub fn solve_part2_up_to(start_secrets: Vec<i64>, max_secrets: i64, debug: bool)
 
     println!("Elapsed {:?}", start_time.elapsed());
 
-    let solution_array: [i64; 4] = best_sequence.try_into().map_err(|_| "Failed to convert slice to array")?;
+    let solution_array: [i64; 4] = best_sequence.0.try_into().map_err(|_| "Failed to convert slice to array")?;
     println!("{:?}", solution_array);
-    Ok((solution_array, best_score))
+    Ok((solution_array, best_sequence.1))
 }
 
 fn compute(diff_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, best: &[i64], debug: bool) -> Vec<i64> {
@@ -128,6 +132,31 @@ fn compute(diff_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, be
         }
     }
     prices
+}
+
+fn compute_best(diffs_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, debug: bool) -> (Vec<i64>, i64) {
+    let mut sequence_values: HashMap<&[i64], i64> = Default::default();
+    for (index, s) in diffs_sequences.iter().enumerate() {
+        for i in 0..s.len() - 4 {
+            let curr: &[i64] = &s[i..i + 4];
+            //prices.push(secrets_sequences[index][i+3] % 10);
+            let old_total = sequence_values.get(curr);
+            if old_total.is_some() {
+                let new_total = (secrets_sequences[index][i+3] % 10) + old_total.expect("just checked it");
+                sequence_values.insert(curr, new_total);
+            } else {
+                sequence_values.insert(curr, secrets_sequences[index][i+3] % 10);
+            }
+            //if debug {
+            //    println!("DEBUG: si={}, i={}, {:?}", index, i, &s[i..i+4]);
+            //}
+        }
+    }
+    let max = sequence_values.into_iter().max_by_key(|(_k, v)| *v);
+    println!("max={:?}", max);
+
+    let max = max.expect("better be a max");
+    (max.0.to_vec(), max.1)
 }
 
 fn parse(input: &str) -> Result<Vec<i64>, ParseError> {
