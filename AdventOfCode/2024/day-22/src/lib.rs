@@ -71,7 +71,7 @@ pub fn solve_part2_up_to(start_secrets: Vec<i64>, max_secrets: i64, debug: bool)
     Ok((solution_array, best_sequence.1))
 }
 
-fn compute_best(diffs_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64>>, _debug: bool) -> (Vec<i64>, i64) {
+fn compute_best(diffs_sequences: &[Vec<i64>], secrets_sequences: &[Vec<i64>], _debug: bool) -> (Vec<i64>, i64) {
     let mut sequence_values: HashMap<&[i64], Vec<i64>> = Default::default();
 
     for (index, s) in diffs_sequences.iter().enumerate() {
@@ -79,7 +79,7 @@ fn compute_best(diffs_sequences: &Vec<Vec<i64>>, secrets_sequences: &Vec<Vec<i64
             let curr: &[i64] = &s[i..i + 4];
             let entry = sequence_values.entry(curr).or_insert(vec![0; s.len()]);
             if entry[index] == 0 {
-                entry[index] = (secrets_sequences[index][i + 3] % 10);
+                entry[index] = secrets_sequences[index][i + 3] % 10;
             }
         }
     }
@@ -99,9 +99,7 @@ fn parse(input: &str) -> Result<Vec<i64>, ParseError> {
 fn solve_next(value: i64) -> i64 {
     let result = ((value * 64) ^ value) % 16777216;
     let result = ((result / 32) ^ result) % 16777216;
-    let result = ((result * 2048) ^ result) % 16777216;
-
-    result
+    ((result * 2048) ^ result) % 16777216
 }
 
 #[cfg(test)]

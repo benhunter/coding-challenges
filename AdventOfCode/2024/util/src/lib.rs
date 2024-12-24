@@ -1,3 +1,4 @@
+use core::panic;
 use std::{cmp::Ordering, fmt::Display, str::FromStr};
 
 use crate::Direction::*;
@@ -68,17 +69,18 @@ impl FromStr for Coord {
 
 impl PartialOrd for Coord {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        let x_cmp = self.x.partial_cmp(&other.x).unwrap();
-        let y_cmp = self.y.partial_cmp(&other.y).unwrap();
-        //println!("comparing {:?} to {:?}. result {:?} and {:?}", self, other, x_cmp, y_cmp);
-
-        if x_cmp == y_cmp {
-            Some(x_cmp)
-        } else if (x_cmp == Ordering::Less || x_cmp == Ordering::Equal) && (y_cmp == Ordering::Less || y_cmp == Ordering::Equal) {
-            Some(Ordering::Less)
-        } else {
-            Some(Ordering::Greater)
-        }
+        Some(self.cmp(other))
+        //let x_cmp = self.x.partial_cmp(&other.x).unwrap();
+        //let y_cmp = self.y.partial_cmp(&other.y).unwrap();
+        ////println!("comparing {:?} to {:?}. result {:?} and {:?}", self, other, x_cmp, y_cmp);
+        //
+        //if x_cmp == y_cmp {
+        //    Some(x_cmp)
+        //} else if (x_cmp == Ordering::Less || x_cmp == Ordering::Equal) && (y_cmp == Ordering::Less || y_cmp == Ordering::Equal) {
+        //    Some(Ordering::Less)
+        //} else {
+        //    Some(Ordering::Greater)
+        //}
     }
 }
 
@@ -91,9 +93,10 @@ impl PartialOrd for Coord {
 impl Ord for Coord {
     fn cmp(&self, other: &Self) -> Ordering {
         if self.x == other.x && self.y == other.y {
-            return Ordering::Equal
+            Ordering::Equal
         } else {
-            return self.partial_cmp(other).unwrap()
+            self.partial_cmp(other).unwrap();
+            panic!("I don't trust this. see partial_cmp()")
         }
     }
 }
@@ -144,9 +147,9 @@ impl Direction {
     }
 }
 
-impl Into<i8> for Direction {
-    fn into(self) -> i8 {
-        match self {
+impl From<Direction> for i8 {
+    fn from(value: Direction) -> Self {
+        match value {
             Up => 0,
             Right => 1,
             Down => 2,
