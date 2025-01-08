@@ -2,9 +2,11 @@
 
 ## Advent of Code
 
-- 2022 https://adventofcode.com/2022
-- 2021 https://adventofcode.com/2021
-- 2020 https://adventofcode.com/2020
+- [2024](https://adventofcode.com/2024) in Rust.
+- [2023](https://adventofcode.com/2023) in Rust.
+- [2022](https://adventofcode.com/2022) in Kotlin.
+- [2021](https://adventofcode.com/2021) in Python.
+- [2020](https://adventofcode.com/2020) in Python.
 
 ## Exercism
 
