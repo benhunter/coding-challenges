@@ -18,16 +18,18 @@ struct Garden {
 impl Garden {
     // constructor:
     fn new(input: &str) -> Garden {
+        let plots = parse_grid_chars(input).unwrap();
+
         Garden {
-            plots: parse_grid_chars(input).unwrap(),
-            regions: vec![vec![None; self.plots[0].len()]; self.plots.len()];
+            regions: vec![vec![None; plots[0].len()]; plots.len()],
+            plots: plots,
         }
 
     }
 
     fn parse(input: &str) -> Result<Garden, ParseError> {
         let plots = parse_grid_chars(input)?;
-        Ok(Garden { plots })
+        Ok(Garden { plots, ..Default::default() })
     }
 
     fn regions(mut self) -> Vec<String> {
