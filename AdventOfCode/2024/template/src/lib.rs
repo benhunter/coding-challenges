@@ -26,16 +26,16 @@ mod tests {
 
     #[test]
     fn test_parse() -> Result<(), String> {
-        let input = include_str!("../test.txt");
+        let input = include_str!("../test1.txt");
         let actual = parse(input)?;
         let expected = Item { ..Default::default() };
         assert_eq!(actual, expected);
         Ok(())
     }
 
-    #[test]
+    // #[test]
     fn test_part1() -> Result<(), String> {
-        let input = include_str!("../test.txt");
+        let input = include_str!("../test1.txt");
         let actual = solve_part1(input)?;
         let solution = 0;
         assert_eq!(actual, solution);
@@ -53,7 +53,7 @@ mod tests {
 
     // #[test]
     fn test_part2() -> Result<(), String> {
-        let input = include_str!("../test.txt");
+        let input = include_str!("../test1.txt");
         let actual = solve_part2(input)?;
         let solution = 0;
         assert_eq!(actual, solution);

@@ -128,6 +128,7 @@ impl Direction {
         }
     }
 
+    /** Counter-clockwise direction. */
     pub fn left(&self) -> Direction {
         match self {
             Up => Left,
@@ -137,6 +138,7 @@ impl Direction {
         }
     }
 
+    /** Clockwise direction. */
     pub fn right(&self) -> Direction {
         match self {
             Up => Right,

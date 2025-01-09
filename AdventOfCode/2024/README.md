@@ -1,3 +1,9 @@
+# Test all days
+
+```
+cargo nextest run
+```
+
 # Create
 
 ```
