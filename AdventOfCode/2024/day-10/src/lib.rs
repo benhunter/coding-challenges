@@ -1,7 +1,8 @@
+use std::str::FromStr;
 use util::{parse_grid_chars, ParseError};
 
 pub fn solve_part1(input: &str) -> Result<i64, String> {
-    let item = parse(input)?;
+    let item: Item = input.parse()?;
     todo!()
 }
 
@@ -15,9 +16,13 @@ struct Item {
     attribute: i64,
 }
 
-fn parse(input: &str) -> Result<Item, ParseError> {
-    let lines = parse_grid_chars(input)?;
-    Ok(Item { lines, attribute: 0 })
+impl FromStr for Item {
+    fn from_str(s: &str) -> Result<Item, ParseError> {
+        let lines = parse_grid_chars(s)?;
+        Ok(Item { lines, attribute: 0 })
+    }
+
+    type Err = ParseError;
 }
 
 #[cfg(test)]
@@ -27,7 +32,7 @@ mod tests {
     #[test]
     fn test_parse() -> Result<(), String> {
         let input = include_str!("../test.txt");
-        let actual = parse(input)?;
+        let actual: Item = input.parse()?;
         let expected = Item { ..Default::default() };
         assert_eq!(actual, expected);
         Ok(())
