@@ -23,6 +23,8 @@
             pkgs.openssl
             pkgs.pkg-config
             pkgs.perl
+            pkgs.rust-analyzer
+            # pkgs.rust-analyzer-nightly
           ];
 
           buildInputs = with pkgs; [
