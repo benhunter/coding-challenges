@@ -18,12 +18,19 @@
       in
       {
         devShells.default = pkgs.mkShell rec {
-          nativeBuildInputs = [ pkgs.pkg-config ];
+          # Additional build inputs to provide OpenSSL and pkg-config
+          nativeBuildInputs = [
+            pkgs.openssl
+            pkgs.pkg-config
+            pkgs.perl
+          ];
+
           buildInputs = with pkgs; [
             clang
             llvmPackages.bintools
             rustup
             cargo-generate
+            openssl
           ];
 
           RUSTC_VERSION = overrides.toolchain.channel;
@@ -39,10 +46,19 @@
           # Add precompiled library to rustc search path
           RUSTFLAGS = (builtins.map (a: ''-L ${a}/lib'') [
             # add libraries here (e.g. pkgs.libvmi)
-          ]);
+          ]) ++ ["--cfg openssl_vendored"];
+
+          #RUSTFLAGS = "--cfg openssl_vendored";
+
+          # Environment variables to help pkg-config locate OpenSSL
+          # PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+          # Environment variables to help the build process find OpenSSL
+          # OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
+          # OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
+          # DEP_OPENSSL_INCLUDE = "${pkgs.openssl.dev}/include";
+          # OPENSSL_STATIC = 1;
           
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath (buildInputs ++ nativeBuildInputs);
-
           
           # Add glibc, clang, glib, and other headers to bindgen search path
           BINDGEN_EXTRA_CLANG_ARGS =
@@ -61,6 +77,7 @@
       }
     );
 }
+
 
 # fenix rust overlay
 #
