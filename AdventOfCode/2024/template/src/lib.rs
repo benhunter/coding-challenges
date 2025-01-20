@@ -31,7 +31,7 @@ mod tests {
 
     #[test]
     fn test_parse() -> Result<(), String> {
-        let input = include_str!("../test.txt");
+        let input = include_str!("../test1.txt");
         let actual: Item = input.parse()?;
         let expected = Item { ..Default::default() };
         assert_eq!(actual, expected);
@@ -58,7 +58,7 @@ mod tests {
 
     // #[test]
     fn test_part2() -> Result<(), String> {
-        let input = include_str!("../test.txt");
+        let input = include_str!("../test1.txt");
         let actual = solve_part2(input)?;
         let solution = 0;
         assert_eq!(actual, solution);

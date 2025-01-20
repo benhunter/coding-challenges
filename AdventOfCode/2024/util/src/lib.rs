@@ -1,5 +1,4 @@
-use core::panic;
-use std::{cmp::Ordering, fmt::Display, str::FromStr};
+use std::{cmp::Ordering, fmt::Display, str::FromStr, ops::Add};
 
 use crate::Direction::*;
 
@@ -36,13 +35,6 @@ impl Coord {
 
     pub fn neighbors(&self, bound: &Coord) -> Vec<Coord> {
         Direction::iter().filter_map(|direction| self.go_bound(&direction, bound)).collect()
-    }
-
-    pub fn add(&self, other: Coord) -> Coord {
-        Coord {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
     }
 }
 
@@ -97,6 +89,23 @@ impl Ord for Coord {
         } else {
             self.partial_cmp(other).unwrap();
             panic!("I don't trust this. see partial_cmp()")
+        }
+    }
+}
+
+impl From<Direction> for Coord {
+    fn from(d: Direction) -> Self {
+        Coord::new(0, 0).go(d)
+    }
+}
+
+impl Add for Coord {
+    type Output = Coord;
+
+    fn add(self, other: Coord) -> Coord {
+        Coord {
+            x: self.x + other.x,
+            y: self.y + other.y,
         }
     }
 }
