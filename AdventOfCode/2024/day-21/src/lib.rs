@@ -3,7 +3,7 @@ use util::{Coord, Direction, ParseError};
 
 pub fn solve_part1(input: &str) -> Result<i64, String> {
     let conundrum: Conundrum = input.parse()?;
-    todo!()
+    Ok(conundrum.solve_part1() as i64)
 }
 
 pub fn solve_part2(input: &str) -> Result<i64, String> {
@@ -14,7 +14,8 @@ pub fn solve_part2(input: &str) -> Result<i64, String> {
 struct Conundrum {
     codes: Vec<String>,
     robot_1: Robot,
-    robot_2: Robot
+    robot_2: Robot,
+    robot_3: Robot,
 }
 
 impl Conundrum {
@@ -24,34 +25,19 @@ impl Conundrum {
         format!("1 position: {}\n2 position: {}", keypad1, keypad2)
     }
 
-    fn press(&mut self, commands: &str) -> () {
-        println!("press commands={}", commands);
-        commands.chars().for_each(|c| {
-            match c {
-                'A' => self.robot_2.press(), 
-                // '^' => 
-                '<' => self.robot_2.go(Direction::Left),
-                // '>' =>
-                // 'v' =>
-                _ => todo!("{}", c)
-            }
-        });
-    }
-
-    fn distance_r1_to(&self, npad_button: char) -> usize {
-        let r2_pad_current_coord = self.robot_2.pad_position.coord();
-        let r1_pad_current_coord = self.robot_1.pad_position.coord();
-        let r1_dest_coord = self.robot_1.coord_of(npad_button);
-        println!("distance_r1_to curr={}, dest={}", r1_pad_current_coord, r1_dest_coord);
-
-        let d = r1_pad_current_coord.distance(r1_dest_coord);
-        println!("r1 curr to dest dist={}", d);
-
-        let path = self.robot_1.path_to(npad_button);
-        println!("r1 curr to dest path={}", path);
-
-        path.len()
-    }
+    //fn press(&mut self, commands: &str) -> () {
+    //    println!("press commands={}", commands);
+    //    commands.chars().for_each(|c| {
+    //        match c {
+    //            'A' => self.robot_2.press(),
+    //            // '^' =>
+    //            '<' => self.robot_2.go(Direction::Left),
+    //            // '>' =>
+    //            // 'v' =>
+    //            _ => todo!("{}", c)
+    //        }
+    //    });
+    //}
 
     fn distance_numpad_to(&self, npad_button: char) -> usize {
         let pad_current_coord = self.robot_1.pad_position.coord();
@@ -62,14 +48,115 @@ impl Conundrum {
         d as usize
     }
 
+    fn distance_r1_to(&self, npad_button: char) -> usize {
+        let r1_pad_current_coord = self.robot_1.pad_position.coord();
+        let r1_dest_coord = self.robot_1.coord_of(npad_button);
+        println!("[distance_r1_to] curr={}, dest={}", r1_pad_current_coord, r1_dest_coord);
+
+        let d = r1_pad_current_coord.distance(r1_dest_coord);
+        println!("[distance_r1_to] r1 curr to dest dist={}", d);
+
+        let path = self.robot_1.path_to(npad_button);
+        println!("[distance_r1_to] r1 curr to dest path={}", path);
+
+        path.len()
+    }
+
     fn distance_r2_to(&self, npad_button: char) -> usize {
+        println!("[distance_r2_to] self={:?}, npad_button={}", self, npad_button);
         let mut r2_path = String::new();
-        let r1_path = self.robot_1.path_to(npad_button);
+        let r1_path = self.robot_1.path('A', npad_button, &self.robot_1);
+        let mut prev_r1_btn = 'A'; // Start on 'A'.
         r1_path.chars().for_each(|r1_btn| {
-            r2_path.push_str(self.robot_2.path_to(r1_btn).as_str());
-            println!("r1_btn={}, r2_path={}", r1_btn, r2_path);
+            println!("[distance_r2_to] r1_btn={}, r2_path={}", r1_btn, r2_path);
+            r2_path.push_str(self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2).as_str());
+            prev_r1_btn = r1_btn;
         });
-        todo!()
+        r2_path.len()
+    }
+
+    fn distance_r3_to(&self, npad_button: char) -> usize {
+        println!("[distance_r3_to] self={:?}, npad_button={}", self, npad_button);
+
+        let r1_path = self.robot_1.path('A', npad_button, &self.robot_1);
+        println!("[distance_r3_to] r1_path={}", r1_path);
+        let mut prev_r1_btn = 'A'; // Start on 'A'.
+        let mut r2_path = String::new();
+        let mut prev_r2_btn = 'A'; // Start on 'A'.
+        let mut r3_path = String::new();
+
+        r1_path.chars().for_each(|r1_btn| {
+            println!("[distance_r3_to] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
+            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2);
+            println!("[distance_r3_to] r2_path={}", r2_path);
+
+            prev_r1_btn = r1_btn;
+
+            r2_path.chars().for_each(|r2_btn| {
+                println!("[distance_r3_to] prev_r2_btn={}, r2_btn={}", prev_r2_btn, r2_btn);
+                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3).as_str());
+                prev_r2_btn = r2_btn;
+                println!("[distance_r3_to] r3_path={}", r3_path);
+            })
+        });
+
+        println!("[distance_r3_to] r3_path={}, r3_path.len()={}", r3_path, r3_path.len());
+        r3_path.len()
+    }
+
+    fn distance_r3(&self, from_npad_btn: char, to_npad_button: char) -> usize {
+        //println!("[distance_r3] self={:?}, npad_button={}", self, to_npad_button);
+
+        let r1_path = self.robot_1.path(from_npad_btn, to_npad_button, &self.robot_1);
+        //println!("[distance_r3] r1_path={}", r1_path);
+        let mut prev_r1_btn = 'A'; // Start on 'A'.
+        let mut r2_path = String::new();
+        let mut prev_r2_btn = 'A'; // Start on 'A'.
+        let mut r3_path = String::new();
+
+        r1_path.chars().for_each(|r1_btn| {
+            //println!("[distance_r3] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
+            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2);
+            //println!("[distance_r3] r2_path={}", r2_path);
+
+            prev_r1_btn = r1_btn;
+
+            r2_path.chars().for_each(|r2_btn| {
+                //println!("[distance_r3] prev_r2_btn={}, r2_btn={}", prev_r2_btn, r2_btn);
+                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3).as_str());
+                prev_r2_btn = r2_btn;
+                //println!("[distance_r3] r3_path={}", r3_path);
+            })
+        });
+
+        //println!("[distance_r3] r3_path={}, r3_path.len()={}", r3_path, r3_path.len());
+        r3_path.len()
+    }
+
+    fn solve_part1(&self) -> usize {
+        self.codes
+            .iter()
+            .map(|code| {
+                let mut code = code.clone();
+                let numeric = &code[..code.len() - 1];
+                let numeric: usize = numeric.parse().expect("must be a number");
+                code.insert(0, 'A');
+                let sum = code
+                    .as_bytes()
+                    .windows(2)
+                    .map(|w| {
+                        let a = w[0].into();
+                        let b = w[1].into();
+                        self.distance_r3(a, b)
+                    })
+                        .sum::<usize>();
+                    //.collect::<Vec<usize>>()
+                println!("sum={}, numeric={}, sum*numeric={}", sum, numeric, sum*numeric);
+                (sum * numeric) as usize
+                //.collect::<Vec<usize>>()
+            })
+            //.inspect(|x| println!("{}", x))
+            .sum()
     }
 }
 
@@ -79,7 +166,9 @@ impl FromStr for Conundrum {
         let robot_2 = Robot {
             pad_position: PadPosition::DirectionPad(Coord::new(2, 0)),
         };
-        Ok(Conundrum { codes: lines, robot_1: Robot::new(), robot_2 })
+        let robot_3 = robot_2.clone();
+
+        Ok(Conundrum { codes: lines, robot_1: Robot::new(), robot_2, robot_3 })
     }
 
     type Err = ParseError;
@@ -150,24 +239,24 @@ impl Robot {
         //let p = self.pad_position + Coord::from(direction);
     }
 
-    fn press(&self) {
-        todo!()
-    }
+    //fn press(&self) {
+    //    todo!()
+    //}
 
     fn coord_of(&self, button: char) -> Coord {
+        //println!("[coord_of] self={:?}, button={}", self, button);
         let vals: (usize, usize, char) = *self
             .pad()
             .iter()
             .enumerate()
-            .map(|(yi, y)| {
+            .flat_map(|(yi, y)| {
                 y
                     .iter()
                     .enumerate()
                     .map(move |(xi, x)| (xi, yi, *x))
         })
-            .flatten()
             .filter(|(_xi, _yi, x)| *x == button )
-            //.inspect(|x| println!("{:?}", x))
+            //.inspect(|x| println!("[coord_of] filtered {:?}", x))
             .collect::<Vec<(usize, usize, char)>>()
             .first()
             .unwrap();
@@ -190,7 +279,37 @@ impl Robot {
         let self_coord = self.pad_position.coord();
         let button_coord = self.coord_of(button);
         let mut diff = self_coord - button_coord;
-        println!("Robot::path_to() self={:?}, button={}, button coord={}, diff={}", self, button, button_coord, diff);
+        //println!("[Robot::path_to()] self={:?}, button={}, button coord={}, diff={}", self, button, button_coord, diff);
+        let mut path = String::new();
+
+        while diff.x != 0 {
+            if diff.x > 0 { // go left
+                path.push('<');
+                diff.x -= 1;
+            } else {
+                path.push('>');
+                diff.x += 1;
+            }
+        }
+
+        while diff.y != 0 {
+            if diff.y > 0 {
+                path.push('^'); // (0, 0) is origin
+                diff.y -=1;
+            } else {
+                path.push('v');
+                diff.y += 1;
+            }
+        }
+        path.push('A');
+        path
+    }
+
+    fn path(&self, from_button: char, to_button: char, using: &Robot) -> String {
+        let from_coord = using.coord_of(from_button);
+        let to_coord = using.coord_of(to_button);
+        let mut diff = from_coord - to_coord;
+        //println!("[Robot::path()] self={:?}, from_button={}, to_button={}", self, from_button, to_button);
         let mut path = String::new();
 
         while diff.x != 0 {
@@ -243,48 +362,124 @@ mod tests {
         Ok(())
     }
 
+    //#[test]
+    //fn test_press() -> Result<(), String> {
+    //    let mut conundrum: Conundrum = "".parse()?;
+    //    conundrum.press("<");
+    //    let actual = conundrum.state();
+    //    let solution = "1 position: A\n2 position: ^";
+    //    assert_eq!(actual, solution);
+    //
+    //    //conundrum.press("v");
+    //    //let actual = conundrum.state();
+    //    //let solution = "1 position: A\n2 position: v";
+    //    //assert_eq!(actual, solution);
+    //
+    //    Ok(())
+    //}
+
     #[test]
-    fn test_press() -> Result<(), String> {
-        let mut conundrum: Conundrum = "".parse()?;
-        conundrum.press("<");
-        let actual = conundrum.state();
-        let solution = "1 position: A\n2 position: ^";
-        assert_eq!(actual, solution);
-
-        //conundrum.press("v");
-        //let actual = conundrum.state();
-        //let solution = "1 position: A\n2 position: v";
-        //assert_eq!(actual, solution);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_distance() -> Result<(), String> {
+    fn test_distance_numpad_to() -> Result<(), String> {
         let conundrum: Conundrum = "".parse()?;
 
         let actual = conundrum.distance_numpad_to('0');
         let expected = 1;
         assert_eq!(expected, actual);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_distance_r1_to() -> Result<(), String> {
+        let conundrum: Conundrum = "".parse()?;
+
         let actual = conundrum.distance_r1_to('0');
         let expected = 2;
         assert_eq!(expected, actual);
 
-        let actual = conundrum.distance_r2_to('0');
-        let expected = 8;
-        assert_eq!(expected, actual);
         Ok(())
     }
 
-    // #[test]
-    //fn test_part1() -> Result<(), String> {
-    //    let input = include_str!("../test1.txt");
-    //    let actual = solve_part1(input)?;
-    //    let solution = 0;
-    //    assert_eq!(actual, solution);
-    //    Ok(())
-    //}
+    #[test]
+    fn test_distance_r2_to() -> Result<(), String> {
+        let conundrum: Conundrum = "".parse()?;
+
+        let actual = conundrum.distance_r2_to('0');
+        let expected = 8;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_distance_r3_to() -> Result<(), String> {
+        let conundrum: Conundrum = "".parse()?;
+
+        let actual = conundrum.distance_r3_to('0');
+        let expected = 18;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_distance_r3_from_A_to_0() -> Result<(), String> {
+        let conundrum: Conundrum = "".parse()?;
+
+        let actual = conundrum.distance_r3('A', '0');
+        let expected = 18;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_distance_r3_from_0_to_9() -> Result<(), String> {
+        let conundrum: Conundrum = "".parse()?;
+
+        let actual = conundrum.distance_r3('0', '9');
+        let expected = 21; // TODO not verified
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_part1_by_steps() -> Result<(), String> {
+        let conundrum: Conundrum = "".parse()?;
+
+        let actual: usize = vec![
+            conundrum.distance_r3('A', '0'),
+            conundrum.distance_r3('0', '2'),
+            conundrum.distance_r3('2', '9'),
+            conundrum.distance_r3('9', 'A'),
+        ].iter().sum();
+        let expected = 68;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_part1_code() -> Result<(), String> {
+        let conundrum: Conundrum = "029A".parse()?;
+
+        let actual = conundrum.solve_part1();
+        let expected = 68 * 29;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+     #[test]
+    fn test_part1() -> Result<(), String> {
+        let input = include_str!("../test1.txt");
+        let actual = solve_part1(input)?;
+        let expected = 126384;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
 
     // #[test]
     //fn test_solve_part1() -> Result<(), String> {
