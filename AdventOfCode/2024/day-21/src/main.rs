@@ -5,8 +5,8 @@ fn main() -> Result<(), String> {
     let result = day_21::solve_part1(input)?;
     println!("✅ part1: {}", result);
 
-    // let result = day_21::solve_part2(input)?;
-    // println!("✅ part2: {}", result);
+    let result = day_21::solve_part2(input)?;
+    println!("✅ part2: {}", result);
 
     Ok(())
 }

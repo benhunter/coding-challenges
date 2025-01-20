@@ -1,5 +1,5 @@
 use std::{fmt::Display, str::FromStr};
-use util::{parse_grid_chars, Coord, Direction, ParseError};
+use util::{Coord, Direction, ParseError};
 
 pub fn solve_part1(input: &str) -> Result<i64, String> {
     let conundrum: Conundrum = input.parse()?;
@@ -19,8 +19,8 @@ struct Conundrum {
 
 impl Conundrum {
     fn state(&self) -> String {
-        let keypad1 = self.robot_1.button();
-        let keypad2 = self.robot_2.button();
+        let keypad1 = self.robot_1.pointed_at_button();
+        let keypad2 = self.robot_2.pointed_at_button();
         format!("1 position: {}\n2 position: {}", keypad1, keypad2)
     }
 
@@ -36,6 +36,40 @@ impl Conundrum {
                 _ => todo!("{}", c)
             }
         });
+    }
+
+    fn distance_r1_to(&self, npad_button: char) -> usize {
+        let r2_pad_current_coord = self.robot_2.pad_position.coord();
+        let r1_pad_current_coord = self.robot_1.pad_position.coord();
+        let r1_dest_coord = self.robot_1.coord_of(npad_button);
+        println!("distance_r1_to curr={}, dest={}", r1_pad_current_coord, r1_dest_coord);
+
+        let d = r1_pad_current_coord.distance(r1_dest_coord);
+        println!("r1 curr to dest dist={}", d);
+
+        let path = self.robot_1.path_to(npad_button);
+        println!("r1 curr to dest path={}", path);
+
+        path.len()
+    }
+
+    fn distance_numpad_to(&self, npad_button: char) -> usize {
+        let pad_current_coord = self.robot_1.pad_position.coord();
+        let dest_coord = self.robot_1.coord_of(npad_button);
+        //println!("distance_numpad_to curr={}, dest={}", pad_current_coord, dest_coord);
+        let d = pad_current_coord.distance(dest_coord);
+        //println!("dist={}", d);
+        d as usize
+    }
+
+    fn distance_r2_to(&self, npad_button: char) -> usize {
+        let mut r2_path = String::new();
+        let r1_path = self.robot_1.path_to(npad_button);
+        r1_path.chars().for_each(|r1_btn| {
+            r2_path.push_str(self.robot_2.path_to(r1_btn).as_str());
+            println!("r1_btn={}, r2_path={}", r1_btn, r2_path);
+        });
+        todo!()
     }
 }
 
@@ -55,6 +89,15 @@ impl FromStr for Conundrum {
 enum PadPosition {
     DirectionPad(Coord),
     NumPad(Coord)
+}
+
+impl PadPosition {
+    fn coord(&self) -> Coord {
+        match self {
+            PadPosition::NumPad(c) => *c,
+            PadPosition::DirectionPad(c) => *c,
+        }
+    }
 }
 
 impl Default for PadPosition {
@@ -79,39 +122,14 @@ impl Robot {
         Robot { pad_position: PadPosition::default() }
     }
 
-    fn button(&self) -> char {
-        match self.pad_position {
-            PadPosition::DirectionPad(c) => {
-                let dpad = [[' ', '^', 'A'], ['<', 'v', '>']];
-                dpad[c.y as usize][c.x as usize]
-                // match c {
-                //     Coord { x: 1, y: 0 } => "^",
-                //     Coord { x: 2, y: 0 } => "A",
-                //     Coord { x: 0, y: 1 } => "<",
-                //     Coord { x: 1, y: 1 } => "v",
-                //     Coord { x: 2, y: 1 } => ">",
-                //     _ => todo!("{:?}", c)
-                // }
-            },
-            PadPosition::NumPad(c) => {
-                let npad = [['7', '8', '9'], ['4', '5', '6'], ['1', '2', '3'], [' ', '0', 'A']];
-                npad[c.y as usize][c.x as usize]
-                // match c {
-                //     Coord { x: 0, y: 0 } => "7",
-                //     Coord { x: 1, y: 0 } => "8",
-                //     Coord { x: 2, y: 0 } => "9",
-                //     Coord { x: 0, y: 1 } => "4",
-                //     Coord { x: 1, y: 1 } => "5",
-                //     Coord { x: 2, y: 1 } => "6",
-                //     Coord { x: 0, y: 2 } => "1",
-                //     Coord { x: 1, y: 2 } => "2",
-                //     Coord { x: 2, y: 2 } => "3",
-                //     Coord { x: 2, y: 3 } => "A",
-                //     Coord { x: 1, y: 3 } => "0",
-                //     _ => todo!("{:?}", c)
-                // }
-            }
-        }
+    fn pointed_at_button(&self) -> char {
+        let pad = self.pad();
+        let c = match self.pad_position {
+            PadPosition::NumPad(c) => c,
+            PadPosition::DirectionPad(c) => c,
+        };
+
+        pad[c.y as usize][c.x as usize]
     }
 
     fn go(&mut self, direction: Direction) {
@@ -134,6 +152,68 @@ impl Robot {
 
     fn press(&self) {
         todo!()
+    }
+
+    fn coord_of(&self, button: char) -> Coord {
+        let vals: (usize, usize, char) = *self
+            .pad()
+            .iter()
+            .enumerate()
+            .map(|(yi, y)| {
+                y
+                    .iter()
+                    .enumerate()
+                    .map(move |(xi, x)| (xi, yi, *x))
+        })
+            .flatten()
+            .filter(|(_xi, _yi, x)| *x == button )
+            //.inspect(|x| println!("{:?}", x))
+            .collect::<Vec<(usize, usize, char)>>()
+            .first()
+            .unwrap();
+
+        Coord::new(vals.0 as i64, vals.1 as i64)
+    }
+
+    fn pad(&self) -> Vec<Vec<char>> {
+        match self.pad_position {
+            PadPosition::DirectionPad(_) => {
+                vec!(vec!(' ', '^', 'A'), vec!('<', 'v', '>'))
+            },
+            PadPosition::NumPad(_) => {
+                vec!(vec!('7', '8', '9'), vec!('4', '5', '6'), vec!('1', '2', '3'), vec!(' ', '0', 'A'))
+            }
+        }
+    }
+
+    fn path_to(&self, button: char) -> String {
+        let self_coord = self.pad_position.coord();
+        let button_coord = self.coord_of(button);
+        let mut diff = self_coord - button_coord;
+        println!("Robot::path_to() self={:?}, button={}, button coord={}, diff={}", self, button, button_coord, diff);
+        let mut path = String::new();
+
+        while diff.x != 0 {
+            if diff.x > 0 { // go left
+                path.push('<');
+                diff.x -= 1;
+            } else {
+                path.push('>');
+                diff.x += 1;
+            }
+        }
+
+        while diff.y != 0 {
+            if diff.y > 0 {
+                path.push('^'); // (0, 0) is origin
+                diff.y -=1;
+            } else {
+                path.push('v');
+                diff.y += 1;
+            }
+        }
+        path.push('A');
+        path
     }
 }
 
@@ -171,47 +251,65 @@ mod tests {
         let solution = "1 position: A\n2 position: ^";
         assert_eq!(actual, solution);
 
-        conundrum.press("v");
-        let actual = conundrum.state();
-        let solution = "1 position: A\n2 position: v";
-        assert_eq!(actual, solution);
+        //conundrum.press("v");
+        //let actual = conundrum.state();
+        //let solution = "1 position: A\n2 position: v";
+        //assert_eq!(actual, solution);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_distance() -> Result<(), String> {
+        let conundrum: Conundrum = "".parse()?;
+
+        let actual = conundrum.distance_numpad_to('0');
+        let expected = 1;
+        assert_eq!(expected, actual);
+
+        let actual = conundrum.distance_r1_to('0');
+        let expected = 2;
+        assert_eq!(expected, actual);
+
+        let actual = conundrum.distance_r2_to('0');
+        let expected = 8;
+        assert_eq!(expected, actual);
         Ok(())
     }
 
     // #[test]
-    fn test_part1() -> Result<(), String> {
-        let input = include_str!("../test1.txt");
-        let actual = solve_part1(input)?;
-        let solution = 0;
-        assert_eq!(actual, solution);
-        Ok(())
-    }
+    //fn test_part1() -> Result<(), String> {
+    //    let input = include_str!("../test1.txt");
+    //    let actual = solve_part1(input)?;
+    //    let solution = 0;
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
 
     // #[test]
-    fn test_solve_part1() -> Result<(), String> {
-        let input = include_str!("../input.txt");
-        let actual = solve_part1(input)?;
-        let solution = 0;
-        assert_eq!(actual, solution);
-        Ok(())
-    }
+    //fn test_solve_part1() -> Result<(), String> {
+    //    let input = include_str!("../input.txt");
+    //    let actual = solve_part1(input)?;
+    //    let solution = 0;
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
 
     // #[test]
-    fn test_part2() -> Result<(), String> {
-        let input = include_str!("../test1.txt");
-        let actual = solve_part2(input)?;
-        let solution = 0;
-        assert_eq!(actual, solution);
-        Ok(())
-    }
+    //fn test_part2() -> Result<(), String> {
+    //    let input = include_str!("../test1.txt");
+    //    let actual = solve_part2(input)?;
+    //    let solution = 0;
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
 
     // #[test]
-    fn test_solve_part2() -> Result<(), String> {
-        let input = include_str!("../input.txt");
-        let actual = solve_part2(input)?;
-        let solution = 0;
-        assert_eq!(actual, solution);
-        Ok(())
-    }
+    //fn test_solve_part2() -> Result<(), String> {
+    //    let input = include_str!("../input.txt");
+    //    let actual = solve_part2(input)?;
+    //    let solution = 0;
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
 }

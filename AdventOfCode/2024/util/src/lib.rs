@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Display, str::FromStr, ops::Add};
+use std::{cmp::Ordering, fmt::Display, str::FromStr, ops::Add, ops::Sub};
 
 use crate::Direction::*;
 
@@ -36,6 +36,10 @@ impl Coord {
     pub fn neighbors(&self, bound: &Coord) -> Vec<Coord> {
         Direction::iter().filter_map(|direction| self.go_bound(&direction, bound)).collect()
     }
+
+    pub fn distance(&self, other: Coord) -> i64 {
+        (self.x - other.x).abs() + (self.y - other.y).abs()
+    }
 }
 
 impl FromStr for Coord {
@@ -51,6 +55,12 @@ impl FromStr for Coord {
     }
 
     type Err = ParseError;
+}
+
+impl Display for Coord {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
 }
 
 //impl PartialEq for Coord {
@@ -106,6 +116,17 @@ impl Add for Coord {
         Coord {
             x: self.x + other.x,
             y: self.y + other.y,
+        }
+    }
+}
+
+impl Sub for Coord {
+    type Output = Coord;
+
+    fn sub(self, other: Coord) -> Coord {
+        Coord {
+            x: self.x - other.x,
+            y: self.y - other.y,
         }
     }
 }
