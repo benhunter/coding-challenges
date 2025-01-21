@@ -314,25 +314,75 @@ impl Robot {
         //println!("[Robot::path()] self={:?}, from_button={}, to_button={}", self, from_button, to_button);
         let mut path = String::new();
 
-        while diff.x != 0 {
-            if diff.x > 0 { // go left
-                path.push('<');
-                diff.x -= 1;
-            } else {
-                path.push('>');
-                diff.x += 1;
+        // TODO if numpad, avoid (0,3)
+        // TODO if dirpad, avoid (0,0)
+        let avoid = match self.pad_position {
+            PadPosition::NumPad(_) => Coord::new(0, 3),
+            PadPosition::DirectionPad(_) => Coord::new(0, 0),
+        };
+        let mut curr = from_coord.clone();
+
+        while diff.x != 0 || diff.y != 0 {
+            while diff.x != 0 {
+                if diff.x > 0 { // go left
+                    if curr.y == avoid.y && (curr.x - 1) == avoid.x {
+                        break;
+                    } else {
+                        path.push('<');
+                        diff.x -= 1;
+                        curr.x -= 1;
+                    } 
+                    //if curr.y == avoid.y && curr.x == avoid.y {
+                    //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
+                    //}
+                } else {
+                    path.push('>');
+                    diff.x += 1;
+                    curr.x += 1;
+                }
+            }
+
+            while diff.y != 0 {
+                if diff.y < 0 {
+                    if curr.x == avoid.x && (curr.y + 1) == avoid.y {
+                        break;
+                    } else {
+                        path.push('v');
+                        diff.y += 1;
+                        curr.y += 1;
+                    }
+                } else {
+                    if curr.x == avoid.x && (curr.y - 1) == avoid.y {
+                        break;
+                    } else {
+                        path.push('^'); // (0, 0) is origin
+                        diff.y -=1;
+                        curr.y -=1;
+                    }
+                }
+
+                //if diff.y > 0 {
+                //    if curr.x == avoid.x && (curr.y - 1) == avoid.y {
+                //        break;
+                //    } else {
+                //        path.push('^'); // (0, 0) is origin
+                //        diff.y -=1;
+                //        curr.y -=1;
+                //    }
+                //} else {
+                //    if curr.x == avoid.x && (curr.y + 1) == avoid.y {
+                //        break;
+                //    } else {
+                //        path.push('v');
+                //        diff.y += 1;
+                //        curr.y += 1;
+                //    }
+                //}
             }
         }
 
-        while diff.y != 0 {
-            if diff.y > 0 {
-                path.push('^'); // (0, 0) is origin
-                diff.y -=1;
-            } else {
-                path.push('v');
-                diff.y += 1;
-            }
-        }
+        assert_eq!(to_coord, curr);
+
         path.push('A');
         path
     }
