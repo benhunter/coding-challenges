@@ -111,12 +111,14 @@ impl Conundrum {
         //println!("[distance_r3] r1_path={}", r1_path);
         let mut prev_r1_btn = 'A'; // Start on 'A'.
         let mut r2_path = String::new();
+        let mut r2_full_path = String::new();
         let mut prev_r2_btn = 'A'; // Start on 'A'.
         let mut r3_path = String::new();
 
         r1_path.chars().for_each(|r1_btn| {
             //println!("[distance_r3] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
             r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2);
+            r2_full_path.push_str(&r2_path);
             //println!("[distance_r3] r2_path={}", r2_path);
 
             prev_r1_btn = r1_btn;
@@ -129,7 +131,7 @@ impl Conundrum {
             })
         });
 
-        //println!("[distance_r3] r3_path={}, r3_path.len()={}", r3_path, r3_path.len());
+        println!("[distance_r3] {} to {}, r3_path={}, r3_path.len()={}, r2_full_path={}, r1_path={}", from_npad_btn, to_npad_button, r3_path, r3_path.len(), r2_full_path, r1_path);
         r3_path.len()
     }
 
@@ -151,7 +153,7 @@ impl Conundrum {
                     })
                         .sum::<usize>();
                     //.collect::<Vec<usize>>()
-                println!("sum={}, numeric={}, sum*numeric={}", sum, numeric, sum*numeric);
+                println!("code={}, sum={}, numeric={}, sum*numeric={}", code, sum, numeric, sum*numeric);
                 (sum * numeric) as usize
                 //.collect::<Vec<usize>>()
             })
@@ -473,6 +475,61 @@ mod tests {
 
      #[test]
     fn test_part1() -> Result<(), String> {
+        // TODO: path cannot cross the empty space on the keypad
+        // https://www.reddit.com/r/adventofcode/comments/1hja685/2024_day_21_here_are_some_examples_and_hints_for/
+
+        /* Expected
+029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+980A: <v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A
+179A: <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A
+379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+        */
+
+        /* Actual
+[distance_r3] A to 0, r3_path=<<vAA>A>^AvAA<^A>A, r3_path.len()=18, r2_full_path=<<vA>>^A, r1_path=<A
+[distance_r3] 0 to 2, r3_path=<<vA>>^AvA^A, r3_path.len()=12, r2_full_path=<A>A, r1_path=^A
+[distance_r3] 2 to 9, r3_path=<vA>^A<<vA>^A>AAvA^A, r3_path.len()=20, r2_full_path=vA<^AA>A, r1_path=>^^A
+[distance_r3] 9 to A, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+code=A029A, sum=68, numeric=29, sum*numeric=1972
+[distance_r3] A to 9, r3_path=<<vA>>^AAAvA^A, r3_path.len()=14, r2_full_path=<AAA>A, r1_path=^^^A
+[distance_r3] 9 to 8, r3_path=<<vAA>A>^AvAA<^A>A, r3_path.len()=18, r2_full_path=<<vA>>^A, r1_path=<A
+[distance_r3] 8 to 0, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+[distance_r3] 0 to A, r3_path=<vA>^A<A>A, r3_path.len()=10, r2_full_path=vA^A, r1_path=>A
+code=A980A, sum=60, numeric=980, sum*numeric=58800
+[distance_r3] A to 1, r3_path=<<vAA>A>^AAvA<^A>AvA^A, r3_path.len()=22, r2_full_path=<<vAA>^A>A, r1_path=<<^A
+[distance_r3] 1 to 7, r3_path=<<vA>>^AAvA^A, r3_path.len()=13, r2_full_path=<AA>A, r1_path=^^A
+[distance_r3] 7 to 9, r3_path=<vA>^AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+[distance_r3] 9 to A, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+code=A179A, sum=64, numeric=179, sum*numeric=11456
+[distance_r3] A to 4, r3_path=<<vAA>A>^AAvA<^A>AAvA^A, r3_path.len()=23, r2_full_path=<<vAA>^AA>A, r1_path=<<^^A
+[distance_r3] 4 to 5, r3_path=<vA>^A<A>A, r3_path.len()=10, r2_full_path=vA^A, r1_path=>A
+[distance_r3] 5 to 6, r3_path=<vA>^A<A>A, r3_path.len()=10, r2_full_path=vA^A, r1_path=>A
+[distance_r3] 6 to A, r3_path=<<vA>A>^AAvA<^A>A, r3_path.len()=17, r2_full_path=<vAA>^A, r1_path=vvA
+code=A456A, sum=60, numeric=456, sum*numeric=27360
+[distance_r3] A to 3, r3_path=<<vA>>^AvA^A, r3_path.len()=12, r2_full_path=<A>A, r1_path=^A
+[distance_r3] 3 to 7, r3_path=<<vAA>A>^AAvA<^A>AAvA^A, r3_path.len()=23, r2_full_path=<<vAA>^AA>A, r1_path=<<^^A
+[distance_r3] 7 to 9, r3_path=<vA>^AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+[distance_r3] 9 to A, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+code=A379A, sum=64, numeric=379, sum*numeric=24256
+        */
+
+        /*
+expected:
+179A: 
+A1: <v<A>>^A<vA<A>>^AAvAA<^A>A r2: <Av<AA>>^A r1: ^<<A
+17: <v<A>>^AAvA^A
+79: <vA>^AA<A>A
+9A: <v<A>A>^AAAvA<^A>A
+
+actual:
+A1: <<vAA>A>^AAvA<^A>AvA^A, r3_path.len()=22, r2_full_path=<<vAA>^A>A, r1_path=<<^A
+pass 17: <<vA>>^AAvA^A, r3_path.len()=13, r2_full_path=<AA>A, r1_path=^^A
+pass 79: <vA>^AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+pass 9A: <<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+code=A179A, sum=64, numeric=179, sum*numeric=11456
+        */
+
         let input = include_str!("../test1.txt");
         let actual = solve_part1(input)?;
         let expected = 126384;
@@ -481,14 +538,16 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    //fn test_solve_part1() -> Result<(), String> {
-    //    let input = include_str!("../input.txt");
-    //    let actual = solve_part1(input)?;
-    //    let solution = 0;
-    //    assert_eq!(actual, solution);
-    //    Ok(())
-    //}
+     #[test]
+    fn test_solve_part1() -> Result<(), String> {
+        let input = include_str!("../input.txt");
+        let actual = solve_part1(input)?;
+        let too_low = 187062;
+        assert!(actual > too_low);
+        let solution = 0;
+        assert_eq!(actual, solution);
+        Ok(())
+    }
 
     // #[test]
     //fn test_part2() -> Result<(), String> {
