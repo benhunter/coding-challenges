@@ -628,20 +628,33 @@ mod tests {
         Ok(())
     }
 
-    //#[test]
-    //#[allow(non_snake_case)]
-    //fn test_379A_code() -> Result<(), String> {
-    //    /*
-    //    *   379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
-    //    */
-    //    let conundrum: Conundrum = "456A".parse()?;
-    //
-    //    let actual = conundrum.solve_part1();
-    //    //let expected =
-    //    assert_eq!(expected, actual);
-    //
-    //    Ok(())
-    //}
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_379A_code() -> Result<(), String> {
+        /*
+        *   379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+        *
+        * [distance_r3] A to 3, r3_path=v<<A>>^AvA^A, r3_path.len()=12, r2_full_path=<A>A, r1_path=^A
+        * [distance_r3] 3 to 7, r3_path=v<<A>>^AAv<A<A>>^AAvAA^<A>A, r3_path.len()=27, r2_full_path=<AAv<AA>>^A, r1_path=^^<<A
+        * [distance_r3] 7 to 9, r3_path=v<A^>AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+        * [distance_r3] 9 to A, r3_path=v<A<A>>^AAA<Av>A^A, r3_path.len()=18, r2_full_path=v<AAA^>A, r1_path=vvvA
+        * code=A379A, sum=68, numeric=379, sum*numeric=25772
+        *
+        * expected 379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+        * actual      A3 v<<A>>^AvA^A
+        *                     37 v<<A>>^AAv<A<A>>^AAvAA^<A>A  * <- TODO error here? 3 to 7
+        *                                                79 v<A^>AA<A>A
+        *                                                           9A v<A<A>>^AAA<Av>A^A
+        *
+        */
+        let conundrum: Conundrum = "379A".parse()?;
+
+        let actual = conundrum.solve_part1();
+        let expected = 64 * 379;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
 
      #[test]
     fn test_part1() -> Result<(), String> {
