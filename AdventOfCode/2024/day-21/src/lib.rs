@@ -328,6 +328,27 @@ impl Robot {
                     // if going down, go down first, then left
                     // if going up, go right first, then left
 
+                    while diff.y != 0 {
+                        if diff.y < 0 {
+                            if curr.x == avoid.x && (curr.y + 1) == avoid.y {
+                                println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
+                                break;
+                            } else {
+                                path.push('v');
+                                diff.y += 1;
+                                curr.y += 1;
+                            }
+                        } else {
+                            if curr.x == avoid.x && (curr.y - 1) == avoid.y {
+                                break;
+                            } else {
+                                path.push('^'); // (0, 0) is origin
+                                diff.y -=1;
+                                curr.y -=1;
+                            }
+                        }
+                    }
+
                     while diff.x != 0 {
                         if diff.x > 0 { // go left
                             if curr.y == avoid.y && (curr.x - 1) == avoid.x {
@@ -349,26 +370,6 @@ impl Robot {
                         }
                     }
 
-                    while diff.y != 0 {
-                        if diff.y < 0 {
-                            if curr.x == avoid.x && (curr.y + 1) == avoid.y {
-                                println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
-                                break;
-                            } else {
-                                path.push('v');
-                                diff.y += 1;
-                                curr.y += 1;
-                            }
-                        } else {
-                            if curr.x == avoid.x && (curr.y - 1) == avoid.y {
-                                break;
-                            } else {
-                                path.push('^'); // (0, 0) is origin
-                                diff.y -=1;
-                                curr.y -=1;
-                            }
-                        }
-                    }
                 }
 
                 PadPosition::DirectionPad(c) => {
