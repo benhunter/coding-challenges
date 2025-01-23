@@ -613,20 +613,20 @@ mod tests {
         Ok(())
     }
 
-    //#[test]
-    //#[allow(non_snake_case)]
-    //fn test_456A_code() -> Result<(), String> {
-    //    /*
-    //    *   456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A
-    //    */
-    //    let conundrum: Conundrum = "456A".parse()?;
-    //
-    //    let actual = conundrum.solve_part1();
-    //    //let expected =
-    //    assert_eq!(expected, actual);
-    //
-    //    Ok(())
-    //}
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_456A_code() -> Result<(), String> {
+        /*
+        *   456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A
+        */
+        let conundrum: Conundrum = "456A".parse()?;
+
+        let actual = conundrum.solve_part1();
+        let expected = 64 * 456;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
 
     //#[test]
     //#[allow(non_snake_case)]
