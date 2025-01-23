@@ -48,19 +48,19 @@ impl Conundrum {
         d as usize
     }
 
-    fn distance_r1_to(&self, npad_button: char) -> usize {
-        let r1_pad_current_coord = self.robot_1.pad_position.coord();
-        let r1_dest_coord = self.robot_1.coord_of(npad_button);
-        println!("[distance_r1_to] curr={}, dest={}", r1_pad_current_coord, r1_dest_coord);
-
-        let d = r1_pad_current_coord.distance(r1_dest_coord);
-        println!("[distance_r1_to] r1 curr to dest dist={}", d);
-
-        let path = self.robot_1.path_to(npad_button);
-        println!("[distance_r1_to] r1 curr to dest path={}", path);
-
-        path.len()
-    }
+    //fn distance_r1_to(&self, npad_button: char) -> usize {
+    //    let r1_pad_current_coord = self.robot_1.pad_position.coord();
+    //    let r1_dest_coord = self.robot_1.coord_of(npad_button);
+    //    println!("[distance_r1_to] curr={}, dest={}", r1_pad_current_coord, r1_dest_coord);
+    //
+    //    let d = r1_pad_current_coord.distance(r1_dest_coord);
+    //    println!("[distance_r1_to] r1 curr to dest dist={}", d);
+    //
+    //    let path = self.robot_1.path_to(npad_button);
+    //    println!("[distance_r1_to] r1 curr to dest path={}", path);
+    //
+    //    path.len()
+    //}
 
     fn distance_r2_to(&self, npad_button: char) -> usize {
         println!("[distance_r2_to] self={:?}, npad_button={}", self, npad_button);
@@ -277,35 +277,35 @@ impl Robot {
         }
     }
 
-    fn path_to(&self, button: char) -> String {
-        let self_coord = self.pad_position.coord();
-        let button_coord = self.coord_of(button);
-        let mut diff = self_coord - button_coord;
-        //println!("[Robot::path_to()] self={:?}, button={}, button coord={}, diff={}", self, button, button_coord, diff);
-        let mut path = String::new();
-
-        while diff.x != 0 {
-            if diff.x > 0 { // go left
-                path.push('<');
-                diff.x -= 1;
-            } else {
-                path.push('>');
-                diff.x += 1;
-            }
-        }
-
-        while diff.y != 0 {
-            if diff.y > 0 {
-                path.push('^'); // (0, 0) is origin
-                diff.y -=1;
-            } else {
-                path.push('v');
-                diff.y += 1;
-            }
-        }
-        path.push('A');
-        path
-    }
+    //fn path_to(&self, button: char) -> String {
+    //    let self_coord = self.pad_position.coord();
+    //    let button_coord = self.coord_of(button);
+    //    let mut diff = self_coord - button_coord;
+    //    //println!("[Robot::path_to()] self={:?}, button={}, button coord={}, diff={}", self, button, button_coord, diff);
+    //    let mut path = String::new();
+    //
+    //    while diff.x != 0 {
+    //        if diff.x > 0 { // go left
+    //            path.push('<');
+    //            diff.x -= 1;
+    //        } else {
+    //            path.push('>');
+    //            diff.x += 1;
+    //        }
+    //    }
+    //
+    //    while diff.y != 0 {
+    //        if diff.y > 0 {
+    //            path.push('^'); // (0, 0) is origin
+    //            diff.y -=1;
+    //        } else {
+    //            path.push('v');
+    //            diff.y += 1;
+    //        }
+    //    }
+    //    path.push('A');
+    //    path
+    //}
 
     fn path(&self, from_button: char, to_button: char, using: &Robot) -> String {
         let from_coord = using.coord_of(from_button);
@@ -323,15 +323,27 @@ impl Robot {
         let mut curr = from_coord.clone();
 
         while diff.x != 0 || diff.y != 0 {
+            //match self.pad_position {
+            //    PadPosition::NumPad(c) => {
+            //        // if going down, go down first, then left
+            //        // if going up, go right first, then left
+            //    }
+            //    PadPosition::DirectionPad(c) => {
+            //
+            //    }
+            //}
+
             while diff.x != 0 {
                 if diff.x > 0 { // go left
                     if curr.y == avoid.y && (curr.x - 1) == avoid.x {
+                        // TODO for dpad - better to go vv< than <v< for path from A to <
+                        println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}", avoid, curr, path);
                         break;
                     } else {
                         path.push('<');
                         diff.x -= 1;
                         curr.x -= 1;
-                    } 
+                    }
                     //if curr.y == avoid.y && curr.x == avoid.y {
                     //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
                     //}
@@ -345,6 +357,7 @@ impl Robot {
             while diff.y != 0 {
                 if diff.y < 0 {
                     if curr.x == avoid.x && (curr.y + 1) == avoid.y {
+                        println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
                         break;
                     } else {
                         path.push('v');
@@ -441,16 +454,16 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_distance_r1_to() -> Result<(), String> {
-        let conundrum: Conundrum = "".parse()?;
-
-        let actual = conundrum.distance_r1_to('0');
-        let expected = 2;
-        assert_eq!(expected, actual);
-
-        Ok(())
-    }
+    //#[test]
+    //fn test_distance_r1_to() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual = conundrum.distance_r1_to('0');
+    //    let expected = 2;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
 
     #[test]
     fn test_distance_r2_to() -> Result<(), String> {
@@ -498,6 +511,9 @@ mod tests {
 
     #[test]
     fn test_part1_by_steps() -> Result<(), String> {
+        /*
+        *   029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+        */
         let conundrum: Conundrum = "".parse()?;
 
         let actual: usize = vec![
