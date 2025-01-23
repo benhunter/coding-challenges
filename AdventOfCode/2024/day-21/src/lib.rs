@@ -323,75 +323,101 @@ impl Robot {
         let mut curr = from_coord.clone();
 
         while diff.x != 0 || diff.y != 0 {
-            //match self.pad_position {
-            //    PadPosition::NumPad(c) => {
-            //        // if going down, go down first, then left
-            //        // if going up, go right first, then left
-            //    }
-            //    PadPosition::DirectionPad(c) => {
-            //
-            //    }
-            //}
+            match self.pad_position {
+                PadPosition::NumPad(c) => {
+                    // if going down, go down first, then left
+                    // if going up, go right first, then left
 
-            while diff.x != 0 {
-                if diff.x > 0 { // go left
-                    if curr.y == avoid.y && (curr.x - 1) == avoid.x {
-                        // TODO for dpad - better to go vv< than <v< for path from A to <
-                        println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}", avoid, curr, path);
-                        break;
-                    } else {
-                        path.push('<');
-                        diff.x -= 1;
-                        curr.x -= 1;
+                    while diff.x != 0 {
+                        if diff.x > 0 { // go left
+                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
+                                // TODO for dpad - better to go vv< than <v< for path from A to <
+                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}", avoid, curr, path);
+                                break;
+                            } else {
+                                path.push('<');
+                                diff.x -= 1;
+                                curr.x -= 1;
+                            }
+                            //if curr.y == avoid.y && curr.x == avoid.y {
+                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
+                            //}
+                        } else {
+                            path.push('>');
+                            diff.x += 1;
+                            curr.x += 1;
+                        }
                     }
-                    //if curr.y == avoid.y && curr.x == avoid.y {
-                    //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
-                    //}
-                } else {
-                    path.push('>');
-                    diff.x += 1;
-                    curr.x += 1;
-                }
-            }
 
-            while diff.y != 0 {
-                if diff.y < 0 {
-                    if curr.x == avoid.x && (curr.y + 1) == avoid.y {
-                        println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
-                        break;
-                    } else {
-                        path.push('v');
-                        diff.y += 1;
-                        curr.y += 1;
-                    }
-                } else {
-                    if curr.x == avoid.x && (curr.y - 1) == avoid.y {
-                        break;
-                    } else {
-                        path.push('^'); // (0, 0) is origin
-                        diff.y -=1;
-                        curr.y -=1;
+                    while diff.y != 0 {
+                        if diff.y < 0 {
+                            if curr.x == avoid.x && (curr.y + 1) == avoid.y {
+                                println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
+                                break;
+                            } else {
+                                path.push('v');
+                                diff.y += 1;
+                                curr.y += 1;
+                            }
+                        } else {
+                            if curr.x == avoid.x && (curr.y - 1) == avoid.y {
+                                break;
+                            } else {
+                                path.push('^'); // (0, 0) is origin
+                                diff.y -=1;
+                                curr.y -=1;
+                            }
+                        }
                     }
                 }
 
-                //if diff.y > 0 {
-                //    if curr.x == avoid.x && (curr.y - 1) == avoid.y {
-                //        break;
-                //    } else {
-                //        path.push('^'); // (0, 0) is origin
-                //        diff.y -=1;
-                //        curr.y -=1;
-                //    }
-                //} else {
-                //    if curr.x == avoid.x && (curr.y + 1) == avoid.y {
-                //        break;
-                //    } else {
-                //        path.push('v');
-                //        diff.y += 1;
-                //        curr.y += 1;
-                //    }
-                //}
+                PadPosition::DirectionPad(c) => {
+                    while diff.y != 0 {
+                        if diff.y < 0 {
+                            if curr.x == avoid.x && (curr.y + 1) == avoid.y {
+                                println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
+                                break;
+                            } else {
+                                path.push('v');
+                                diff.y += 1;
+                                curr.y += 1;
+                            }
+                        } else {
+                            if curr.x == avoid.x && (curr.y - 1) == avoid.y {
+                                break;
+                            } else {
+                                path.push('^'); // (0, 0) is origin
+                                diff.y -=1;
+                                curr.y -=1;
+                            }
+                        }
+                    }
+
+                    while diff.x != 0 {
+                        if diff.x > 0 { // go left
+                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
+                                // TODO for dpad - better to go vv< than <v< for path from A to <
+                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}", avoid, curr, path);
+                                break;
+                            } else {
+                                path.push('<');
+                                diff.x -= 1;
+                                curr.x -= 1;
+                            }
+                            //if curr.y == avoid.y && curr.x == avoid.y {
+                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
+                            //}
+                        } else {
+                            path.push('>');
+                            diff.x += 1;
+                            curr.x += 1;
+                        }
+                    }
+
+
+                }
             }
+
         }
 
         assert_eq!(to_coord, curr);
@@ -488,6 +514,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn test_distance_r3_from_A_to_0() -> Result<(), String> {
         let conundrum: Conundrum = "".parse()?;
 
@@ -510,7 +537,8 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_by_steps() -> Result<(), String> {
+    #[allow(non_snake_case)]
+    fn test_029A_by_steps() -> Result<(), String> {
         /*
         *   029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
         */
@@ -529,7 +557,8 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_code() -> Result<(), String> {
+    #[allow(non_snake_case)]
+    fn test_029A_code() -> Result<(), String> {
         let conundrum: Conundrum = "029A".parse()?;
 
         let actual = conundrum.solve_part1();
@@ -538,6 +567,80 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_980A_code() -> Result<(), String> {
+        /*
+        *   980A: <v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A
+        */
+        let conundrum: Conundrum = "980A".parse()?;
+
+        let actual = conundrum.solve_part1();
+        let expected = 60 * 980;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_179A_code() -> Result<(), String> {
+        /*
+        * Expected:
+        *   179A: <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+        *
+        * Actual:
+        * [Robot::path()] avoid going left, avoid=(0, 3), curr=(1, 3), path=<
+        * [distance_r3] A to 1, r3_path=v<A<AA>>^AvA^<A>Av<A<A>>^AvAA^<A>A, r3_path.len()=34, r2_full_path=v<<A>^Av<A>>^A, r1_path=<^<A
+        * [distance_r3] 1 to 7, r3_path=v<<A>>^AAvA^A, r3_path.len()=13, r2_full_path=<AA>A, r1_path=^^A
+        * [distance_r3] 7 to 9, r3_path=v<A^>AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+        * [distance_r3] 9 to A, r3_path=v<A<A>>^AAA<Av>A^A, r3_path.len()=18, r2_full_path=v<AAA^>A, r1_path=vvvA
+        * code=A179A, sum=76, numeric=179, sum*numeric=13604
+        *
+        * A1 v<A<AA>>^AvA^<A>Av<A<A>>^AvAA^<A>A
+        * 17 v<<A>>^AAvA^A
+        * 79 v<A^>AA<A>A
+        * 9A v<A<A>>^AAA<Av>A^A
+        */
+        let conundrum: Conundrum = "179A".parse()?;
+
+        let actual = conundrum.solve_part1();
+        let expected = 68 * 179;
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_456A_code() -> Result<(), String> {
+    //    /*
+    //    *   456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A
+    //    */
+    //    let conundrum: Conundrum = "456A".parse()?;
+    //
+    //    let actual = conundrum.solve_part1();
+    //    //let expected =
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_379A_code() -> Result<(), String> {
+    //    /*
+    //    *   379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+    //    */
+    //    let conundrum: Conundrum = "456A".parse()?;
+    //
+    //    let actual = conundrum.solve_part1();
+    //    //let expected =
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
 
      #[test]
     fn test_part1() -> Result<(), String> {
