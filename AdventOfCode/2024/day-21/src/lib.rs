@@ -424,6 +424,20 @@ impl Robot {
         assert_eq!(to_coord, curr);
 
         path.push('A');
+        match self.pad_position {
+            PadPosition::NumPad(..) => {
+                 if path.contains("^^<<") {
+                    println!("[Robot::path()] self={:?}, path={}", self, path);
+                    path = path.replace("^^<<", "<<^^");
+                }
+            },
+            PadPosition::DirectionPad(..) => {
+                // if path.contains("^^<<") {
+                //    println!("[Robot::path()] self={:?}, path={}", self, path);
+                //    path = path.replace("^^<<", "<<^^");
+                //}
+            },
+        }
         path
     }
 }
@@ -640,11 +654,16 @@ mod tests {
         * [distance_r3] 9 to A, r3_path=v<A<A>>^AAA<Av>A^A, r3_path.len()=18, r2_full_path=v<AAA^>A, r1_path=vvvA
         * code=A379A, sum=68, numeric=379, sum*numeric=25772
         *
-        * expected 379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+        * expected 379A: <v<A>>^AvA^A    <vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
         * actual      A3 v<<A>>^AvA^A
-        *                     37 v<<A>>^AAv<A<A>>^AAvAA^<A>A  * <- TODO error here? 3 to 7
-        *                                                79 v<A^>AA<A>A
-        *                                                           9A v<A<A>>^AAA<Av>A^A
+        *                         37 v<<A>>^AAv<A<A>>^AAvAA^<A>A  * <- TODO error here? 3 to 7
+        *                                                    79 v<A^>AA<A>A
+        *                                                               9A v<A<A>>^AAA<Av>A^A
+        * actual robot 2    <   A > A   <   AA  v <   AA >>  ^ A  v  AA ^ A  v <   AAA ^  > A
+        * actual robot 1        ^   A       ^^        <<       A     >>   A        vvv      A
+        * expect robot 2    <   A > A----  v <<   AA >  ^ AA > A  v  AA ^ A   < v  AAA >  ^ A
+        * expect robot 1        ^   A             <<      ^^   A     >>   A        vvv      A
+        *  expect robot 1 should have gone left then up, <<^^
         *
         */
         let conundrum: Conundrum = "379A".parse()?;
