@@ -328,10 +328,31 @@ impl Robot {
                     // if going down, go down first, then left
                     // if going up, go right first, then left
 
+                    while diff.x != 0 {
+                        if diff.x > 0 { // go left
+                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
+                                // TODO for dpad - better to go vv< than <v< for path from A to <
+                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, from={}, to={}, path={}", avoid, curr, from_coord, to_coord, path);
+                                break;
+                            } else {
+                                path.push('<');
+                                diff.x -= 1;
+                                curr.x -= 1;
+                            }
+                            //if curr.y == avoid.y && curr.x == avoid.y {
+                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
+                            //}
+                        } else {
+                            path.push('>');
+                            diff.x += 1;
+                            curr.x += 1;
+                        }
+                    }
+
                     while diff.y != 0 {
                         if diff.y < 0 {
                             if curr.x == avoid.x && (curr.y + 1) == avoid.y {
-                                println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
+                                println!("[Robot::path()] avoid going down, avoid={}, curr={}", avoid, curr);
                                 break;
                             } else {
                                 path.push('v');
@@ -349,30 +370,42 @@ impl Robot {
                         }
                     }
 
-                    while diff.x != 0 {
-                        if diff.x > 0 { // go left
-                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
-                                // TODO for dpad - better to go vv< than <v< for path from A to <
-                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}", avoid, curr, path);
-                                break;
-                            } else {
-                                path.push('<');
-                                diff.x -= 1;
-                                curr.x -= 1;
-                            }
-                            //if curr.y == avoid.y && curr.x == avoid.y {
-                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
-                            //}
-                        } else {
-                            path.push('>');
-                            diff.x += 1;
-                            curr.x += 1;
-                        }
+                    let pattern = "<^<";
+                    if path.contains(pattern) {
+                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
+                        path = path.replace(pattern, "^<<");
+                    }
+
+                    let pattern = "<^^<";
+                    if path.contains(pattern) {
+                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
+                        path = path.replace(pattern, "^^<<");
                     }
 
                 }
 
                 PadPosition::DirectionPad(c) => {
+                    while diff.x != 0 {
+                        if diff.x > 0 { // go left
+                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
+                                // TODO for dpad - better to go vv< than <v< for path from A to <
+                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}, from={}, to={}, self={:?}", avoid, curr, path, from_coord, to_coord, self);
+                                break;
+                            } else {
+                                path.push('<');
+                                diff.x -= 1;
+                                curr.x -= 1;
+                            }
+                            //if curr.y == avoid.y && curr.x == avoid.y {
+                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
+                            //}
+                        } else {
+                            path.push('>');
+                            diff.x += 1;
+                            curr.x += 1;
+                        }
+                    }
+
                     while diff.y != 0 {
                         if diff.y < 0 {
                             if curr.x == avoid.x && (curr.y + 1) == avoid.y {
@@ -394,27 +427,23 @@ impl Robot {
                         }
                     }
 
-                    while diff.x != 0 {
-                        if diff.x > 0 { // go left
-                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
-                                // TODO for dpad - better to go vv< than <v< for path from A to <
-                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}", avoid, curr, path);
-                                break;
-                            } else {
-                                path.push('<');
-                                diff.x -= 1;
-                                curr.x -= 1;
-                            }
-                            //if curr.y == avoid.y && curr.x == avoid.y {
-                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
-                            //}
-                        } else {
-                            path.push('>');
-                            diff.x += 1;
-                            curr.x += 1;
-                        }
+                    let pattern = "<v<v";
+                    if path.contains(pattern) {
+                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
+                        path = path.replace(pattern, "vv<<");
                     }
 
+                    let pattern = "<v<";
+                    if path.contains(pattern) {
+                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
+                        path = path.replace(pattern, "v<<");
+                    }
+
+                    let pattern = "<vv<";
+                    if path.contains(pattern) {
+                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
+                        path = path.replace(pattern, "vv<<");
+                    }
 
                 }
             }
@@ -426,15 +455,17 @@ impl Robot {
         path.push('A');
         match self.pad_position {
             PadPosition::NumPad(..) => {
-                 if path.contains("^^<<") {
-                    println!("[Robot::path()] self={:?}, path={}", self, path);
-                    path = path.replace("^^<<", "<<^^");
-                }
+                //let pattern = "^^<<";
+                //if path.contains(pattern) {
+                //    println!("[Robot::path()] found pattern={}, self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
+                //    //path = path.replace("^^<<", "<<^^");
+                //}
             },
             PadPosition::DirectionPad(..) => {
-                // if path.contains("^^<<") {
-                //    println!("[Robot::path()] self={:?}, path={}", self, path);
-                //    path = path.replace("^^<<", "<<^^");
+                //let pattern = "^^<<";
+                // if path.contains(pattern) {
+                //    println!("[Robot::path()] found pattern={}, self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
+                //    //path = path.replace("^^<<", "<<^^");
                 //}
             },
         }
@@ -746,6 +777,8 @@ code=A179A, sum=64, numeric=179, sum*numeric=11456
         let actual = solve_part1(input)?;
         let too_low = 187062;
         assert!(actual > too_low);
+        let too_high = 199154;
+        //assert!(actual < too_high);
         let solution = 0;
         assert_eq!(actual, solution);
         Ok(())
