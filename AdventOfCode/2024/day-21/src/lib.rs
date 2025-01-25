@@ -308,14 +308,17 @@ impl Robot {
     //}
 
     fn path(&self, from_button: char, to_button: char, using: &Robot) -> String {
+        /*
+         * TODO return multiple strings for possible paths to try
+        */
         let from_coord = using.coord_of(from_button);
         let to_coord = using.coord_of(to_button);
         let mut diff = from_coord - to_coord;
         //println!("[Robot::path()] self={:?}, from_button={}, to_button={}", self, from_button, to_button);
         let mut path = String::new();
 
-        // TODO if numpad, avoid (0,3)
-        // TODO if dirpad, avoid (0,0)
+        // if numpad, avoid (0,3)
+        // if dirpad, avoid (0,0)
         let avoid = match self.pad_position {
             PadPosition::NumPad(_) => Coord::new(0, 3),
             PadPosition::DirectionPad(_) => Coord::new(0, 0),
