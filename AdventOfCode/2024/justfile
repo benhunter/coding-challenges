@@ -4,7 +4,7 @@ create day:
     just get-input {{day}}
 
 work day:
-    cargo watch --clear -w {{day}} -x "check -p {{day}}" -s "just test {{day}}" -s "just lint {{day}}"
+    cargo watch --clear -w {{day}} -x "check -p {{day}}" -s "RUST_LOG=info just test {{day}}" -s "just lint {{day}}"
 
 test day:
     cargo nextest run -p {{day}}

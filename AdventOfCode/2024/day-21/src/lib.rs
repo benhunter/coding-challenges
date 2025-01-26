@@ -1,4 +1,6 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::Display, str::{Chars, FromStr}};
+use tracing::{debug, info};
+use tracing_subscriber::field::debug;
 use util::{Coord, Direction, ParseError};
 
 pub fn solve_part1(input: &str) -> Result<i64, String> {
@@ -78,72 +80,122 @@ impl Conundrum {
         r2_path.len()
     }
 
-    fn distance_r3_to(&self, npad_button: char) -> usize {
-        println!("[distance_r3_to] self={:?}, npad_button={}", self, npad_button);
+    //fn distance_r3_to(&self, npad_button: char) -> usize {
+    //    println!("[distance_r3_to] self={:?}, npad_button={}", self, npad_button);
+    //
+    //    let r1_path = self.robot_1.path('A', npad_button, &self.robot_1)
+    //        .pop().unwrap(); // TODO handle all paths
+    //    println!("[distance_r3_to] r1_path={}", r1_path);
+    //    let mut prev_r1_btn = 'A'; // Start on 'A'.
+    //    let mut r2_path = String::new();
+    //    let mut prev_r2_btn = 'A'; // Start on 'A'.
+    //    let mut r3_path = String::new();
+    //
+    //    r1_path.chars().for_each(|r1_btn| {
+    //        println!("[distance_r3_to] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
+    //        r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2)
+    //            .pop().unwrap(); // TODO handle all paths
+    //        println!("[distance_r3_to] r2_path={}", r2_path);
+    //
+    //        prev_r1_btn = r1_btn;
+    //
+    //        r2_path.chars().for_each(|r2_btn| {
+    //            println!("[distance_r3_to] prev_r2_btn={}, r2_btn={}", prev_r2_btn, r2_btn);
+    //            r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3)
+    //                .pop().unwrap() // TODO handle all paths
+    //                .as_str());
+    //            prev_r2_btn = r2_btn;
+    //            println!("[distance_r3_to] r3_path={}", r3_path);
+    //        })
+    //    });
+    //
+    //    println!("[distance_r3_to] r3_path={}, r3_path.len()={}", r3_path, r3_path.len());
+    //    r3_path.len()
+    //}
 
-        let r1_path = self.robot_1.path('A', npad_button, &self.robot_1)
-            .pop().unwrap(); // TODO handle all paths
-        println!("[distance_r3_to] r1_path={}", r1_path);
-        let mut prev_r1_btn = 'A'; // Start on 'A'.
-        let mut r2_path = String::new();
-        let mut prev_r2_btn = 'A'; // Start on 'A'.
-        let mut r3_path = String::new();
-
-        r1_path.chars().for_each(|r1_btn| {
-            println!("[distance_r3_to] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
-            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2)
-                .pop().unwrap(); // TODO handle all paths
-            println!("[distance_r3_to] r2_path={}", r2_path);
-
-            prev_r1_btn = r1_btn;
-
-            r2_path.chars().for_each(|r2_btn| {
-                println!("[distance_r3_to] prev_r2_btn={}, r2_btn={}", prev_r2_btn, r2_btn);
-                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3)
-                    .pop().unwrap() // TODO handle all paths
-                    .as_str());
-                prev_r2_btn = r2_btn;
-                println!("[distance_r3_to] r3_path={}", r3_path);
-            })
-        });
-
-        println!("[distance_r3_to] r3_path={}, r3_path.len()={}", r3_path, r3_path.len());
-        r3_path.len()
-    }
+    // Get the shortest path from a Vec<String>
+    //paths
+    //    .iter()
+    //    .min_by_key(|s| s.len())
+    //    .unwrap()
+    //    .to_string();
 
     fn distance_r3(&self, from_npad_btn: char, to_npad_button: char) -> usize {
-        //println!("[distance_r3] self={:?}, npad_button={}", self, to_npad_button);
+        let numpad_goal = format!("{}{}", from_npad_btn, to_npad_button);
+        debug!("distance_r3 numpad_goal={}", numpad_goal);
 
-        let r1_path = self.robot_1.path(from_npad_btn, to_npad_button, &self.robot_1)
-            .pop().unwrap(); // TODO handle all paths;
         //println!("[distance_r3] r1_path={}", r1_path);
-        let mut prev_r1_btn = 'A'; // Start on 'A'.
-        let mut r2_path = String::new();
-        let mut r2_full_path = String::new();
-        let mut prev_r2_btn = 'A'; // Start on 'A'.
-        let mut r3_path = String::new();
+        //let mut prev_r1_btn = 'A'; // Start on 'A'.
+        //let mut r2_path = String::new();
+        //let mut r2_full_path = String::new();
+        //let mut prev_r2_btn = 'A'; // Start on 'A'.
+        //let mut r3_path = String::new();
 
-        r1_path.chars().for_each(|r1_btn| {
-            //println!("[distance_r3] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
-            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2)
-                .pop().unwrap(); // TODO handle all paths
-            r2_full_path.push_str(&r2_path);
-            //println!("[distance_r3] r2_path={}", r2_path);
-
-            prev_r1_btn = r1_btn;
-
-            r2_path.chars().for_each(|r2_btn| {
-                //println!("[distance_r3] prev_r2_btn={}, r2_btn={}", prev_r2_btn, r2_btn);
-                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3)
-                    .pop().unwrap() // TODO handle all paths
-                    .as_str());
-                prev_r2_btn = r2_btn;
-                //println!("[distance_r3] r3_path={}", r3_path);
+        let r1_presses = self.robot_1.path(from_npad_btn, to_npad_button, &self.robot_1);
+        let r1_paths: Vec<String> = r1_presses.iter()
+            .map(|r1_path| {
+                format!("A{}", r1_path)
             })
-        });
+            .collect();
 
-        println!("[distance_r3] {} to {}, r3_path={}, r3_path.len()={}, r2_full_path={}, r1_path={}", from_npad_btn, to_npad_button, r3_path, r3_path.len(), r2_full_path, r1_path);
-        r3_path.len()
+        debug!("r1_paths={:?}", r1_paths);
+        let final_paths: Vec<Path> = r1_paths
+            .iter()
+            .flat_map(|r1_path| {
+                // TODO add A at front of r1_path?
+                assert!(r1_path.chars().nth(0).unwrap() == 'A');
+                r1_path
+                    .as_bytes()
+                    .windows(2)
+                    .flat_map(|r1_substr| {
+                        let r1_substr_string: String = r1_substr.iter().map(|r| *r as char).collect();
+
+                        let mut r2_paths: Vec<String> = self.robot_2.path(r1_substr[0].into(), r1_substr[1].into(), &self.robot_2);
+                        debug!("\tr1_path={:?}, r1_substr={:?}, r2_paths={:?}", r1_path.clone(), r1_substr_string, r2_paths);
+                        let r2_full_paths: Vec<Path> = r2_paths
+                            .iter_mut()
+                            .flat_map(|r2_path| {
+                                r2_path.insert(0, 'A');
+                                //assert!(r2_path.chars().nth(0).unwrap() == 'A');
+
+                                let r3_r2_path: Vec<Vec<Path>> = r2_path
+                                    .as_bytes()
+                                    .windows(2)
+                                    .map(|r2_substr| {
+                                        let r2_substr_string: String = r1_substr.iter().map(|r| *r as char).collect();
+
+                                        let mut r3_presses: Vec<String> = self.robot_3.path(r2_substr[0].into(), r2_substr[1].into(), &self.robot_3);
+                                        debug!("\t\tr2_substr={:?}, r3_paths={:?}", r2_substr_string, r3_presses);
+
+                                        let r3_paths: Vec<Path> = r3_presses
+                                            .iter_mut()
+                                            .map(|r3_path| {
+                                                let p = Path { numpad: numpad_goal.clone(), r1: r1_path.clone(), r2: r2_path.clone(), r3: r3_path.to_string() };
+                                                debug!("\t\t\tr3_path p={:?}", p);
+                                                p
+                                            })
+                                            .collect();
+                                        debug!("\t\tr3_paths={:?}", r3_paths);
+                                        r3_paths
+
+                                    })
+                                    .collect();
+                                //debug!("\t\tr3_r2_path={:?}", r3_r2_path);
+                                r3_r2_path.iter()
+                                    .for_each(|p| debug!("\t\tr3_r2_path p={:?}", p));
+                                r3_r2_path.into_iter().flatten()
+
+                            })
+                            .collect();
+                        r2_full_paths
+                    })
+            })
+            .collect()
+        ;
+
+        //println!("[distance_r3] {} to {}, r3_path={}, r3_path.len()={}, r2_full_path={}, r1_path={}", from_npad_btn, to_npad_button, r3_path, r3_path.len(), r2_full_path, r1_path);
+
+        final_paths.len()
     }
 
     fn solve_part1(&self) -> usize {
@@ -322,6 +374,7 @@ impl Robot {
         /*
          * TODO return multiple strings for possible paths to try
         */
+        //debug!("path from={}, to={}", from_button, to_button);
 
         let from_coord = using.coord_of(from_button);
         let to_coord = using.coord_of(to_button);
@@ -348,7 +401,7 @@ impl Robot {
             }
 
             let path_diff_coord = partial_paths.pop().unwrap();
-            println!("[Robot::path()] partial_paths={:?} after pop", partial_paths);
+            //println!("[Robot::path()] partial_paths={:?} after pop", partial_paths);
             let mut path = path_diff_coord.0;
             let mut diff = path_diff_coord.1;
             let mut curr = path_diff_coord.2;
@@ -463,9 +516,20 @@ impl Robot {
     }
 }
 
+#[derive(Debug)]
+struct Path {
+    numpad: String,
+    r1: String,
+    r2: String,
+    r3: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_log::test;
+    //use tracing::Level;
+    //use tracing_subscriber::FmtSubscriber;
 
     #[test]
     fn test_parse() -> Result<(), String> {
@@ -538,16 +602,16 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_distance_r3_to() -> Result<(), String> {
-        let conundrum: Conundrum = "".parse()?;
-
-        let actual = conundrum.distance_r3_to('0');
-        let expected = 18;
-        assert_eq!(expected, actual);
-
-        Ok(())
-    }
+    //#[test]
+    //fn test_distance_r3_to() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual = conundrum.distance_r3_to('0');
+    //    let expected = 18;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
 
     #[test]
     #[allow(non_snake_case)]
@@ -578,6 +642,7 @@ mod tests {
         /*
         *   029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
         */
+
         let conundrum: Conundrum = "".parse()?;
 
         let actual: usize = vec![

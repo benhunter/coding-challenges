@@ -1,5 +1,5 @@
 {
-  description = "Rust development environment";
+  description = "Rust development environment. Selects toolchain from ./rust-toolchain.toml. Supports Neovim LSP.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
