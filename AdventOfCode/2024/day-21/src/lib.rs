@@ -65,11 +65,14 @@ impl Conundrum {
     fn distance_r2_to(&self, npad_button: char) -> usize {
         println!("[distance_r2_to] self={:?}, npad_button={}", self, npad_button);
         let mut r2_path = String::new();
-        let r1_path = self.robot_1.path('A', npad_button, &self.robot_1);
+        let r1_path = self.robot_1.path('A', npad_button, &self.robot_1)
+            .pop().unwrap(); // TODO handle all paths
         let mut prev_r1_btn = 'A'; // Start on 'A'.
         r1_path.chars().for_each(|r1_btn| {
             println!("[distance_r2_to] r1_btn={}, r2_path={}", r1_btn, r2_path);
-            r2_path.push_str(self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2).as_str());
+            r2_path.push_str(self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2)
+                .pop().unwrap() // TODO handle all paths
+                .as_str());
             prev_r1_btn = r1_btn;
         });
         r2_path.len()
@@ -78,7 +81,8 @@ impl Conundrum {
     fn distance_r3_to(&self, npad_button: char) -> usize {
         println!("[distance_r3_to] self={:?}, npad_button={}", self, npad_button);
 
-        let r1_path = self.robot_1.path('A', npad_button, &self.robot_1);
+        let r1_path = self.robot_1.path('A', npad_button, &self.robot_1)
+            .pop().unwrap(); // TODO handle all paths
         println!("[distance_r3_to] r1_path={}", r1_path);
         let mut prev_r1_btn = 'A'; // Start on 'A'.
         let mut r2_path = String::new();
@@ -87,14 +91,17 @@ impl Conundrum {
 
         r1_path.chars().for_each(|r1_btn| {
             println!("[distance_r3_to] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
-            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2);
+            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2)
+                .pop().unwrap(); // TODO handle all paths
             println!("[distance_r3_to] r2_path={}", r2_path);
 
             prev_r1_btn = r1_btn;
 
             r2_path.chars().for_each(|r2_btn| {
                 println!("[distance_r3_to] prev_r2_btn={}, r2_btn={}", prev_r2_btn, r2_btn);
-                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3).as_str());
+                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3)
+                    .pop().unwrap() // TODO handle all paths
+                    .as_str());
                 prev_r2_btn = r2_btn;
                 println!("[distance_r3_to] r3_path={}", r3_path);
             })
@@ -107,7 +114,8 @@ impl Conundrum {
     fn distance_r3(&self, from_npad_btn: char, to_npad_button: char) -> usize {
         //println!("[distance_r3] self={:?}, npad_button={}", self, to_npad_button);
 
-        let r1_path = self.robot_1.path(from_npad_btn, to_npad_button, &self.robot_1);
+        let r1_path = self.robot_1.path(from_npad_btn, to_npad_button, &self.robot_1)
+            .pop().unwrap(); // TODO handle all paths;
         //println!("[distance_r3] r1_path={}", r1_path);
         let mut prev_r1_btn = 'A'; // Start on 'A'.
         let mut r2_path = String::new();
@@ -117,7 +125,8 @@ impl Conundrum {
 
         r1_path.chars().for_each(|r1_btn| {
             //println!("[distance_r3] prev_r1_btn={} r1_btn={}", prev_r1_btn, r1_btn);
-            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2);
+            r2_path = self.robot_2.path(prev_r1_btn, r1_btn, &self.robot_2)
+                .pop().unwrap(); // TODO handle all paths
             r2_full_path.push_str(&r2_path);
             //println!("[distance_r3] r2_path={}", r2_path);
 
@@ -125,7 +134,9 @@ impl Conundrum {
 
             r2_path.chars().for_each(|r2_btn| {
                 //println!("[distance_r3] prev_r2_btn={}, r2_btn={}", prev_r2_btn, r2_btn);
-                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3).as_str());
+                r3_path.push_str(self.robot_3.path(prev_r2_btn, r2_btn, &self.robot_3)
+                    .pop().unwrap() // TODO handle all paths
+                    .as_str());
                 prev_r2_btn = r2_btn;
                 //println!("[distance_r3] r3_path={}", r3_path);
             })
@@ -307,15 +318,17 @@ impl Robot {
     //    path
     //}
 
-    fn path(&self, from_button: char, to_button: char, using: &Robot) -> String {
+    fn path(&self, from_button: char, to_button: char, using: &Robot) -> Vec<String> {
         /*
          * TODO return multiple strings for possible paths to try
         */
+
         let from_coord = using.coord_of(from_button);
         let to_coord = using.coord_of(to_button);
-        let mut diff = from_coord - to_coord;
+        let start_diff = from_coord - to_coord;
         //println!("[Robot::path()] self={:?}, from_button={}, to_button={}", self, from_button, to_button);
-        let mut path = String::new();
+        let mut partial_paths: Vec<(String, Coord, Coord)> = vec![(String::new(), start_diff.clone(), from_coord.clone())];
+        let mut complete_paths: Vec<String> = vec![];
 
         // if numpad, avoid (0,3)
         // if dirpad, avoid (0,0)
@@ -323,156 +336,130 @@ impl Robot {
             PadPosition::NumPad(_) => Coord::new(0, 3),
             PadPosition::DirectionPad(_) => Coord::new(0, 0),
         };
-        let mut curr = from_coord.clone();
 
-        while diff.x != 0 || diff.y != 0 {
-            match self.pad_position {
-                PadPosition::NumPad(c) => {
-                    // if going down, go down first, then left
-                    // if going up, go right first, then left
+        let mut loops = 0;
+        let mut loops2 = 0;
+        let MAX_LOOPS = 10;
 
-                    while diff.x != 0 {
-                        if diff.x > 0 { // go left
-                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
-                                // TODO for dpad - better to go vv< than <v< for path from A to <
-                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, from={}, to={}, path={}", avoid, curr, from_coord, to_coord, path);
-                                break;
-                            } else {
-                                path.push('<');
-                                diff.x -= 1;
-                                curr.x -= 1;
-                            }
-                            //if curr.y == avoid.y && curr.x == avoid.y {
-                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
-                            //}
-                        } else {
-                            path.push('>');
-                            diff.x += 1;
-                            curr.x += 1;
-                        }
-                    }
-
-                    while diff.y != 0 {
-                        if diff.y < 0 {
-                            if curr.x == avoid.x && (curr.y + 1) == avoid.y {
-                                println!("[Robot::path()] avoid going down, avoid={}, curr={}", avoid, curr);
-                                break;
-                            } else {
-                                path.push('v');
-                                diff.y += 1;
-                                curr.y += 1;
-                            }
-                        } else {
-                            if curr.x == avoid.x && (curr.y - 1) == avoid.y {
-                                break;
-                            } else {
-                                path.push('^'); // (0, 0) is origin
-                                diff.y -=1;
-                                curr.y -=1;
-                            }
-                        }
-                    }
-
-                    let pattern = "<^<";
-                    if path.contains(pattern) {
-                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
-                        path = path.replace(pattern, "^<<");
-                    }
-
-                    let pattern = "<^^<";
-                    if path.contains(pattern) {
-                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
-                        path = path.replace(pattern, "^^<<");
-                    }
-
-                }
-
-                PadPosition::DirectionPad(c) => {
-                    while diff.x != 0 {
-                        if diff.x > 0 { // go left
-                            if curr.y == avoid.y && (curr.x - 1) == avoid.x {
-                                // TODO for dpad - better to go vv< than <v< for path from A to <
-                                println!("[Robot::path()] avoid going left, avoid={}, curr={}, path={}, from={}, to={}, self={:?}", avoid, curr, path, from_coord, to_coord, self);
-                                break;
-                            } else {
-                                path.push('<');
-                                diff.x -= 1;
-                                curr.x -= 1;
-                            }
-                            //if curr.y == avoid.y && curr.x == avoid.y {
-                            //    panic!("from={}, to={}, diff={}, avoid={}", from_coord, to_coord, diff, avoid);
-                            //}
-                        } else {
-                            path.push('>');
-                            diff.x += 1;
-                            curr.x += 1;
-                        }
-                    }
-
-                    while diff.y != 0 {
-                        if diff.y < 0 {
-                            if curr.x == avoid.x && (curr.y + 1) == avoid.y {
-                                println!("[Robot::path()] avoid={}, curr={} avoid going down", avoid, curr);
-                                break;
-                            } else {
-                                path.push('v');
-                                diff.y += 1;
-                                curr.y += 1;
-                            }
-                        } else {
-                            if curr.x == avoid.x && (curr.y - 1) == avoid.y {
-                                break;
-                            } else {
-                                path.push('^'); // (0, 0) is origin
-                                diff.y -=1;
-                                curr.y -=1;
-                            }
-                        }
-                    }
-
-                    let pattern = "<v<v";
-                    if path.contains(pattern) {
-                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
-                        path = path.replace(pattern, "vv<<");
-                    }
-
-                    let pattern = "<v<";
-                    if path.contains(pattern) {
-                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
-                        path = path.replace(pattern, "v<<");
-                    }
-
-                    let pattern = "<vv<";
-                    if path.contains(pattern) {
-                        println!("[Robot::path()] found pattern={} self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
-                        path = path.replace(pattern, "vv<<");
-                    }
-
-                }
+        while partial_paths.len() > 0 {
+            loops += 1;
+            if loops > MAX_LOOPS {
+                break;
             }
 
-        }
+            let path_diff_coord = partial_paths.pop().unwrap();
+            println!("[Robot::path()] partial_paths={:?} after pop", partial_paths);
+            let mut path = path_diff_coord.0;
+            let mut diff = path_diff_coord.1;
+            let mut curr = path_diff_coord.2;
 
-        assert_eq!(to_coord, curr);
+            if diff.x != 0 && diff.y != 0 {
+                // two paths
+                // go x and add path
+                let mut path_x = path.clone();
+                let mut diff_x = diff.clone();
+                let mut curr_x = curr.clone();
 
-        path.push('A');
-        match self.pad_position {
-            PadPosition::NumPad(..) => {
-                //let pattern = "^^<<";
-                //if path.contains(pattern) {
-                //    println!("[Robot::path()] found pattern={}, self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
-                //    //path = path.replace("^^<<", "<<^^");
-                //}
-            },
-            PadPosition::DirectionPad(..) => {
-                //let pattern = "^^<<";
-                // if path.contains(pattern) {
-                //    println!("[Robot::path()] found pattern={}, self={:?}, path={}, from_coord={}, to_coord={}", pattern, self, path, from_coord, to_coord);
-                //    //path = path.replace("^^<<", "<<^^");
-                //}
-            },
+                if diff_x.x > 0 {
+                    //println!("[Robot::path()] diff_x.x > 0");
+                    if (curr_x.x - 1) != avoid.x || curr_x.y != avoid.y {
+                        //println!("[Robot::path()] push <");
+                        path_x.push('<');
+                        diff_x.x -= 1;
+                        curr_x.x -= 1;
+                        partial_paths.push((path_x, diff_x, curr_x));
+                    }
+                } else if diff_x.x < 0 {
+                    //println!("[Robot::path()] diff_x.x < 0");
+                    if (curr_x.x + 1) != avoid.x || curr_x.y != avoid.y {
+                        path_x.push('>');
+                        diff_x.x += 1;
+                        curr_x.x += 1;
+                        partial_paths.push((path_x, diff_x, curr_x));
+                    }
+                }
+
+                // TODO
+                // go y and add path
+                let mut path_y = path.clone();
+                let mut diff_y = diff.clone();
+                let mut curr_y = curr.clone();
+
+                if diff_y.y > 0 {
+                    //println!("[Robot::path()] diff_y.y > 0");
+                    if (curr_y.y - 1) != avoid.y || curr_y.x != avoid.x {
+                        path_y.push('^');
+                        diff_y.y -= 1;
+                        curr_y.y -= 1;
+                        partial_paths.push((path_y, diff_y, curr_y));
+                    }
+                } else if diff_y.y < 0 {
+                    //println!("[Robot::path()] diff_y.y < 0");
+                    if (curr_y.y + 1) != avoid.y || curr_y.x != avoid.x {
+                        path_y.push('v');
+                        diff_y.y += 1;
+                        curr_y.y += 1;
+                        partial_paths.push((path_y, diff_y, curr_y));
+                    } 
+                }
+
+                //println!("[Robot::path()] partial_paths={:?}", partial_paths);
+
+            } else {
+
+                while diff.x != 0 || diff.y != 0 {
+                    loops2 += 1;
+                    if loops2 > MAX_LOOPS {
+                        panic!("too many loops");
+                    }
+
+                    //println!("[Robot::path()] self={:?}, from={}, to={}, path={}, diff={}, curr={}, avoid={}", self, from_coord, to_coord, path, diff, curr, avoid);
+                    if diff.x > 0 {
+                        //println!("[Robot::path()] diff.x > 0");
+                        if (curr.x - 1) != avoid.x || curr.y != avoid.y {
+                            //println!("[Robot::path()] push <");
+                            path.push('<');
+                            diff.x -= 1;
+                            curr.x -= 1;
+                        }
+                    } else if diff.x < 0 {
+                        //println!("[Robot::path()] diff.x < 0");
+                        if (curr.x + 1) != avoid.x || curr.y != avoid.y {
+                            path.push('>');
+                            diff.x += 1;
+                            curr.x += 1;
+                        }
+                    }
+
+                    if diff.y > 0 {
+                        //println!("[Robot::path()] diff.y > 0");
+                        if (curr.y - 1) != avoid.y || curr.x != avoid.x {
+                            path.push('^');
+                            diff.y -= 1;
+                            curr.y -= 1;
+                        }
+                    } else if diff.y < 0 {
+                        //println!("[Robot::path()] diff.y < 0");
+                        if (curr.y + 1) != avoid.y || curr.x != avoid.x {
+                            path.push('v');
+                            diff.y += 1;
+                            curr.y += 1;
+                        }
+                    }
+
+                }
+
+                path.push('A');
+                complete_paths.push(path.clone());
+
+            }
+
+            //println!("[Robot::path()] complete_paths={:?}", complete_paths);
+            //println!("[Robot::path()] partial_paths={:?}", partial_paths);
+
         }
-        path
+        complete_paths
+
     }
 }
 
