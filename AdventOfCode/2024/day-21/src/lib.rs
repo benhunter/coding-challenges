@@ -1,5 +1,5 @@
-use std::{fmt::Display, str::{Chars, FromStr}};
-use tracing::{debug, info};
+use std::{fmt::{format, Display}, str::{Chars, FromStr}};
+use tracing::{debug, field::debug, info, warn};
 use tracing_subscriber::field::debug;
 use util::{Coord, Direction, ParseError};
 
@@ -142,7 +142,6 @@ impl Conundrum {
         let final_paths: Vec<Path> = r1_paths
             .iter()
             .flat_map(|r1_path| {
-                // TODO add A at front of r1_path?
                 assert!(r1_path.chars().nth(0).unwrap() == 'A');
                 r1_path
                     .as_bytes()
@@ -152,49 +151,62 @@ impl Conundrum {
 
                         let mut r2_paths: Vec<String> = self.robot_2.path(r1_substr[0].into(), r1_substr[1].into(), &self.robot_2);
                         debug!("\tr1_path={:?}, r1_substr={:?}, r2_paths={:?}", r1_path.clone(), r1_substr_string, r2_paths);
-                        let r2_full_paths: Vec<Path> = r2_paths
+
+                        let r2_all_paths: Vec<Path> = r2_paths
                             .iter_mut()
                             .flat_map(|r2_path| {
                                 r2_path.insert(0, 'A');
-                                //assert!(r2_path.chars().nth(0).unwrap() == 'A');
+                                assert!(r2_path.chars().nth(0).unwrap() == 'A');
 
-                                let r3_r2_path: Vec<Vec<Path>> = r2_path
+                                let mut r3_paths_curr: Vec<String> = vec!["".to_string()];
+
+                                r2_path
                                     .as_bytes()
                                     .windows(2)
-                                    .map(|r2_substr| {
+                                    .for_each(|r2_substr| {
                                         let r2_substr_string: String = r1_substr.iter().map(|r| *r as char).collect();
 
-                                        let mut r3_presses: Vec<String> = self.robot_3.path(r2_substr[0].into(), r2_substr[1].into(), &self.robot_3);
-                                        debug!("\t\tr2_substr={:?}, r3_paths={:?}", r2_substr_string, r3_presses);
-
-                                        let r3_paths: Vec<Path> = r3_presses
-                                            .iter_mut()
-                                            .map(|r3_path| {
-                                                let p = Path { numpad: numpad_goal.clone(), r1: r1_path.clone(), r2: r2_path.clone(), r3: r3_path.to_string() };
-                                                debug!("\t\t\tr3_path p={:?}", p);
-                                                p
+                                        let r3_new_presses: Vec<String> = self.robot_3.path(r2_substr[0].into(), r2_substr[1].into(), &self.robot_3);
+                                        debug!("\t\t\tr2_substr_string={:?}, r3_paths_curr={:?}, r3_new_presses={:?}", r2_substr_string, r3_paths_curr, r3_new_presses);
+                                        r3_paths_curr = r3_new_presses.iter()
+                                            .flat_map(|r3_new_press| {
+                                                r3_paths_curr.iter()
+                                                    .map(|r3_path_curr| {
+                                                        format!("{}{}", r3_path_curr, r3_new_press.clone())
+                                                    })
                                             })
                                             .collect();
-                                        debug!("\t\tr3_paths={:?}", r3_paths);
-                                        r3_paths
 
+                                        debug!("\t\t\tr3_paths_curr={:?} want last group of these", r3_paths_curr);
+
+                                    });
+
+
+                                debug!("\t\tr3_paths_curr={:?}", r3_paths_curr);
+                                r3_paths_curr.iter()
+                                    .map(|r3_path_curr| {
+                                        Path { numpad: numpad_goal.clone(), r1: r1_path.clone(), r2: r2_path.clone(), r3: r3_path_curr.to_string() }
                                     })
-                                    .collect();
-                                //debug!("\t\tr3_r2_path={:?}", r3_r2_path);
-                                r3_r2_path.iter()
-                                    .for_each(|p| debug!("\t\tr3_r2_path p={:?}", p));
-                                r3_r2_path.into_iter().flatten()
-
+                                    .collect::<Vec<Path>>()
                             })
                             .collect();
-                        r2_full_paths
+                        debug!("\tr2_full_paths=");
+                        r2_all_paths.iter()
+                            .for_each(|p| {
+                                debug!("\t\tr2_all_path p={:?}", p);
+                            });
+                        r2_all_paths
                     })
             })
-            .collect()
-        ;
+            .collect();
 
         //println!("[distance_r3] {} to {}, r3_path={}, r3_path.len()={}, r2_full_path={}, r1_path={}", from_npad_btn, to_npad_button, r3_path, r3_path.len(), r2_full_path, r1_path);
 
+        debug!("final_paths=");
+        final_paths.iter()
+            .for_each(|p| {
+                debug!("\t{:?}", p);
+            });
         final_paths.len()
     }
 
