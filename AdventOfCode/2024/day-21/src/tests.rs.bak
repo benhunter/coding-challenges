@@ -1,0 +1,356 @@
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_log::test;
+
+    #[test]
+    fn test_parse() -> Result<(), String> {
+        let input = include_str!("../test1.txt");
+        let actual: Conundrum = input.parse()?;
+
+        let expected_codes_len = 5;
+        assert_eq!(actual.codes.len(), expected_codes_len);
+
+        let expected_code_0 = "029A";
+        assert_eq!(actual.codes.first().expect("should have a code"), expected_code_0);
+        Ok(())
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_r1_path_A0() -> Result<(), String> {
+        let r1 = Robot { next: Box::new(RobotOrNumpad::NumPad) }; // Robot 1 points to a NumPad.
+
+        let actual = r1.paths('A', '0');
+        debug!("{:?}", actual);
+        let expected_len = 1;
+        assert_eq!(expected_len, actual.len());
+
+        let actual_answer = actual.iter().next().unwrap();
+        let expected_answer = "<A";
+        assert_eq!(expected_answer, actual_answer);
+
+        Ok(())
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_r2_path_A0() -> Result<(), String> {
+        let r1 = Robot { next: Box::new(RobotOrNumpad::NumPad) };
+        let r2 = Robot { next: Box::new(RobotOrNumpad::Robot(r1)) };
+        debug!("{:?}", r2);
+
+        let actual = r2.paths('A', '0');
+        debug!("{:?}", actual);
+        let expected_len = 0;
+        assert_eq!(expected_len, actual.len());
+
+        let actual_answer = actual.iter().next().unwrap();
+        let expected_answer = "";
+        assert_eq!(expected_answer, actual_answer);
+
+        Ok(())
+    }
+
+    //#[test]
+    //fn test_start_state() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //    let actual = conundrum.state();
+    //    let solution = "1 position: A\n2 position: A";
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
+
+    //#[test]
+    //fn test_press() -> Result<(), String> {
+    //    let mut conundrum: Conundrum = "".parse()?;
+    //    conundrum.press("<");
+    //    let actual = conundrum.state();
+    //    let solution = "1 position: A\n2 position: ^";
+    //    assert_eq!(actual, solution);
+    //
+    //    //conundrum.press("v");
+    //    //let actual = conundrum.state();
+    //    //let solution = "1 position: A\n2 position: v";
+    //    //assert_eq!(actual, solution);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //fn test_distance_r1_to() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual = conundrum.distance_r1_to('0');
+    //    let expected = 2;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //fn test_distance_r2_to() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual = conundrum.distance_r2_to('0');
+    //    let expected = 8;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //fn test_distance_r3_to() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual = conundrum.distance_r3_to('0');
+    //    let expected = 18;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_distance_r3_from_A_to_0() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual = conundrum.distance_r3('A', '0');
+    //    let expected = 18;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //fn test_distance_r3_from_0_to_9() -> Result<(), String> {
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual = conundrum.distance_r3('0', '9');
+    //    let expected = 21; // TODO not verified
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_029A_by_steps() -> Result<(), String> {
+    //    /*
+    //    *   029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+    //    */
+    //
+    //    let conundrum: Conundrum = "".parse()?;
+    //
+    //    let actual: usize = vec![
+    //        conundrum.distance_r3('A', '0'),
+    //        conundrum.distance_r3('0', '2'),
+    //        conundrum.distance_r3('2', '9'),
+    //        conundrum.distance_r3('9', 'A'),
+    //    ].iter().sum();
+    //    let expected = 68;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_029A_code() -> Result<(), String> {
+    //    let conundrum: Conundrum = "029A".parse()?;
+    //
+    //    let actual = conundrum.solve_part1();
+    //    let expected = 68 * 29;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_980A_code() -> Result<(), String> {
+    //    /*
+    //    *   980A: <v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A
+    //    */
+    //    let conundrum: Conundrum = "980A".parse()?;
+    //
+    //    let actual = conundrum.solve_part1();
+    //    let expected = 60 * 980;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_179A_code() -> Result<(), String> {
+    //    /*
+    //    * Expected:
+    //    *   179A: <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+    //    *
+    //    * Actual:
+    //    * [Robot::path()] avoid going left, avoid=(0, 3), curr=(1, 3), path=<
+    //    * [distance_r3] A to 1, r3_path=v<A<AA>>^AvA^<A>Av<A<A>>^AvAA^<A>A, r3_path.len()=34, r2_full_path=v<<A>^Av<A>>^A, r1_path=<^<A
+    //    * [distance_r3] 1 to 7, r3_path=v<<A>>^AAvA^A, r3_path.len()=13, r2_full_path=<AA>A, r1_path=^^A
+    //    * [distance_r3] 7 to 9, r3_path=v<A^>AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+    //    * [distance_r3] 9 to A, r3_path=v<A<A>>^AAA<Av>A^A, r3_path.len()=18, r2_full_path=v<AAA^>A, r1_path=vvvA
+    //    * code=A179A, sum=76, numeric=179, sum*numeric=13604
+    //    *
+    //    * A1 v<A<AA>>^AvA^<A>Av<A<A>>^AvAA^<A>A
+    //    * 17 v<<A>>^AAvA^A
+    //    * 79 v<A^>AA<A>A
+    //    * 9A v<A<A>>^AAA<Av>A^A
+    //    */
+    //    let conundrum: Conundrum = "179A".parse()?;
+    //
+    //    let actual = conundrum.solve_part1();
+    //    let expected = 68 * 179;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_456A_code() -> Result<(), String> {
+    //    /*
+    //    *   456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A
+    //    */
+    //    let conundrum: Conundrum = "456A".parse()?;
+    //
+    //    let actual = conundrum.solve_part1();
+    //    let expected = 64 * 456;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+    //#[test]
+    //#[allow(non_snake_case)]
+    //fn test_379A_code() -> Result<(), String> {
+    //    /*
+    //    *   379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+    //    *
+    //    * [distance_r3] A to 3, r3_path=v<<A>>^AvA^A, r3_path.len()=12, r2_full_path=<A>A, r1_path=^A
+    //    * [distance_r3] 3 to 7, r3_path=v<<A>>^AAv<A<A>>^AAvAA^<A>A, r3_path.len()=27, r2_full_path=<AAv<AA>>^A, r1_path=^^<<A
+    //    * [distance_r3] 7 to 9, r3_path=v<A^>AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+    //    * [distance_r3] 9 to A, r3_path=v<A<A>>^AAA<Av>A^A, r3_path.len()=18, r2_full_path=v<AAA^>A, r1_path=vvvA
+    //    * code=A379A, sum=68, numeric=379, sum*numeric=25772
+    //    *
+    //    * expected 379A: <v<A>>^AvA^A    <vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+    //    * actual      A3 v<<A>>^AvA^A
+    //    *                         37 v<<A>>^AAv<A<A>>^AAvAA^<A>A  * <- TODO error here? 3 to 7
+    //    *                                                    79 v<A^>AA<A>A
+    //    *                                                               9A v<A<A>>^AAA<Av>A^A
+    //    * actual robot 2    <   A > A   <   AA  v <   AA >>  ^ A  v  AA ^ A  v <   AAA ^  > A
+    //    * actual robot 1        ^   A       ^^        <<       A     >>   A        vvv      A
+    //    * expect robot 2    <   A > A----  v <<   AA >  ^ AA > A  v  AA ^ A   < v  AAA >  ^ A
+    //    * expect robot 1        ^   A             <<      ^^   A     >>   A        vvv      A
+    //    *  expect robot 1 should have gone left then up, <<^^
+    //    *
+    //    */
+    //    let conundrum: Conundrum = "379A".parse()?;
+    //
+    //    let actual = conundrum.solve_part1();
+    //    let expected = 64 * 379;
+    //    assert_eq!(expected, actual);
+    //
+    //    Ok(())
+    //}
+
+//     #[test]
+//    fn test_part1() -> Result<(), String> {
+//        // TODO: path cannot cross the empty space on the keypad
+//        // https://www.reddit.com/r/adventofcode/comments/1hja685/2024_day_21_here_are_some_examples_and_hints_for/
+//
+//        /* Expected
+//029A: <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+//980A: <v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A
+//179A: <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+//456A: <v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A
+//379A: <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+//        */
+//
+//        /* Actual
+//[distance_r3] A to 0, r3_path=<<vAA>A>^AvAA<^A>A, r3_path.len()=18, r2_full_path=<<vA>>^A, r1_path=<A
+//[distance_r3] 0 to 2, r3_path=<<vA>>^AvA^A, r3_path.len()=12, r2_full_path=<A>A, r1_path=^A
+//[distance_r3] 2 to 9, r3_path=<vA>^A<<vA>^A>AAvA^A, r3_path.len()=20, r2_full_path=vA<^AA>A, r1_path=>^^A
+//[distance_r3] 9 to A, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+//code=A029A, sum=68, numeric=29, sum*numeric=1972
+//[distance_r3] A to 9, r3_path=<<vA>>^AAAvA^A, r3_path.len()=14, r2_full_path=<AAA>A, r1_path=^^^A
+//[distance_r3] 9 to 8, r3_path=<<vAA>A>^AvAA<^A>A, r3_path.len()=18, r2_full_path=<<vA>>^A, r1_path=<A
+//[distance_r3] 8 to 0, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+//[distance_r3] 0 to A, r3_path=<vA>^A<A>A, r3_path.len()=10, r2_full_path=vA^A, r1_path=>A
+//code=A980A, sum=60, numeric=980, sum*numeric=58800
+//[distance_r3] A to 1, r3_path=<<vAA>A>^AAvA<^A>AvA^A, r3_path.len()=22, r2_full_path=<<vAA>^A>A, r1_path=<<^A
+//[distance_r3] 1 to 7, r3_path=<<vA>>^AAvA^A, r3_path.len()=13, r2_full_path=<AA>A, r1_path=^^A
+//[distance_r3] 7 to 9, r3_path=<vA>^AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+//[distance_r3] 9 to A, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+//code=A179A, sum=64, numeric=179, sum*numeric=11456
+//[distance_r3] A to 4, r3_path=<<vAA>A>^AAvA<^A>AAvA^A, r3_path.len()=23, r2_full_path=<<vAA>^AA>A, r1_path=<<^^A
+//[distance_r3] 4 to 5, r3_path=<vA>^A<A>A, r3_path.len()=10, r2_full_path=vA^A, r1_path=>A
+//[distance_r3] 5 to 6, r3_path=<vA>^A<A>A, r3_path.len()=10, r2_full_path=vA^A, r1_path=>A
+//[distance_r3] 6 to A, r3_path=<<vA>A>^AAvA<^A>A, r3_path.len()=17, r2_full_path=<vAA>^A, r1_path=vvA
+//code=A456A, sum=60, numeric=456, sum*numeric=27360
+//[distance_r3] A to 3, r3_path=<<vA>>^AvA^A, r3_path.len()=12, r2_full_path=<A>A, r1_path=^A
+//[distance_r3] 3 to 7, r3_path=<<vAA>A>^AAvA<^A>AAvA^A, r3_path.len()=23, r2_full_path=<<vAA>^AA>A, r1_path=<<^^A
+//[distance_r3] 7 to 9, r3_path=<vA>^AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+//[distance_r3] 9 to A, r3_path=<<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+//code=A379A, sum=64, numeric=379, sum*numeric=24256
+//        */
+//
+//        /*
+//expected:
+//179A: 
+//A1: <v<A>>^A<vA<A>>^AAvAA<^A>A r2: <Av<AA>>^A r1: ^<<A
+//17: <v<A>>^AAvA^A
+//79: <vA>^AA<A>A
+//9A: <v<A>A>^AAAvA<^A>A
+//
+//actual:
+//A1: <<vAA>A>^AAvA<^A>AvA^A, r3_path.len()=22, r2_full_path=<<vAA>^A>A, r1_path=<<^A
+//pass 17: <<vA>>^AAvA^A, r3_path.len()=13, r2_full_path=<AA>A, r1_path=^^A
+//pass 79: <vA>^AA<A>A, r3_path.len()=11, r2_full_path=vAA^A, r1_path=>>A
+//pass 9A: <<vA>A>^AAAvA<^A>A, r3_path.len()=18, r2_full_path=<vAAA>^A, r1_path=vvvA
+//code=A179A, sum=64, numeric=179, sum*numeric=11456
+//        */
+//
+//        let input = include_str!("../test1.txt");
+//        let actual = solve_part1(input)?;
+//        let expected = 126384;
+//        assert_eq!(expected, actual);
+//
+//        Ok(())
+//    }
+
+    //#[test]
+    //fn test_solve_part1() -> Result<(), String> {
+    //    let input = include_str!("../input.txt");
+    //    let actual = solve_part1(input)?;
+    //    let too_low = 187062;
+    //    assert!(actual > too_low);
+    //    let too_high = 199154;
+    //    //assert!(actual < too_high);
+    //    let solution = 0;
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
+
+    // #[test]
+    //fn test_part2() -> Result<(), String> {
+    //    let input = include_str!("../test1.txt");
+    //    let actual = solve_part2(input)?;
+    //    let solution = 0;
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
+
+    // #[test]
+    //fn test_solve_part2() -> Result<(), String> {
+    //    let input = include_str!("../input.txt");
+    //    let actual = solve_part2(input)?;
+    //    let solution = 0;
+    //    assert_eq!(actual, solution);
+    //    Ok(())
+    //}
+}
