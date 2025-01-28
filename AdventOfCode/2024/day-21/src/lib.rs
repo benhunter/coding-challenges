@@ -253,14 +253,14 @@ impl Robot {
         * Recursive solution. Base case is RobotOrNumpad::NumPad
         */
 
-        let result = match *self.next {
+        let full_paths = match *self.next {
             RobotOrNumpad::Numpad => self.local_paths(from_button, to_button),
             RobotOrNumpad::Robot(ref r) => {
 
                 let mut r_paths = r.clone().paths(from_button, to_button);
                 debug!("r_paths={:?}", r_paths);
 
-                let mut local_paths: Vec<Vec<String>> = vec![];
+                let mut window_paths: Vec<Vec<String>> = vec![];
 
                 debug!("starting r_paths.iter()");
                 r_paths.iter_mut()
@@ -275,34 +275,35 @@ impl Robot {
                                 debug!("r_path_pair={:?}", r_path_pair);
                                 let lp = self.local_paths(r_path_pair[0].into(), r_path_pair[1].into());
                                 debug!("lp={:?}", lp);
-                                local_paths.push(lp);
+                                window_paths.push(lp);
                             })
 
                     });
 
-                debug!("Building full_paths");
-                let mut full_paths: Vec<String> = vec!["".to_string()];
-                local_paths.iter()
-                    .for_each(|lps| {
-                        lps.iter()
-                            .for_each(|lp| {
-                                full_paths.iter_mut()
-                                    .for_each(|fp| {
-                                        fp.push_str(lp);
-                                        debug!("lp={:?}, fp={:?}", lp, fp);
-                                        todo!("need to push new strings to full_paths");
-                                    });
-                            });
-                        debug!("lps={:?}, full_paths={:?}", lps, full_paths);
-                    });
+                debug!("Building full_paths. r_paths={:?}, local_paths={:?}", r_paths, window_paths);
 
-                local_paths.iter().next().unwrap().to_vec()
+                build_full_paths_from_window_paths(window_paths)
             },
         };
 
-        debug!("paths() end result={:?}", result);
-        result
+        debug!("full_paths={:?}", full_paths);
+        full_paths
     }
+}
+
+fn build_full_paths_from_window_paths(window_paths: Vec<Vec<String>>) -> Vec<String> {
+    let mut full_paths: Vec<String> = vec!["".to_string()];
+    for window_path in window_paths {
+        let mut new_full_paths: Vec<String> = vec![];
+        for full_path in full_paths {
+            for wp in window_path.clone() {
+                new_full_paths.push(format!("{}{}", full_path, wp));
+            }
+        }
+        full_paths = new_full_paths;
+    }
+
+    full_paths
 }
 
 #[derive(Debug)]
@@ -357,8 +358,83 @@ mod tests {
 
         let actual = r2.paths('A', '0');
         debug!("{:?}", actual);
-        let expected_len = 8;
+        let expected_len = 4;
         assert_eq!(expected_len, actual.len());
+
+        let expected_len_of_shortest = 8;
+        let actual_len_of_shortest = actual.iter().map(|a| a.len()).min().unwrap();
+        assert_eq!(expected_len_of_shortest, actual_len_of_shortest);
+
+        let actual_answer = actual.iter().next().unwrap();
+        let expected_answer = "v<<A>^>A";
+        assert_eq!(expected_answer, actual_answer);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_build_full_path() -> Result<(), String> {
+        let window_paths = vec![vec!["A".to_string(), "B".to_string()], vec!["C".to_string(), "D".to_string()]];
+        let actual = build_full_paths_from_window_paths(window_paths);
+        let expected = vec!["AC".to_string(), "AD".to_string(), "BC".to_string(), "BD".to_string()];
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_build_full_path_from_3_windows() -> Result<(), String> {
+        let window_paths = vec![vec!["A".to_string(), "B".to_string()], vec!["C".to_string(), "D".to_string()], vec!["E".to_string(), "F".to_string()]];
+        let actual = build_full_paths_from_window_paths(window_paths);
+        let expected = vec![
+            "ACE".to_string(), "ACF".to_string(), "ADE".to_string(), "ADF".to_string(), 
+            "BCE".to_string(), "BCF".to_string(), "BDE".to_string(), "BDF".to_string(),
+        ];
+        assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_r3_path_A0() -> Result<(), String> {
+
+        /*
+2025-01-27T20:43:05.752679Z DEBUG day_21: Building full_paths. r_paths=["Av<<A>^>A", "Av<<A>>^A", "A<v<A>^>A", "A<v<A>>^A"], local_paths=[["v<A", "<vA"], ["<A"], ["A"], [">^>A", ">>^A"], ["vA"], ["^<A", "<^A"], ["v>A", ">vA"], ["^A"], ["v<A", "<vA"], ["<A"], ["A"], [">^>A", ">>^A"], ["vA"], ["A"], ["^<A", "<^A"], [">A"], ["v<<A", "<v<A"], [">A"], ["<A"], [">^>A", ">>^A"], ["vA"], ["^<A", "<^A"], ["v>A", ">vA"], ["^A"], ["v<<A", "<v<A"], [">A"], ["<A"], [">^>A", ">>^A"], ["vA"], ["A"], ["^<A", "<^A"], [">A"]]
+
+r_paths=["Av<<A>^>A", "Av<<A>>^A", "A<v<A>^>A", "A<v<A>>^A"]
+local_paths=
+[
+["v<A", "<vA"],
+["<A"],
+["A"],
+[">^>A", ">>^A"],
+["vA"],
+["^<A", "<^A"],
+["v>A", ">vA"],
+["^A"],
+["v<A", "<vA"],
+["<A"],
+["A"],
+[">^>A", ">>^A"],
+["vA"],
+["A"],
+["^<A", "<^A"],
+[">A"], ["v<<A", "<v<A"], [">A"], ["<A"], [">^>A", ">>^A"], ["vA"], ["^<A", "<^A"], ["v>A", ">vA"], ["^A"], ["v<<A", "<v<A"], [">A"], ["<A"], [">^>A", ">>^A"], ["vA"], ["A"], ["^<A", "<^A"], [">A"]]
+        */
+
+        let r1 = Robot { next: Box::new(RobotOrNumpad::Numpad) };
+        let r2 = Robot { next: Box::new(RobotOrNumpad::Robot(r1)) };
+        let r3 = Robot { next: Box::new(RobotOrNumpad::Robot(r2)) };
+
+        let actual = r3.paths('A', '0');
+        //debug!("{:?}", actual);
+        //let expected_len = 0;
+        //assert_eq!(expected_len, actual.len());
+
+        let expected_shortest_path = "AAAAA";
+        let actual_shortest_path = actual.iter().min_by_key(|a| a.len()).unwrap();
+        assert_eq!(expected_shortest_path, actual_shortest_path);
 
         let actual_answer = actual.iter().next().unwrap();
         let expected_answer = "v<<A>^>A";
