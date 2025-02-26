@@ -4,13 +4,7 @@ fn main() {
 
 pub fn is_valid(s: String) -> bool {
     match expr_zero_or_more(&s[..]) {
-        Some(s) => {
-            if s.len() == 0 {
-                true
-            } else {
-                false
-            }
-        },
+        Some(s) => s.is_empty(),
         None => false,
     }
 }
@@ -18,12 +12,12 @@ pub fn is_valid(s: String) -> bool {
 fn expr_zero_or_more(s: &str) -> Option<&str> {
     // println!("expr_zero_or_more s={}", s);
 
-    if s.len() == 0 {
+    if s.is_empty() {
         return Some(s);
     }
 
     let mut t = s;
-    while t.len() > 0 {
+    while !t.is_empty() {
         match expr_parens(t) {
             Some(u) => t = u,
             None => return None,
@@ -37,7 +31,7 @@ fn expr_one_or_more(s: &str) -> Option<&str> {
     // println!("expr_one_or_more s={}", s);
 
     let mut t = s;
-    while t.len() > 0 {
+    while !t.is_empty() {
         // println!("expr_one_or_more while t={}", t);
         match expr_parens(t) {
             Some(u) => t = u,
@@ -50,7 +44,7 @@ fn expr_one_or_more(s: &str) -> Option<&str> {
 
 fn expr_parens(s: &str) -> Option<&str> {
     // println!("expr_parens s={}", s);
-    assert!(s.len() > 0);
+    assert!(!s.is_empty(), "s must not be empty");
 
     let next = &s[0..1];
     match next {
@@ -73,7 +67,7 @@ fn expr_parens(s: &str) -> Option<&str> {
                     // println!("expr_parens s={} match ( e={:?}", s, e);
                     match e {
                         Some(f) => {
-                            if f.len() >= 1 && &f[0..1] == ")" {
+                            if !f.is_empty() && &f[0..1] == ")" {
                                 // println!("expr_parens s={} ( e={:?} return Some(&f[1..])={}", s, e, &f[1..]);
                                 Some(&f[1..])
                             } else {
@@ -105,7 +99,7 @@ fn expr_parens(s: &str) -> Option<&str> {
                     // println!("expr_parens s={} match {{ e={:?}", s, e);
                     match e {
                         Some(f) => {
-                            if f.len() >= 1 && &f[0..1] == "}" {
+                            if !f.is_empty() && &f[0..1] == "}" {
                                 // println!("expr_parens s={} {{ e={:?} return Some(&f[1..])={}", s, e, &f[1..]);
                                 Some(&f[1..])
                             } else {
@@ -137,7 +131,7 @@ fn expr_parens(s: &str) -> Option<&str> {
                     // println!("expr_parens s={} match [ e={:?}", s, e);
                     match e {
                         Some(f) => {
-                            if f.len() >= 1 && &f[0..1] == "]" {
+                            if !f.is_empty() && &f[0..1] == "]" {
                                 // println!("expr_parens s={} [ e={:?} return Some(&f[1..])={}", s, e, &f[1..]);
                                 Some(&f[1..])
                             } else {
@@ -159,7 +153,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[should_panic(expected = "assertion failed: s.len() > 0")]
+    #[should_panic(expected = "s must not be empty")]
     fn test_expr_empty_panics() {
         let input = "";
         expr_parens(input);
