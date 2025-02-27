@@ -1,12 +1,15 @@
-# Coding Challenges
+# Solutions
 
 ## Advent of Code
 
-- [2024](https://adventofcode.com/2024) in Rust.
-- [2023](https://adventofcode.com/2023) in Rust.
-- [2022](https://adventofcode.com/2022) in Kotlin.
-- [2021](https://adventofcode.com/2021) in Python.
-- [2020](https://adventofcode.com/2020) in Python.
+[https://adventofcode.com/](https://adventofcode.com/)
+
+- [2024](https://github.com/benhunter/coding-challenges/tree/main/AdventOfCode/2024) in Rust.
+    - [Day 13](https://github.com/benhunter/coding-challenges/blob/main/AdventOfCode/2024/day-13/src/lib.rs)
+- [2023](https://github.com/benhunter/coding-challenges/tree/main/AdventOfCode/2023) in Rust.
+- [2022](https://github.com/benhunter/coding-challenges/tree/main/AdventOfCode/2022) in Kotlin.
+- [2021](https://github.com/benhunter/coding-challenges/tree/main/AdventOfCode/2021) in Python.
+- [2020](https://github.com/benhunter/coding-challenges/tree/main/AdventOfCode/2020) in Python.
 
 ## LeetCode
 
