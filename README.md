@@ -8,6 +8,14 @@
 - [2021](https://adventofcode.com/2021) in Python.
 - [2020](https://adventofcode.com/2020) in Python.
 
+## LeetCode
+
+
+```
+leetup pick X -l rust
+cargo +nightly -Zscript best-time-to-buy-and-sell-stock.rs 
+```
+
 ## Exercism
 
 Java - https://exercism.io/my/tracks/java
