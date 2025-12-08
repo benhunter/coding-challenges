@@ -1,0 +1,5 @@
+run day:
+  uv run --directory {{day}} {{day}}.py
+
+watch day:
+  watch -d -c -n 1 uv --directory {{day}} run {{day}}.py
