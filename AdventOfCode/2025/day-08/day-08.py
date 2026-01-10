@@ -31,7 +31,7 @@ def part1(junctions, num_connections=1000):
     for pair in sorted_d[:num_connections]:
         connections.append([pair])
     connections = [c[0][0].split() for c in connections]
-    pprint(connections[:10])
+    pprint(connections)
     # print()
 
     circuit_count = 0
@@ -48,15 +48,16 @@ def part1(junctions, num_connections=1000):
                     if circuits[x] == circuits[c[1]]:
                         circuits[x] = circuits[c[0]]
                 print(f"fixed loop {c=} {circuits[c[0]]}, {circuits[c[1]]}")
-            # else:
-                # print(f"connection already in same circuit {circuits[c[0]]=} {circuits[c[1]]=}")
+            else:
+                print(f"connection already in same circuit {circuits[c[0]]=} {circuits[c[1]]=}")
             break
 
         elif c[0] in circuits or c[1] in circuits:
-            # print(f"One is in! {circuits[c[0]]}")
             if circuits.get(c[0]) is not None:
+                print(f"One is in! {c[0]=} {circuits[c[0]]=}")
                 circuits[c[1]] = circuits[c[0]]
             elif circuits.get(c[1]) is not None:
+                print(f"One is in! {c[1]=} {circuits[c[1]]=}")
                 circuits[c[0]] = circuits[c[1]]
         else:
             circuits[c[0]] = circuit_count
