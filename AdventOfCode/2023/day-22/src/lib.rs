@@ -1,6 +1,13 @@
+/*
+Advent of Code 2023, Day 22
+https://adventofcode.com/2023/day/22
+
+Keywords for search:
+Simulation, collision detection, box overlap, physics, gravity, falling
+ */
 use itertools::Itertools;
 
-use util::{Coord, ParseError};
+use util::ParseError;
 
 /*
 input.txt
@@ -23,9 +30,6 @@ y_min = 0
 pub fn solve_part1(input: &str) -> Result<i32, String> {
     let mut stack = parse(input)?;
     stack.check_invalid();
-    stack.bricks.iter().for_each(|brick| {
-        // println!("{:?}", brick);
-    });
     stack.render_xz();
     stack.render_yz();
 
@@ -68,15 +72,11 @@ impl Stack {
             let mut moved_bricks = vec![];
 
             (2..=z_max).for_each(|z| {
-                // if z > 5 {
-                //     panic!("debug")
-                // }
                 let updated_bricks = self.bricks.iter()
                     // find bricks at z
                     .filter(|brick| {
                         brick.position_start.2 == z
                     })
-                    // .inspect(|&brick| { dbg!(brick); })
                     .filter(|brick| {
                         // check if there is a brick under it
                         let bricks_under = self.bricks.iter()
@@ -88,19 +88,11 @@ impl Stack {
                                     return false;
                                 }
 
-                                // brick corners
-                                // nw - ne
-                                // sw - se
-                                // let nw = (brick.position_start.0, brick.position_end.1);
-                                let brick_ne = (brick.position_end.0, brick.position_end.1);
-                                let brick_sw = (brick.position_start.0, brick.position_start.1);
-                                // let se = (brick.position_end.0, brick.position_start.1);
-
-                                if (brick.position_end.0 < lower_brick.position_start.0 || brick.position_start.0 > lower_brick.position_end.0) {
+                                if brick.position_end.0 < lower_brick.position_start.0 || brick.position_start.0 > lower_brick.position_end.0 {
                                     return false;
                                 }
 
-                                if (brick.position_end.1 < lower_brick.position_start.1 || brick.position_start.1 > lower_brick.position_end.1) {
+                                if brick.position_end.1 < lower_brick.position_start.1 || brick.position_start.1 > lower_brick.position_end.1 {
                                     return false;
                                 }
 
@@ -133,8 +125,6 @@ impl Stack {
                                 moved_bricks.push(brick.id);
                             });
                     });
-
-                // self.render_xz();
 
                 if !updated_bricks.is_empty() {
                     if debug {
@@ -175,11 +165,11 @@ impl Stack {
                                 return false;
                             }
 
-                            if (brick.position_end.0 < other.position_start.0 || brick.position_start.0 > other.position_end.0) {
+                            if brick.position_end.0 < other.position_start.0 || brick.position_start.0 > other.position_end.0 {
                                 return false;
                             }
 
-                            if (brick.position_end.1 < other.position_start.1 || brick.position_start.1 > other.position_end.1) {
+                            if brick.position_end.1 < other.position_start.1 || brick.position_start.1 > other.position_end.1 {
                                 return false;
                             }
                             true
@@ -193,21 +183,15 @@ impl Stack {
                                 return false;
                             }
 
-                            if (brick.position_end.0 < other.position_start.0 || brick.position_start.0 > other.position_end.0) {
+                            if brick.position_end.0 < other.position_start.0 || brick.position_start.0 > other.position_end.0 {
                                 return false;
                             }
 
-                            if (brick.position_end.1 < other.position_start.1 || brick.position_start.1 > other.position_end.1) {
+                            if brick.position_end.1 < other.position_start.1 || brick.position_start.1 > other.position_end.1 {
                                 return false;
                             }
                             true
                         })
-                        // .inspect(|other| {
-                        //     if brick.id == 'A' {
-                        //         dbg!(brick);
-                        //         dbg!(other);
-                        //     }
-                        // })
                         // find bricks that would be supported by another brick
                         .filter(|other| {
                             let supporting = self.bricks.iter()
@@ -215,50 +199,36 @@ impl Stack {
                                     possible_supporting.id != other.id
                                         && possible_supporting.id != brick.id
                                 })
-                                .filter(|posssible_supporting| {
+                                .filter(|possible_supporting| {
                                     // is possible_supporting under other?
-                                    posssible_supporting.position_end.2 == z
+                                    possible_supporting.position_end.2 == z
                                 })
                                 .filter(|possible_supporting| {
 
                                     // does it intersect with other?
-                                    if (possible_supporting.position_end.0 < other.position_start.0 || possible_supporting.position_start.0 > other.position_end.0) {
+                                    if possible_supporting.position_end.0 < other.position_start.0 || possible_supporting.position_start.0 > other.position_end.0 {
                                         return false;
                                     }
 
-                                    if (possible_supporting.position_end.1 < other.position_start.1 || possible_supporting.position_start.1 > other.position_end.1) {
+                                    if possible_supporting.position_end.1 < other.position_start.1 || possible_supporting.position_start.1 > other.position_end.1 {
                                         return false;
                                     }
                                     true
                                 })
                                 .collect::<Vec<&Brick>>();
-                            // dbg!(supporting.clone());
                             !supporting.is_empty()
                         })
-                        .inspect(|other| {
-                            // if brick.id == 'A' {
-                            //     dbg!(brick);
-                            //     dbg!(other);
-                            // }
-                        })
                         .collect::<Vec<&Brick>>();
-                    // dbg!(supported_bricks_over.clone());
-                    // if brick.id == 'A' {
-                    //     dbg!(bricks_over);
-                    //     dbg!(supported_bricks_over.clone());
-                    // }
                     bricks_over == 0 || (bricks_over == supported_bricks_over.len())
                 }).collect::<Vec<&Brick>>();
 
-            // dbg!(safe_to_disintegrate.clone());
             safe_to_disintegrate
         }).flatten()
-            // .inspect(|safe| { dbg!(safe); })
             .count() as i32)
     }
 
     fn render_xz(&self) -> String {
-        let debug = true;
+        let print = true;
         let mut output = String::new();
 
         let z_max = self.bricks.iter()
@@ -273,31 +243,25 @@ impl Stack {
             })
             .max().unwrap();
 
-        let y_max = self.bricks.iter()
-            .map(|brick| {
-                brick.position_end.1
-            })
-            .max().unwrap();
-
-        if debug {
+        if print {
             println!("\n{:=>x_max$}", "=", x_max = (x_max + 3) as usize);
         }
         // output.push_str(&format!("{:=>x_max$}", "=", x_max = (x_max + 3) as usize));
 
         let x_label_position = x_max / 2 + 1;
-        if debug {
+        if print {
             println!("{}", format!("{: >width_x$}", "x", width_x = x_label_position as usize));
         }
-        output.push_str(&format!("{}", format!("{: >width_x$}\n", "x", width_x = x_label_position as usize)));
+        output.push_str(&format!("{: >width_x$}\n", "x", width_x = x_label_position as usize));
 
         (0..=x_max).for_each(|x| {
-            if debug {
+            if print {
                 print!("{}", x);
             }
             output.push_str(&format!("{}", x));
         });
 
-        if debug {
+        if print {
             println!();
         }
         output.push('\n');
@@ -318,10 +282,10 @@ impl Stack {
                 let next = match closest_y {
                     None => '.',
                     Some(x) => {
-                        char::from_u32(x.rem_euclid(26) as u32 + 'A' as u32).unwrap()
+                        char::from_u32(x.rem_euclid(26) + 'A' as u32).unwrap()
                     }
                 };
-                if debug {
+                if print {
                     print!("{}", next);
                 }
 
@@ -332,23 +296,23 @@ impl Stack {
                 }
             });
 
-            if debug {
+            if print {
                 print!(" {}", z);
             }
             output.push_str(&format!(" {}", z));
             if z == (z_max + 1) / 2 {
-                if debug {
+                if print {
                     print!(" z");
                 }
                 output.push_str(" z");
             }
-            if debug {
+            if print {
                 println!();
             }
             output.push('\n');
         });
 
-        if debug {
+        if print {
             println!("{:->x_max$} 0", "-", x_max = (x_max + 1) as usize);
             println!("{:=>x_max$}", "=", x_max = (x_max + 3) as usize);
         }
@@ -358,7 +322,7 @@ impl Stack {
     }
 
     fn render_yz(&self) -> String {
-        let debug = true;
+        let print = true;
         let mut output = String::new();
 
         let z_max = self.bricks.iter()
@@ -379,23 +343,23 @@ impl Stack {
             })
             .max().unwrap();
 
-        if debug {
+        if print {
             println!("\n{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
         }
 
         let y_label_position = y_max / 2 + 1;
-        if debug {
-            println!("{}", format!("{: >width_y$}", "y", width_y = y_label_position as usize));
+        if print {
+            println!("{: >width_y$}", "y", width_y = y_label_position as usize);
         }
-        output.push_str(&format!("{}", format!("{: >width_y$}\n", "y", width_y = y_label_position as usize)));
+        output.push_str(&format!("{: >width_y$}\n", "y", width_y = y_label_position as usize));
 
         (0..=y_max).for_each(|y| {
-            if debug {
+            if print {
                 print!("{}", y);
             }
             output.push_str(&format!("{}", y));
         });
-        if debug {
+        if print {
             println!();
         }
         output.push('\n');
@@ -413,32 +377,32 @@ impl Stack {
                 let next = match closest_x {
                     None => '.',
                     Some(x) => {
-                        char::from_u32(x.rem_euclid(26) as u32 + 'A' as u32).unwrap()
+                        char::from_u32(x.rem_euclid(26) + 'A' as u32).unwrap()
                     }
                 };
-                if debug {
+                if print {
                     print!("{}", next);
                 }
                 output.push(next);
             });
 
-            if debug {
+            if print {
                 print!(" {}", z);
             }
             output.push_str(&format!(" {}", z));
             if z == z_max / 2 + 1 {
-                if debug {
+                if print {
                     print!(" z");
                 }
                 output.push_str(" z");
             }
-            if debug {
+            if print {
                 println!();
             }
             output.push('\n');
         });
 
-        if debug {
+        if print {
             println!("{:->y_max$} 0", "-", y_max = (y_max + 1) as usize);
             println!("{:=>y_max$}", "=", y_max = (y_max + 3) as usize);
         }
@@ -513,7 +477,7 @@ mod tests {
         assert_eq!(actual.bricks.len(), expected_bricks);
 
         // last brick 1,1,8~1,1,9
-        let g = 'G'.to_digit(10).unwrap();
+        let g = 'G' as u32 - 'A' as u32;
         let last_brick = Brick {
             position_start: (1, 1, 8),
             position_end: (1, 1, 9),
